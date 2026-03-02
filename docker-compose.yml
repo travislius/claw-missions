@@ -1,0 +1,10 @@
+services:
+  octovault:
+    build: .
+    ports:
+      - "5679:5679"
+    volumes:
+      - ./data:/data
+    env_file:
+      - .env
+    restart: unless-stopped
