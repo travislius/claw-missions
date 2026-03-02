@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, LayoutGrid, List, Upload, Octagon, LogOut } from 'lucide-react';
+import { Search, LayoutGrid, List, Upload, Octagon, LogOut, Menu, Sun, Moon } from 'lucide-react';
 import { useStore } from '../store';
 import { searchFiles } from '../api';
 
 export default function Header({ onUploadClick }) {
-  const { viewMode, setViewMode, searchQuery, setSearchQuery, logout } = useStore();
+  const { viewMode, setViewMode, searchQuery, setSearchQuery, logout, theme, toggleTheme, toggleSidebar } = useStore();
   const [localQuery, setLocalQuery] = useState(searchQuery);
   const [suggestions, setSuggestions] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -66,7 +66,15 @@ export default function Header({ onUploadClick }) {
   };
 
   return (
-    <header className="h-16 bg-gray-900 border-b border-gray-800 flex items-center px-4 gap-4 shrink-0">
+    <header className="h-14 sm:h-16 bg-gray-900 dark:bg-gray-900 bg-white border-b border-gray-800 dark:border-gray-800 border-gray-200 flex items-center px-3 sm:px-4 gap-2 sm:gap-4 shrink-0 transition-colors">
+      {/* Hamburger (mobile) */}
+      <button
+        onClick={toggleSidebar}
+        className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition md:hidden"
+      >
+        <Menu className="w-5 h-5" />
+      </button>
+
       {/* Logo */}
       <div className="flex items-center gap-2 shrink-0 cursor-pointer" onClick={() => { setSearchQuery(''); setLocalQuery(''); navigate('/'); }}>
         <Octagon className="w-6 h-6 text-ocean-400" />
@@ -109,10 +117,18 @@ export default function Header({ onUploadClick }) {
       </form>
 
       {/* Actions */}
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+        <button
+          onClick={toggleTheme}
+          className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition"
+          title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+        >
+          {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+        </button>
+
         <button
           onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-          className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition"
+          className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition hidden sm:block"
           title={viewMode === 'grid' ? 'List view' : 'Grid view'}
         >
           {viewMode === 'grid' ? <List className="w-5 h-5" /> : <LayoutGrid className="w-5 h-5" />}
@@ -120,7 +136,7 @@ export default function Header({ onUploadClick }) {
 
         <button
           onClick={onUploadClick}
-          className="flex items-center gap-2 bg-ocean-600 hover:bg-ocean-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition"
+          className="flex items-center gap-2 bg-ocean-600 hover:bg-ocean-500 text-white text-sm font-medium px-3 sm:px-4 py-2 rounded-lg transition touch-manipulation"
         >
           <Upload className="w-4 h-4" />
           <span className="hidden sm:inline">Upload</span>

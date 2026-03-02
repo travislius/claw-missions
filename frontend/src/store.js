@@ -55,4 +55,21 @@ export const useStore = create((set, get) => ({
   // Stats
   stats: null,
   setStats: (stats) => set({ stats }),
+
+  // Theme (dark/light)
+  theme: localStorage.getItem('octovault_theme') || 'dark',
+  setTheme: (theme) => {
+    localStorage.setItem('octovault_theme', theme);
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+    set({ theme });
+  },
+  toggleTheme: () => {
+    const next = get().theme === 'dark' ? 'light' : 'dark';
+    get().setTheme(next);
+  },
+
+  // Mobile sidebar
+  sidebarOpen: false,
+  setSidebarOpen: (sidebarOpen) => set({ sidebarOpen }),
+  toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
 }));

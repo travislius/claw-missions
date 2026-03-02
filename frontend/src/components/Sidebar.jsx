@@ -64,7 +64,7 @@ function InlineTagEdit({ tag, onDone }) {
 }
 
 export default function Sidebar({ onRefreshTags }) {
-  const { tags, selectedTag, setSelectedTag, stats } = useStore();
+  const { tags, selectedTag, setSelectedTag, stats, sidebarOpen, setSidebarOpen } = useStore();
   const [managing, setManaging] = useState(false);
   const [editingTag, setEditingTag] = useState(null); // null | 'new' | tag object
   const [fileCount] = useState(null);
@@ -84,7 +84,9 @@ export default function Sidebar({ onRefreshTags }) {
   };
 
   return (
-    <aside className="w-56 bg-gray-900 border-r border-gray-800 flex flex-col shrink-0 overflow-y-auto hidden md:flex">
+    <aside className={`w-64 bg-gray-900 dark:bg-gray-900 bg-gray-50 border-r border-gray-800 dark:border-gray-800 border-gray-200 flex flex-col shrink-0 overflow-y-auto
+      fixed md:relative inset-y-0 left-0 z-40 transform transition-transform duration-200 ease-in-out
+      ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
       {/* Tags */}
       <div className="p-4">
         <div className="flex items-center justify-between mb-3">
@@ -110,8 +112,8 @@ export default function Sidebar({ onRefreshTags }) {
         </div>
 
         <button
-          onClick={() => setSelectedTag(null)}
-          className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition ${
+          onClick={() => { setSelectedTag(null); setSidebarOpen(false); }}
+          className={`w-full flex items-center gap-2 px-3 py-3 rounded-lg text-sm transition ${
             !selectedTag ? 'bg-ocean-600/20 text-ocean-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white'
           }`}
         >
@@ -123,7 +125,7 @@ export default function Sidebar({ onRefreshTags }) {
           {tags.map((tag) => (
             <div key={tag.id} className="group flex items-center">
               <button
-                onClick={() => setSelectedTag(tag.id === selectedTag ? null : tag.id)}
+                onClick={() => { setSelectedTag(tag.id === selectedTag ? null : tag.id); setSidebarOpen(false); }}
                 className={`flex-1 flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition ${
                   selectedTag === tag.id
                     ? 'bg-ocean-600/20 text-ocean-400'

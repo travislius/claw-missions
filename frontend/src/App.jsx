@@ -16,18 +16,31 @@ function ProtectedRoute() {
 
 function AppLayout() {
   const setTags = useStore((s) => s.setTags);
+  const { theme, sidebarOpen, setSidebarOpen } = useStore();
   const refreshTags = useCallback(() => {
     getTags().then((r) => setTags(r.data?.tags || r.data || [])).catch(() => {});
   }, [setTags]);
 
   useEffect(() => { refreshTags(); }, [refreshTags]);
 
+  // Initialize theme class on mount
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+  }, [theme]);
+
   return (
-    <div className="h-screen flex flex-col bg-gray-950 text-white">
+    <div className="h-screen flex flex-col bg-gray-950 dark:bg-gray-950 bg-white text-gray-900 dark:text-white transition-colors">
       <Header onUploadClick={() => window.__octovaultOpenUpload?.()} />
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Mobile sidebar overlay */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-30 md:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
         <Sidebar onRefreshTags={refreshTags} />
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
           <Outlet />
         </main>
       </div>

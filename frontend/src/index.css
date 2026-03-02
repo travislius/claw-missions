@@ -3,7 +3,25 @@
 @tailwind utilities;
 
 body {
-  @apply bg-gray-950 text-white antialiased;
+  @apply antialiased;
+}
+
+/* Dark mode body */
+.dark body, html.dark body {
+  @apply bg-gray-950 text-white;
+}
+
+/* Light mode body */
+html:not(.dark) body {
+  @apply bg-gray-50 text-gray-900;
+}
+
+/* Touch-friendly: ensure min 44px tap targets on mobile */
+@media (pointer: coarse) {
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
 }
 
 /* Scrollbar styling */
@@ -13,10 +31,17 @@ body {
 ::-webkit-scrollbar-track {
   background: transparent;
 }
-::-webkit-scrollbar-thumb {
+.dark ::-webkit-scrollbar-thumb {
   background: #374151;
   border-radius: 3px;
 }
-::-webkit-scrollbar-thumb:hover {
+.dark ::-webkit-scrollbar-thumb:hover {
   background: #4b5563;
+}
+
+/* Safe area padding for notched phones */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }
