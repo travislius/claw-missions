@@ -140,6 +140,12 @@ octocloud/
 └── start.sh                 # Native startup script
 ```
 
+## 🔐 Security
+
+OctoCloud includes rate limiting, bcrypt password hashing, CORS lockdown, and strong JWT signing. For deployments storing sensitive files, we recommend adding **Cloudflare Access** (free) as a second authentication layer.
+
+See [SECURITY.md](./SECURITY.md) for the full guide.
+
 ## 🤝 Contributing
 
 PRs welcome! Ideas for future features:
