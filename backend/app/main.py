@@ -31,9 +31,14 @@ app = FastAPI(
     openapi_tags=tags_metadata,
 )
 
+_ALLOWED_ORIGINS = os.getenv(
+    "OCTOCLOUD_ALLOWED_ORIGINS",
+    "http://localhost:5173,http://localhost:5679",
+).split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
