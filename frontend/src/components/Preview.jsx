@@ -126,13 +126,13 @@ export default function Preview({ file, onClose, onRefresh }) {
         {/* Preview content */}
         <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-gray-950/50 min-h-[200px]">
           {isImage && !imgErr ? (
-            <img src={`/api/files/${currentFile.id}/download`} alt={currentFile.name} className="max-w-full max-h-[60vh] object-contain rounded-lg" onError={() => setImgErr(true)} />
+            <img src={`/api/files/${currentFile.id}/download?token=${localStorage.getItem('octovault_token')}`} alt={currentFile.name} className="max-w-full max-h-[60vh] object-contain rounded-lg" onError={() => setImgErr(true)} />
           ) : isPdf ? (
-            <iframe src={`/api/files/${currentFile.id}/download`} className="w-full h-[60vh] rounded-lg" title={currentFile.name} />
+            <iframe src={`/api/files/${currentFile.id}/download?token=${localStorage.getItem('octovault_token')}`} className="w-full h-[60vh] rounded-lg" title={currentFile.name} />
           ) : isVideo ? (
-            <video src={`/api/files/${currentFile.id}/download`} controls className="max-w-full max-h-[60vh] rounded-lg" />
+            <video src={`/api/files/${currentFile.id}/download?token=${localStorage.getItem('octovault_token')}`} controls className="max-w-full max-h-[60vh] rounded-lg" />
           ) : isAudio ? (
-            <audio src={`/api/files/${currentFile.id}/download`} controls className="w-full max-w-md" />
+            <audio src={`/api/files/${currentFile.id}/download?token=${localStorage.getItem('octovault_token')}`} controls className="w-full max-w-md" />
           ) : (
             <div className="text-center text-gray-500 py-10">
               <p className="text-lg mb-2">No preview available</p>

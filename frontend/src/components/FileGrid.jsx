@@ -80,7 +80,7 @@ function FileCard({ file, onPreview, onRefresh, selected, onToggleSelect }) {
           <img
             src={getThumb(file.id)}
             alt={file.name}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain bg-gray-900"
             onError={() => setImgError(true)}
             loading="lazy"
           />

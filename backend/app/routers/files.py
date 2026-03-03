@@ -143,7 +143,19 @@ def update_file(file_id: int, update: FileUpdate, user: User = Depends(get_curre
 
 
 @router.get("/{file_id}/download")
-def download_file(file_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def download_file(file_id: int, token: str = None, db: Session = Depends(get_db)):
+    from jose import jwt, JWTError
+    user = None
+    if token:
+        try:
+            payload = jwt.decode(token, settings.SECRET, algorithms=["HS256"])
+            username = payload.get("sub")
+            if username:
+                user = db.query(User).filter(User.username == username).first()
+        except JWTError:
+            pass
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
     f = db.query(File).filter(File.id == file_id).first()
     if not f:
         raise HTTPException(status_code=404, detail="File not found")

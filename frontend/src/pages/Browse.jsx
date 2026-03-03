@@ -124,7 +124,7 @@ export default function Browse() {
       <TagBar onRefreshTags={refreshTags} />
 
       {/* Bulk operations bar */}
-      <BulkBar onRefresh={fetchFiles} />
+      <BulkBar onRefresh={fetchFiles} />}
 
       {/* Upload modal */}
       {showUpload && (
