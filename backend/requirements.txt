@@ -8,3 +8,4 @@ python-multipart==0.0.9
 aiofiles==24.1.0
 pillow==10.4.0
 pdf2image==1.17.0
+psutil==6.0.0

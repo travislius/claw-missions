@@ -14,6 +14,7 @@ from .auth import hash_password, get_current_user
 from .routers import auth as auth_router
 from .routers import files as files_router
 from .routers import tags as tags_router
+from .routers import system as system_router
 
 Base.metadata.create_all(bind=engine)
 
@@ -25,9 +26,9 @@ tags_metadata = [
 ]
 
 app = FastAPI(
-    title="OctoCloud",
-    version="0.1.0",
-    description="Self-hosted personal file vault with tagging, search, and thumbnails.",
+    title="Claw Missions",
+    version="0.2.0",
+    description="Mission control for your OpenClaw — file vault, machine monitor, and more.",
     openapi_tags=tags_metadata,
 )
 
@@ -47,6 +48,7 @@ app.add_middleware(
 app.include_router(auth_router.router, prefix="/api/auth", tags=["auth"])
 app.include_router(files_router.router, prefix="/api/files", tags=["files"])
 app.include_router(tags_router.router, prefix="/api/tags", tags=["tags"])
+app.include_router(system_router.router, prefix="/api/system", tags=["system"])
 
 
 @app.on_event("startup")

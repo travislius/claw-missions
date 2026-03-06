@@ -5,6 +5,7 @@ import { getTags } from './api';
 import Login from './pages/Login';
 import Browse from './pages/Browse';
 import SearchPage from './pages/Search';
+import Resources from './pages/Resources';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 
@@ -62,6 +63,7 @@ export default function App() {
           <Route element={<AppLayout />}>
             <Route path="/" element={<Browse />} />
             <Route path="/search" element={<SearchPage />} />
+            <Route path="/resources" element={<Resources />} />
           </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
