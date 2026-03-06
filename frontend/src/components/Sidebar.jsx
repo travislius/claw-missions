@@ -108,7 +108,7 @@ export default function Sidebar({ onRefreshTags }) {
           onClick={() => goTo('/resources')}
           className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition ${
             isResources
-              ? 'bg-yellow-500/20 text-yellow-400'
+              ? 'bg-red-500/20 text-red-400'
               : 'text-gray-400 hover:bg-gray-800 hover:text-white'
           }`}
         >
