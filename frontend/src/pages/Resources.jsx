@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Cpu, MemoryStick, HardDrive, Wifi, Clock, Activity,
-  RefreshCw, Zap
+  RefreshCw, Zap, Monitor, Apple
 } from 'lucide-react';
 import api from '../api';
 
@@ -60,26 +60,37 @@ function StatRow({ label, value, sub }) {
   );
 }
 
+const MACHINES = [
+  { id: 'tia',  label: 'Tia 🌿',  subtitle: 'Mac Mini M4',    endpoint: '/system/resources',     icon: Apple,   accent: 'ocean' },
+  { id: 'max',  label: 'Max 🔬',  subtitle: 'Windows PC',     endpoint: '/system/resources/max', icon: Monitor, accent: 'yellow' },
+];
+
 export default function Resources() {
+  const [activeMachine, setActiveMachine] = useState('tia');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
 
+  const machine = MACHINES.find(m => m.id === activeMachine);
+
   const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const res = await api.get('/system/resources');
+      const res = await api.get(machine.endpoint);
       setData(res.data);
       setLastUpdated(new Date());
-      setError(null);
     } catch (e) {
       setError(e.response?.data?.detail || 'Failed to fetch system data');
+      setData(null);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [machine]);
 
   useEffect(() => {
+    setData(null);
     fetchData();
     const interval = setInterval(fetchData, REFRESH_MS);
     return () => clearInterval(interval);
@@ -105,7 +116,7 @@ export default function Resources() {
 
   if (!data) return null;
 
-  const { cpu, memory, disks, network, system } = data;
+  const { cpu, memory, disks, network, system, gpu } = data;
 
   return (
     <div className="max-w-5xl mx-auto space-y-5">
@@ -121,14 +132,50 @@ export default function Resources() {
             {lastUpdated && ` · Last: ${lastUpdated.toLocaleTimeString()}`}
           </p>
         </div>
-        <div className="flex items-center gap-3 text-xs text-gray-500">
-          <Clock className="w-4 h-4" />
-          <span>Up {system?.uptime_human ?? '...'}</span>
-          <span className="text-gray-700">·</span>
-          <span>{system?.process_count ?? '...'} processes</span>
-        </div>
+        <button onClick={fetchData} className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition">
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+        </button>
       </div>
 
+      {/* Machine tabs */}
+      <div className="flex gap-2">
+        {MACHINES.map(m => {
+          const Icon = m.icon;
+          const active = m.id === activeMachine;
+          return (
+            <button
+              key={m.id}
+              onClick={() => setActiveMachine(m.id)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition border
+                ${active
+                  ? 'bg-gray-800 border-gray-600 text-white'
+                  : 'bg-gray-900 border-gray-800 text-gray-500 hover:text-gray-300 hover:border-gray-700'}`}
+            >
+              <Icon className="w-4 h-4" />
+              <span>{m.label}</span>
+              <span className="text-xs text-gray-600">{m.subtitle}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Uptime row */}
+      {data && (
+        <div className="flex items-center gap-3 text-xs text-gray-500">
+          <Clock className="w-4 h-4" />
+          <span>Up {data.system?.uptime_human ?? '...'}</span>
+          <span className="text-gray-700">·</span>
+          <span>{data.system?.process_count ?? '...'} processes</span>
+          {data.gpu?.name && (
+            <>
+              <span className="text-gray-700">·</span>
+              <span className="text-yellow-500">GPU: {data.gpu.name}{data.gpu.vram_gb ? ` (${data.gpu.vram_gb} GB)` : ''}</span>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Resource cards */}
       {/* Top row — CPU + RAM */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {/* CPU */}

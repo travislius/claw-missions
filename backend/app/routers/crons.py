@@ -11,7 +11,8 @@ from ..auth import get_current_user
 import os as _os
 
 def _load_team() -> dict:
-    _here = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+    # crons.py is at backend/app/routers/ → go up 3 levels to backend/
+    _here = _os.path.dirname(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
     _path = _os.path.join(_here, "team.json")
     if _os.path.exists(_path):
         with open(_path) as f:
@@ -262,28 +263,14 @@ def get_team(current_user=Depends(get_current_user)):
         online = False
         if cfg["fetch"] == "local":
             online = True
-        elif cfg.get("node_name"):
-            # Check via OpenClaw node ping
-            try:
-                r = subprocess.run(
-                    ["openclaw", "nodes", "invoke",
-                     "--node", cfg["node_name"],
-                     "--command", "system.run",
-                     "--params", '{"cmd":"echo ok"}',
-                     "--invoke-timeout", "5000"],
-                    capture_output=True, timeout=8
-                )
-                online = r.returncode == 0
-            except Exception:
-                online = False
         elif cfg.get("host"):
-            # SSH fallback ping
+            # SSH ping (works for both macOS and Windows via OpenSSH)
             try:
                 r = subprocess.run(
                     ["ssh", "-o", "ConnectTimeout=3", "-o", "BatchMode=yes",
                      "-o", "StrictHostKeyChecking=no",
                      f"{cfg['ssh_user']}@{cfg['host']}", "echo ok"],
-                    capture_output=True, timeout=5
+                    capture_output=True, timeout=6
                 )
                 online = r.returncode == 0
             except Exception:

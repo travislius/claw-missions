@@ -1,6 +1,8 @@
+import json
+import subprocess
 import time
 import psutil
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from ..auth import get_current_user
 
 router = APIRouter()
@@ -121,5 +123,132 @@ def get_resources(current_user=Depends(get_current_user)):
             "uptime_human": f"{days}d {hours}h {minutes}m",
             "process_count": proc_count,
             "boot_time": _boot_time,
+        },
+    }
+
+
+# ── Max (Windows PC) resources via SSH ──────────────────────────────────────
+
+_MAX_SSH = "tiali@100.84.71.61"
+
+_PS_SCRIPT = r"""
+$ErrorActionPreference = 'Stop'
+$cpu = (Get-WmiObject Win32_Processor | Measure-Object -Property LoadPercentage -Average).Average
+$os  = Get-WmiObject Win32_OperatingSystem
+$cs  = Get-WmiObject Win32_ComputerSystem
+$memTotal = [long]$os.TotalVisibleMemorySize * 1024
+$memFree  = [long]$os.FreePhysicalMemory * 1024
+$memUsed  = $memTotal - $memFree
+$memPct   = [math]::Round($memUsed / $memTotal * 100, 1)
+$disks = Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Used -ne $null } | ForEach-Object {
+  $total = $_.Used + $_.Free
+  @{ letter=$_.Name; used=$_.Used; free=$_.Free; total=$total;
+     pct=[math]::Round($_.Used/$total*100,1) }
+}
+$net = Get-NetAdapterStatistics | Where-Object { $_.ReceivedBytes -gt 0 } | Select-Object -First 1
+$gpu = (Get-WmiObject -Namespace "root\cimv2" -Class Win32_VideoController | Where-Object { $_.AdapterRAM -gt 100MB } | Select-Object -First 1)
+$proc = (Get-Process).Count
+$uptime = (Get-Date) - $os.ConvertToDateTime($os.LastBootUpTime)
+[ordered]@{
+  cpu_pct    = [math]::Round($cpu, 1)
+  mem_total  = $memTotal
+  mem_used   = $memUsed
+  mem_free   = $memFree
+  mem_pct    = $memPct
+  disks      = $disks
+  proc_count = $proc
+  uptime_sec = [long]$uptime.TotalSeconds
+  gpu_name   = if($gpu) { $gpu.Name } else { $null }
+  gpu_ram_gb = if($gpu) { [math]::Round($gpu.AdapterRAM/1GB,1) } else { $null }
+} | ConvertTo-Json -Depth 4
+"""
+
+
+def _fmt(n: int | float) -> dict:
+    n = int(n)
+    for unit in ("B", "KB", "MB", "GB", "TB"):
+        if n < 1024:
+            return {"bytes": n, "human": f"{n:.1f} {unit}"}
+        n //= 1024
+    return {"bytes": n * 1024 ** 4, "human": f"{n:.1f} PB"}
+
+
+@router.get("/resources/max", tags=["system"])
+def get_resources_max(current_user=Depends(get_current_user)):
+    """Fetch Max (Windows PC) system resources via SSH + PowerShell."""
+    try:
+        result = subprocess.run(
+            ["ssh", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes",
+             "-o", "StrictHostKeyChecking=no",
+             _MAX_SSH, f"powershell -NoProfile -NonInteractive -Command \"{_PS_SCRIPT.strip()}\""],
+            capture_output=True, text=True, timeout=15
+        )
+        if result.returncode != 0:
+            raise HTTPException(status_code=503, detail=f"SSH failed: {result.stderr[:200]}")
+
+        raw = json.loads(result.stdout)
+    except subprocess.TimeoutExpired:
+        raise HTTPException(status_code=503, detail="Max unreachable (timeout)")
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=502, detail=f"Bad response from Max: {e}")
+
+    uptime_secs = int(raw.get("uptime_sec", 0))
+    days, rem = divmod(uptime_secs, 86400)
+    hours, rem = divmod(rem, 3600)
+    minutes = rem // 60
+
+    disks = []
+    for d in (raw.get("disks") or []):
+        total = int(d.get("total") or 0)
+        if total < 1 * 1024 ** 3:
+            continue
+        disks.append({
+            "device": f"{d['letter']}:",
+            "mountpoint": f"{d['letter']}:\\",
+            "fstype": "NTFS",
+            "total": _fmt(total),
+            "used": _fmt(int(d.get("used") or 0)),
+            "free": _fmt(int(d.get("free") or 0)),
+            "percent": float(d.get("pct") or 0),
+        })
+
+    return {
+        "cpu": {
+            "percent": float(raw.get("cpu_pct") or 0),
+            "per_core": [],
+            "count_logical": None,
+            "count_physical": None,
+            "freq_mhz": None,
+            "freq_max_mhz": None,
+            "load_avg": [],
+        },
+        "memory": {
+            "total": _fmt(int(raw.get("mem_total") or 0)),
+            "used": _fmt(int(raw.get("mem_used") or 0)),
+            "available": _fmt(int(raw.get("mem_free") or 0)),
+            "percent": float(raw.get("mem_pct") or 0),
+            "swap_total": {"bytes": 0, "human": "0.0 B"},
+            "swap_used": {"bytes": 0, "human": "0.0 B"},
+            "swap_percent": 0,
+        },
+        "disks": disks,
+        "network": {
+            "bytes_sent": {"bytes": 0, "human": "—"},
+            "bytes_recv": {"bytes": 0, "human": "—"},
+            "packets_sent": 0,
+            "packets_recv": 0,
+            "active_interfaces": [],
+            "upload_speed": {"bytes": 0, "human": "—"},
+            "download_speed": {"bytes": 0, "human": "—"},
+        },
+        "gpu": {
+            "name": raw.get("gpu_name"),
+            "vram_gb": raw.get("gpu_ram_gb"),
+        },
+        "system": {
+            "uptime_seconds": uptime_secs,
+            "uptime_human": f"{days}d {hours}h {minutes}m",
+            "process_count": int(raw.get("proc_count") or 0),
+            "boot_time": None,
         },
     }
