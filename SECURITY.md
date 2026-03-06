@@ -1,6 +1,6 @@
 # Security Guide
 
-OctoCloud is designed to store personal and sensitive files. This guide explains the built-in security measures and recommended deployment practices.
+Claw Missions is designed to store personal and sensitive files. This guide explains the built-in security measures and recommended deployment practices.
 
 ---
 
@@ -31,13 +31,13 @@ OctoCloud is designed to store personal and sensitive files. This guide explains
 
 ## Recommended: Cloudflare Access (Zero Trust)
 
-OctoCloud has no built-in two-factor authentication. We strongly recommend putting it behind **Cloudflare Access** (free tier), which adds an email-based verification gate *before* the login page is reachable.
+Claw Missions has no built-in two-factor authentication. We strongly recommend putting it behind **Cloudflare Access** (free tier), which adds an email-based verification gate *before* the login page is reachable.
 
 ### How it works
 ```
 Visitor → Cloudflare Access gate
             ↓ (email OTP verification)
-          OctoCloud login page
+          Claw Missions login page
             ↓ (username + password)
           Your files ✅
 ```
@@ -47,7 +47,7 @@ Even if someone knows your password, they cannot reach the login page without ve
 ### Setup (5 minutes)
 1. Go to [Cloudflare Zero Trust dashboard](https://one.dash.cloudflare.com)
 2. **Access → Applications → Add an application → Self-hosted**
-3. Set domain to your OctoCloud URL (e.g. `cloud.yourdomain.com`)
+3. Set domain to your Claw Missions URL (e.g. `cloud.yourdomain.com`)
 4. Add a policy: **Allow → Emails → your@email.com**
 5. Set session duration to **30 days** (so you only verify once per device)
 6. Save — done
@@ -63,7 +63,7 @@ If you're not using Cloudflare, consider:
 
 | Option | Description |
 |--------|-------------|
-| **Nginx basic auth** | Add HTTP Basic Auth in front of OctoCloud |
+| **Nginx basic auth** | Add HTTP Basic Auth in front of Claw Missions |
 | **VPN-only** | Restrict port to a VPN (WireGuard, Tailscale) |
 | **IP allowlist** | Cloudflare firewall rules to allow only your IPs |
 
@@ -79,7 +79,7 @@ If you're not using Cloudflare, consider:
 
 ---
 
-## What OctoCloud Does NOT Provide
+## What Claw Missions Does NOT Provide
 
 - Two-factor authentication (use Cloudflare Access instead)
 - File encryption at rest (files are stored as-is on disk)

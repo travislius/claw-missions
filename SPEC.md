@@ -1,11 +1,11 @@
-# OctoCloud — Self-hosted Personal File Vault
+# Claw Missions — Self-hosted Personal File Vault
 
 ## Overview
 Lightweight, beautiful, self-hosted file vault for people who want simplicity over Nextcloud bloat.
 
 ## Architecture
 ```
-octocloud/
+clawmissions/
 ├── backend/
 │   ├── app/
 │   │   ├── main.py          # FastAPI app
@@ -124,7 +124,7 @@ OCTOCLOUD_USERNAME=admin
 OCTOCLOUD_PASSWORD=changeme
 OCTOCLOUD_SECRET=random-jwt-secret
 OCTOCLOUD_STORAGE=/data/files
-OCTOCLOUD_DB=/data/octocloud.db
+OCTOCLOUD_DB=/data/clawmissions.db
 OCTOCLOUD_MAX_UPLOAD_MB=500
 OCTOCLOUD_PORT=5679
 ```
@@ -153,7 +153,7 @@ OCTOCLOUD_PORT=5679
 ```yaml
 # docker-compose.yml
 services:
-  octocloud:
+  clawmissions:
     build: .
     ports:
       - "5679:5679"
@@ -168,5 +168,5 @@ Single Dockerfile: Python backend serves built React frontend as static files.
 
 ## Deployment on Mac Mini
 - Port 5679
-- Cloudflare tunnel → photo.octodance.com
-- Data in ~/octocloud-data/ (persistent)
+- Cloudflare tunnel → missions.octodance.com
+- Data in ~/clawmissions-data/ (persistent)

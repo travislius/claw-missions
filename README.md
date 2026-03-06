@@ -1,10 +1,10 @@
-# 🐙 OctoCloud
+# 🐙 Claw Missions
 
 > A beautiful, lightweight, self-hosted personal file vault.
 
-OctoCloud is a clean alternative to Nextcloud — fast, simple, and actually good-looking. Built for people who want to self-host their personal files without the complexity.
+Claw Missions is a clean alternative to Nextcloud — fast, simple, and actually good-looking. Built for people who want to self-host their personal files without the complexity.
 
-![OctoCloud Screenshot](https://raw.githubusercontent.com/travislius/octocloud/main/docs/screenshot.png)
+![Claw Missions Screenshot](https://raw.githubusercontent.com/travislius/clawmissions/main/docs/screenshot.png)
 
 ## ✨ Features
 
@@ -22,8 +22,8 @@ OctoCloud is a clean alternative to Nextcloud — fast, simple, and actually goo
 ### Docker (recommended)
 
 ```bash
-git clone https://github.com/travislius/octocloud.git
-cd octocloud
+git clone https://github.com/travislius/clawmissions.git
+cd clawmissions
 cp .env.example .env
 # Edit .env with your credentials
 docker compose up -d
@@ -34,8 +34,8 @@ Open http://localhost:5679 in your browser.
 ### Native (Python + Node)
 
 ```bash
-git clone https://github.com/travislius/octocloud.git
-cd octocloud
+git clone https://github.com/travislius/clawmissions.git
+cd clawmissions
 
 # Backend
 cd backend && python3 -m venv venv && source venv/bin/activate
@@ -61,7 +61,7 @@ OCTOCLOUD_USERNAME=admin        # Login username
 OCTOCLOUD_PASSWORD=changeme     # Login password (use something strong!)
 OCTOCLOUD_SECRET=random-string  # JWT secret (generate with: openssl rand -hex 32)
 OCTOCLOUD_STORAGE=/data/files   # Where files are stored on disk
-OCTOCLOUD_DB=/data/octocloud.db # SQLite database path
+OCTOCLOUD_DB=/data/clawmissions.db # SQLite database path
 OCTOCLOUD_MAX_UPLOAD_MB=500     # Max upload size in MB
 OCTOCLOUD_PORT=5679             # Port to listen on
 ```
@@ -73,15 +73,15 @@ OCTOCLOUD_PORT=5679             # Port to listen on
 For HTTPS access from anywhere (phone, etc.), use [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/):
 
 ```bash
-cloudflared tunnel create octocloud
-cloudflared tunnel route dns octocloud vault.yourdomain.com
+cloudflared tunnel create clawmissions
+cloudflared tunnel route dns clawmissions vault.yourdomain.com
 ```
 
 Or use a reverse proxy like nginx with Let's Encrypt.
 
 ## 📡 REST API
 
-OctoCloud has a full REST API — useful for automation and AI assistants:
+Claw Missions has a full REST API — useful for automation and AI assistants:
 
 ```bash
 # Login
@@ -121,7 +121,7 @@ Full API docs available at `http://localhost:5679/docs` (Swagger UI).
 ## 📂 Project Structure
 
 ```
-octocloud/
+clawmissions/
 ├── backend/
 │   └── app/
 │       ├── main.py          # FastAPI app
@@ -142,7 +142,7 @@ octocloud/
 
 ## 🔐 Security
 
-OctoCloud includes rate limiting, bcrypt password hashing, CORS lockdown, and strong JWT signing. For deployments storing sensitive files, we recommend adding **Cloudflare Access** (free) as a second authentication layer.
+Claw Missions includes rate limiting, bcrypt password hashing, CORS lockdown, and strong JWT signing. For deployments storing sensitive files, we recommend adding **Cloudflare Access** (free) as a second authentication layer.
 
 See [SECURITY.md](./SECURITY.md) for the full guide.
 

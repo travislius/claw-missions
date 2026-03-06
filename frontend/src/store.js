@@ -2,18 +2,18 @@ import { create } from 'zustand';
 
 export const useStore = create((set, get) => ({
   // Auth
-  token: localStorage.getItem('octocloud_token') || null,
-  isAuthenticated: !!localStorage.getItem('octocloud_token'),
+  token: localStorage.getItem('clawmissions_token') || null,
+  isAuthenticated: !!localStorage.getItem('clawmissions_token'),
   setToken: (token) => {
     if (token) {
-      localStorage.setItem('octocloud_token', token);
+      localStorage.setItem('clawmissions_token', token);
     } else {
-      localStorage.removeItem('octocloud_token');
+      localStorage.removeItem('clawmissions_token');
     }
     set({ token, isAuthenticated: !!token });
   },
   logout: () => {
-    localStorage.removeItem('octocloud_token');
+    localStorage.removeItem('clawmissions_token');
     set({ token: null, isAuthenticated: false });
   },
 
@@ -42,9 +42,9 @@ export const useStore = create((set, get) => ({
   clearSelection: () => set({ selectedFiles: new Set() }),
 
   // View
-  viewMode: localStorage.getItem('octocloud_view') || 'grid',
+  viewMode: localStorage.getItem('clawmissions_view') || 'grid',
   setViewMode: (viewMode) => {
-    localStorage.setItem('octocloud_view', viewMode);
+    localStorage.setItem('clawmissions_view', viewMode);
     set({ viewMode });
   },
 
@@ -57,9 +57,9 @@ export const useStore = create((set, get) => ({
   setStats: (stats) => set({ stats }),
 
   // Theme (dark/light)
-  theme: localStorage.getItem('octocloud_theme') || 'dark',
+  theme: localStorage.getItem('clawmissions_theme') || 'dark',
   setTheme: (theme) => {
-    localStorage.setItem('octocloud_theme', theme);
+    localStorage.setItem('clawmissions_theme', theme);
     document.documentElement.classList.toggle('dark', theme === 'dark');
     set({ theme });
   },

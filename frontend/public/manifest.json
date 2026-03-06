@@ -1,6 +1,6 @@
 {
-  "name": "OctoCloud",
-  "short_name": "OctoCloud",
+  "name": "Claw Missions",
+  "short_name": "Claw Missions",
   "description": "Self-hosted personal file vault",
   "start_url": "/",
   "display": "standalone",

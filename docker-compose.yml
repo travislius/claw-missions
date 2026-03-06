@@ -1,5 +1,5 @@
 services:
-  octocloud:
+  clawmissions:
     build: .
     ports:
       - "5679:5679"

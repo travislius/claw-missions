@@ -34,7 +34,7 @@ app = FastAPI(
 )
 
 _ALLOWED_ORIGINS = os.getenv(
-    "OCTOCLOUD_ALLOWED_ORIGINS",
+    "CLAWMISSIONS_ALLOWED_ORIGINS",
     "http://localhost:5173,http://localhost:5679",
 ).split(",")
 
