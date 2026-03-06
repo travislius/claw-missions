@@ -76,9 +76,9 @@ export default function Sidebar({ onRefreshTags }) {
 
         {vaultOpen && (
           <button
-            onClick={() => { setSelectedTag(null); goTo('/'); }}
+            onClick={() => goTo('/')}
             className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition ${
-              !isResources
+              !isResources && !isCalendar
                 ? 'bg-ocean-600/20 text-ocean-400'
                 : 'text-gray-400 hover:bg-gray-800 hover:text-white'
             }`}
