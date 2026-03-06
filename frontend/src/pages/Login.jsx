@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock, User, Octagon } from 'lucide-react';
+import { Lock, User } from 'lucide-react';
 import { login } from '../api';
 import { useStore } from '../store';
 
@@ -32,11 +32,13 @@ export default function Login() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-ocean-600/20 mb-4">
-            <Octagon className="w-8 h-8 text-ocean-400" />
-          </div>
-          <h1 className="text-2xl font-bold text-white">OctoCloud</h1>
-          <p className="text-gray-500 text-sm mt-1">Your personal file vault</p>
+          <img
+            src="https://raw.githubusercontent.com/travislius/claw-missions/main/docs/logo.png"
+            alt="Claw Missions"
+            className="w-16 h-16 rounded-2xl mx-auto mb-4 object-cover"
+          />
+          <h1 className="text-2xl font-bold text-white">Claw Missions</h1>
+          <p className="text-gray-500 text-sm mt-1">Mission control for your digital life</p>
         </div>
 
         {/* Form */}
