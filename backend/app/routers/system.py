@@ -178,8 +178,10 @@ def get_resources_max(current_user=Depends(get_current_user)):
     """Fetch Max (Windows PC) system resources via SSH + PowerShell."""
     try:
         result = subprocess.run(
-            ["ssh", "-o", "ConnectTimeout=5", "-o", "BatchMode=yes",
+            ["ssh", "-q",
+             "-o", "ConnectTimeout=5", "-o", "BatchMode=yes",
              "-o", "StrictHostKeyChecking=no",
+             "-o", "LogLevel=ERROR",
              _MAX_SSH, f"powershell -NoProfile -NonInteractive -Command \"{_PS_SCRIPT.strip()}\""],
             capture_output=True, text=True, timeout=15
         )

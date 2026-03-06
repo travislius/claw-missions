@@ -68,35 +68,42 @@ const MACHINES = [
 export default function Resources() {
   const [activeMachine, setActiveMachine] = useState('tia');
   const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
 
   const machine = MACHINES.find(m => m.id === activeMachine);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const fetchData = useCallback(async (isBackground = false) => {
+    if (!isBackground) setInitialLoading(true);
+    else setRefreshing(true);
     try {
       const res = await api.get(machine.endpoint);
       setData(res.data);
       setLastUpdated(new Date());
+      setError(null);
     } catch (e) {
-      setError(e.response?.data?.detail || 'Failed to fetch system data');
-      setData(null);
+      // Only replace data with error on initial load; keep stale data on background refresh
+      if (!isBackground) {
+        setError(e.response?.data?.detail || 'Failed to fetch system data');
+        setData(null);
+      }
     } finally {
-      setLoading(false);
+      setInitialLoading(false);
+      setRefreshing(false);
     }
   }, [machine]);
 
   useEffect(() => {
     setData(null);
-    fetchData();
-    const interval = setInterval(fetchData, REFRESH_MS);
+    setError(null);
+    fetchData(false);
+    const interval = setInterval(() => fetchData(true), REFRESH_MS);
     return () => clearInterval(interval);
   }, [fetchData]);
 
-  if (loading) {
+  if (initialLoading) {
     return (
       <div className="flex items-center justify-center h-64 text-gray-500">
         <RefreshCw className="w-5 h-5 animate-spin mr-2" />
@@ -105,7 +112,7 @@ export default function Resources() {
     );
   }
 
-  if (error) {
+  if (error && !data) {
     return (
       <div className="flex items-center justify-center h-64 text-red-400">
         <Activity className="w-5 h-5 mr-2" />
@@ -132,8 +139,8 @@ export default function Resources() {
             {lastUpdated && ` · Last: ${lastUpdated.toLocaleTimeString()}`}
           </p>
         </div>
-        <button onClick={fetchData} className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition">
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+        <button onClick={() => fetchData(false)} className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition">
+          <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin text-ocean-400' : ''}`} />
         </button>
       </div>
 

@@ -267,8 +267,10 @@ def get_team(current_user=Depends(get_current_user)):
             # SSH ping (works for both macOS and Windows via OpenSSH)
             try:
                 r = subprocess.run(
-                    ["ssh", "-o", "ConnectTimeout=3", "-o", "BatchMode=yes",
+                    ["ssh", "-q",
+                     "-o", "ConnectTimeout=3", "-o", "BatchMode=yes",
                      "-o", "StrictHostKeyChecking=no",
+                     "-o", "LogLevel=ERROR",
                      f"{cfg['ssh_user']}@{cfg['host']}", "echo ok"],
                     capture_output=True, timeout=6
                 )
