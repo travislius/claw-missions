@@ -68,7 +68,7 @@ export default function Resources() {
 
   const fetchData = useCallback(async () => {
     try {
-      const res = await api.get('/api/system/resources');
+      const res = await api.get('/system/resources');
       setData(res.data);
       setLastUpdated(new Date());
       setError(null);
@@ -103,6 +103,8 @@ export default function Resources() {
     );
   }
 
+  if (!data) return null;
+
   const { cpu, memory, disks, network, system } = data;
 
   return (
@@ -121,9 +123,9 @@ export default function Resources() {
         </div>
         <div className="flex items-center gap-3 text-xs text-gray-500">
           <Clock className="w-4 h-4" />
-          <span>Up {system.uptime_human}</span>
+          <span>Up {system?.uptime_human ?? '...'}</span>
           <span className="text-gray-700">·</span>
-          <span>{system.process_count} processes</span>
+          <span>{system?.process_count ?? '...'} processes</span>
         </div>
       </div>
 
