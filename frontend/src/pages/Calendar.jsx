@@ -7,9 +7,9 @@ import {
 import api from '../api';
 
 const AGENTS = [
-  { id: 'tia',    label: 'Tia 🌿',    color: 'text-ocean-400',  active: 'bg-ocean-500/20 border-ocean-500/50' },
-  { id: 'dexter', label: 'Dexter 🔬', color: 'text-amber-400',  active: 'bg-amber-500/20 border-amber-500/50' },
-  { id: 'sia',    label: 'Sia 🤖',    color: 'text-purple-400', active: 'bg-purple-500/20 border-purple-500/50' },
+  { id: 'tia', label: 'Tia 🌿',  color: 'text-ocean-400',  active: 'bg-ocean-500/20 border-ocean-500/50' },
+  { id: 'max', label: 'Max 🔬',  color: 'text-amber-400',  active: 'bg-amber-500/20 border-amber-500/50' },
+  { id: 'sia', label: 'Sia 🤖',  color: 'text-purple-400', active: 'bg-purple-500/20 border-purple-500/50' },
 ];
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
