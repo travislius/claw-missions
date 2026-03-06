@@ -1,9 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Calendar as CalIcon, RefreshCw, X, AlertTriangle, CheckCircle,
-  HelpCircle, ChevronDown, ChevronUp, Edit2, Save, Loader
+  HelpCircle, ChevronDown, ChevronUp, Edit2, Save, Loader, WifiOff
 } from 'lucide-react';
 import api from '../api';
+
+const AGENTS = [
+  { id: 'tia',    label: 'Tia 🌿',    color: 'text-ocean-400',  active: 'bg-ocean-500/20 border-ocean-500/50' },
+  { id: 'dexter', label: 'Dexter 🔬', color: 'text-amber-400',  active: 'bg-amber-500/20 border-amber-500/50' },
+  { id: 'sia',    label: 'Sia 🤖',    color: 'text-purple-400', active: 'bg-purple-500/20 border-purple-500/50' },
+];
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const HOUR_PX = 96;          // pixels per hour — bigger = more breathing room
@@ -413,19 +420,24 @@ function Legend({ summary }) {
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function CalendarPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeAgent = searchParams.get('agent') || 'tia';
+
   const [data, setData]       = useState(null);
   const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState(null);  // detail modal
-  const [editing, setEditing]   = useState(null);  // edit modal
+  const [selected, setSelected] = useState(null);
+  const [editing, setEditing]   = useState(null);
   const gridRef = useRef(null);
 
   const fetchData = useCallback(async () => {
+    setLoading(true);
+    setData(null);
     try {
-      const res = await api.get('/crons/jobs');
+      const res = await api.get(`/crons/jobs?agent=${activeAgent}`);
       setData(res.data);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
-  }, []);
+  }, [activeAgent]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -437,11 +449,42 @@ export default function CalendarPage() {
   }, [data]);
 
   if (loading) return (
-    <div className="flex items-center justify-center h-64 text-gray-500">
-      <RefreshCw className="w-5 h-5 animate-spin mr-2" /> Loading schedule…
+    <div className="flex flex-col gap-4">
+      <div className="flex gap-2">
+        {AGENTS.map(ag => (
+          <button key={ag.id} onClick={() => setSearchParams({ agent: ag.id })}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition ${activeAgent === ag.id ? ag.active : 'border-gray-700 text-gray-500'}`}>
+            <span className={activeAgent === ag.id ? ag.color : ''}>{ag.label}</span>
+          </button>
+        ))}
+      </div>
+      <div className="flex items-center justify-center h-64 text-gray-500">
+        <RefreshCw className="w-5 h-5 animate-spin mr-2" /> Fetching schedule…
+      </div>
     </div>
   );
+
   if (!data) return null;
+
+  if (data.online === false) return (
+    <div className="flex flex-col gap-4">
+      <div className="flex gap-2">
+        {AGENTS.map(ag => (
+          <button key={ag.id} onClick={() => setSearchParams({ agent: ag.id })}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition ${activeAgent === ag.id ? ag.active : 'border-gray-700 text-gray-500'}`}>
+            <span className={activeAgent === ag.id ? ag.color : ''}>{ag.label}</span>
+          </button>
+        ))}
+      </div>
+      <div className="flex flex-col items-center justify-center h-64 gap-3 text-gray-500">
+        <WifiOff className="w-8 h-8 text-gray-600" />
+        <p className="text-sm font-medium">
+          {AGENTS.find(a => a.id === activeAgent)?.label ?? activeAgent} is offline
+        </p>
+        <p className="text-xs text-gray-600">{data.error || 'Could not connect to this machine'}</p>
+      </div>
+    </div>
+  );
 
   const jobs = data.jobs || [];
   const byDay = DAYS.map((_, di) => jobs.filter(j => j.days.includes(di)));
@@ -456,14 +499,34 @@ export default function CalendarPage() {
           <div>
             <h1 className="text-xl font-bold text-white flex items-center gap-2">
               <CalIcon className="w-5 h-5 text-red-400" />
-              Tia's Schedule
+              {AGENTS.find(a => a.id === activeAgent)?.label ?? 'Schedule'}
             </h1>
-            <p className="text-xs text-gray-500 mt-0.5">{data.total} cron jobs · America/Los_Angeles · click tile to view · ✏️ to edit</p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {data.total} cron jobs · click tile to view · ✏️ to edit
+            </p>
           </div>
           <button onClick={fetchData} className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition" title="Refresh">
             <RefreshCw className="w-4 h-4" />
           </button>
         </div>
+
+        {/* Agent tab switcher */}
+        <div className="flex gap-2">
+          {AGENTS.map(ag => (
+            <button
+              key={ag.id}
+              onClick={() => setSearchParams({ agent: ag.id })}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition ${
+                activeAgent === ag.id
+                  ? ag.active
+                  : 'border-gray-700 text-gray-500 hover:text-gray-300 hover:border-gray-600'
+              }`}
+            >
+              <span className={activeAgent === ag.id ? ag.color : ''}>{ag.label}</span>
+            </button>
+          ))}
+        </div>
+
         <Legend summary={data} />
       </div>
 

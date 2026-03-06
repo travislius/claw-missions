@@ -8,6 +8,7 @@ import Browse from './pages/Browse';
 import SearchPage from './pages/Search';
 import Resources from './pages/Resources';
 import CalendarPage from './pages/Calendar';
+import Team from './pages/Team';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 
@@ -68,6 +69,7 @@ export default function App() {
             <Route path="/search" element={<SearchPage />} />
             <Route path="/resources" element={<Resources />} />
             <Route path="/calendar" element={<CalendarPage />} />
+            <Route path="/team" element={<Team />} />
           </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

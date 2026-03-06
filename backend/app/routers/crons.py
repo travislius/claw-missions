@@ -3,9 +3,34 @@ import re
 import subprocess
 import time
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from ..auth import get_current_user
+
+# ── Team config ───────────────────────────────────────────────────────────────
+TEAM = {
+    "tia": {
+        "name": "Tia Li", "emoji": "🌿", "role": "Always-On Hub",
+        "machine": "Mac Mini M4", "specs": "32 GB RAM · 2 TB SSD",
+        "os": "macOS", "location": "Bothell, WA",
+        "fetch": "local",
+    },
+    "dexter": {
+        "name": "Dexter", "emoji": "🔬", "role": "Heavy Compute + GPU",
+        "machine": "Windows PC", "specs": "128 GB RAM · RTX 4080 · 8 TB SSD",
+        "os": "windows", "location": "Bothell, WA",
+        "fetch": "ssh", "host": "100.84.71.61", "ssh_user": "travis",
+        "openclaw_cmd": "openclaw",
+    },
+    "sia": {
+        "name": "Sia", "emoji": "🤖", "role": "Mobile Laptop",
+        "machine": "MacBook Pro M1 Max", "specs": "64 GB RAM · 2 TB SSD",
+        "os": "macOS", "location": "Mobile",
+        "fetch": "ssh", "host": None,  # Tailscale IP unknown / offline
+        "ssh_user": "travis",
+        "openclaw_cmd": "openclaw",
+    },
+}
 
 router = APIRouter()
 
@@ -80,6 +105,30 @@ def _ms_to_relative(ms: int | None) -> str | None:
     hrs = mins // 60
     if hrs < 24: return f"{hrs}h ago"
     return f"{hrs // 24}d ago"
+
+
+def _fetch_openclaw_crons_ssh(host: str, ssh_user: str, cmd: str = "openclaw") -> list[dict]:
+    """Fetch crons from a remote machine via SSH."""
+    ssh_cmd = [
+        "ssh", "-o", "ConnectTimeout=5", "-o", "StrictHostKeyChecking=no",
+        "-o", "BatchMode=yes",   # fail fast, no password prompts
+        f"{ssh_user}@{host}",
+        f"{cmd} cron list --json"
+    ]
+    try:
+        result = subprocess.run(ssh_cmd, capture_output=True, text=True, timeout=10)
+        if result.returncode != 0:
+            return []
+        # Find JSON in stdout (strip any warnings)
+        lines = result.stdout.strip().splitlines()
+        json_str = next((l for l in lines if l.strip().startswith('{')), None)
+        if not json_str:
+            # Try joining all lines
+            json_str = "\n".join(l for l in lines if not l.startswith("**"))
+        data = json.loads(json_str)
+        return data.get("jobs", [])
+    except Exception:
+        return []
 
 
 def _fetch_openclaw_crons() -> list[dict]:
@@ -181,9 +230,89 @@ def _fetch_system_crons() -> list[dict]:
 
 # ── route ────────────────────────────────────────────────────────────────────
 
-@router.get("/jobs", tags=["system"])
-def get_cron_jobs(current_user=Depends(get_current_user)):
-    jobs = _fetch_openclaw_crons() + _fetch_system_crons()
+@router.get("/team", tags=["crons"])
+def get_team(current_user=Depends(get_current_user)):
+    """Return team members with their online status."""
+    members = []
+    for agent_id, cfg in TEAM.items():
+        online = False
+        if cfg["fetch"] == "local":
+            online = True
+        elif cfg.get("host"):
+            # Quick ping via SSH
+            try:
+                r = subprocess.run(
+                    ["ssh", "-o", "ConnectTimeout=3", "-o", "BatchMode=yes",
+                     "-o", "StrictHostKeyChecking=no",
+                     f"{cfg['ssh_user']}@{cfg['host']}", "echo ok"],
+                    capture_output=True, timeout=5
+                )
+                online = r.returncode == 0
+            except Exception:
+                online = False
+
+        members.append({
+            "id":       agent_id,
+            "name":     cfg["name"],
+            "emoji":    cfg["emoji"],
+            "role":     cfg["role"],
+            "machine":  cfg["machine"],
+            "specs":    cfg["specs"],
+            "os":       cfg["os"],
+            "location": cfg["location"],
+            "online":   online,
+            "fetch":    cfg["fetch"],
+            "has_host": bool(cfg.get("host")),
+        })
+    return {"members": members}
+
+
+@router.get("/jobs", tags=["crons"])
+def get_cron_jobs(
+    agent: str = Query("tia", description="Agent ID: tia | dexter | sia"),
+    current_user=Depends(get_current_user)
+):
+    cfg = TEAM.get(agent, TEAM["tia"])
+
+    if cfg["fetch"] == "local":
+        jobs = _fetch_openclaw_crons() + _fetch_system_crons()
+    elif cfg.get("host"):
+        raw = _fetch_openclaw_crons_ssh(cfg["host"], cfg["ssh_user"], cfg.get("openclaw_cmd", "openclaw"))
+        if not raw:
+            return {"jobs": [], "total": 0, "by_category": {}, "by_status": {},
+                    "agent": agent, "online": False, "error": "Could not connect via SSH"}
+        # Parse the raw jobs same way as local
+        jobs = []
+        for job in raw:
+            if not job.get("enabled", True):
+                continue
+            schedule = job.get("schedule", {})
+            expr = schedule.get("expr", "0 0 * * *")
+            tz   = schedule.get("tz", "America/Los_Angeles")
+            parsed = _parse_expr(expr)
+            state = job.get("state", {})
+            payload = job.get("payload", {})
+            message = payload.get("message", "")
+            task_preview = message[:300].strip() + ("…" if len(message) > 300 else "")
+            jobs.append({
+                "id": job["id"], "name": job["name"], "source": "openclaw",
+                "kind": schedule.get("kind", "cron"), "category": _categorize(job["name"]),
+                "hour": parsed["hour"], "minute": parsed["minute"], "days": parsed["days"],
+                "expr": expr, "tz": tz, "enabled": job.get("enabled", True),
+                "agent_id": job.get("agentId"), "wake_mode": job.get("wakeMode", "now"),
+                "session_target": job.get("sessionTarget", "isolated"),
+                "status": state.get("lastStatus", "unknown"),
+                "next_run": _ms_to_relative(state.get("nextRunAtMs")),
+                "last_run": _ms_to_relative(state.get("lastRunAtMs")),
+                "duration_ms": state.get("lastDurationMs"),
+                "consecutive_errors": state.get("consecutiveErrors", 0),
+                "last_error": state.get("lastError"),
+                "target": job.get("sessionTarget", "isolated"),
+                "task_preview": task_preview, "timeout_s": payload.get("timeoutSeconds"),
+            })
+    else:
+        return {"jobs": [], "total": 0, "by_category": {}, "by_status": {},
+                "agent": agent, "online": False, "error": "No connection configured for this agent"}
     # Sort by hour then minute
     jobs.sort(key=lambda j: (j["hour"], j["minute"]))
 
@@ -200,6 +329,8 @@ def get_cron_jobs(current_user=Depends(get_current_user)):
         "total": len(jobs),
         "by_category": by_category,
         "by_status": by_status,
+        "agent": agent,
+        "online": True,
     }
 
 
