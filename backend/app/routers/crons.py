@@ -99,6 +99,38 @@ def _ms_to_relative(ms: int | None) -> str | None:
     return f"{hrs // 24}d ago"
 
 
+def _fetch_openclaw_crons_node(node_name: str, openclaw_cmd: str = "openclaw") -> list[dict] | None:
+    """Fetch crons from a paired OpenClaw node via `openclaw nodes invoke`."""
+    # Use system.run to execute openclaw cron list on the remote node
+    params = json.dumps({"cmd": f"{openclaw_cmd} cron list --json"})
+    try:
+        result = subprocess.run(
+            ["openclaw", "nodes", "invoke",
+             "--node", node_name,
+             "--command", "system.run",
+             "--params", params,
+             "--json",
+             "--invoke-timeout", "15000"],
+            capture_output=True, text=True, timeout=20
+        )
+        if result.returncode != 0:
+            return None
+        outer = json.loads(result.stdout)
+        # The node returns stdout inside the result
+        stdout = outer.get("stdout") or outer.get("output") or outer.get("result", "")
+        if isinstance(stdout, dict):
+            return stdout.get("jobs")
+        # Parse JSON from stdout string
+        lines = str(stdout).strip().splitlines()
+        json_str = next((l for l in lines if l.strip().startswith('{')), None)
+        if not json_str:
+            json_str = "\n".join(l for l in lines if not l.startswith("**"))
+        data = json.loads(json_str)
+        return data.get("jobs")
+    except Exception:
+        return None
+
+
 def _fetch_openclaw_crons_ssh(host: str, ssh_user: str, cmd: str = "openclaw") -> list[dict]:
     """Fetch crons from a remote machine via SSH."""
     ssh_cmd = [
@@ -230,8 +262,22 @@ def get_team(current_user=Depends(get_current_user)):
         online = False
         if cfg["fetch"] == "local":
             online = True
+        elif cfg.get("node_name"):
+            # Check via OpenClaw node ping
+            try:
+                r = subprocess.run(
+                    ["openclaw", "nodes", "invoke",
+                     "--node", cfg["node_name"],
+                     "--command", "system.run",
+                     "--params", '{"cmd":"echo ok"}',
+                     "--invoke-timeout", "5000"],
+                    capture_output=True, timeout=8
+                )
+                online = r.returncode == 0
+            except Exception:
+                online = False
         elif cfg.get("host"):
-            # Quick ping via SSH
+            # SSH fallback ping
             try:
                 r = subprocess.run(
                     ["ssh", "-o", "ConnectTimeout=3", "-o", "BatchMode=yes",
@@ -268,6 +314,43 @@ def get_cron_jobs(
 
     if cfg["fetch"] == "local":
         jobs = _fetch_openclaw_crons() + _fetch_system_crons()
+    elif cfg.get("node_name"):
+        # Primary: OpenClaw node (no SSH auth needed)
+        raw = _fetch_openclaw_crons_node(cfg["node_name"], cfg.get("openclaw_cmd", "openclaw"))
+        if raw is None and cfg.get("host"):
+            # Fallback: SSH
+            raw = _fetch_openclaw_crons_ssh(cfg["host"], cfg["ssh_user"], cfg.get("openclaw_cmd", "openclaw"))
+        if not raw:
+            return {"jobs": [], "total": 0, "by_category": {}, "by_status": {},
+                    "agent": agent, "online": False, "error": "Node offline — run OpenClawNode.lnk on Dexter to connect"}
+        jobs = []
+        for job in raw:
+            if not job.get("enabled", True):
+                continue
+            schedule = job.get("schedule", {})
+            expr = schedule.get("expr", "0 0 * * *")
+            tz   = schedule.get("tz", "America/Los_Angeles")
+            parsed = _parse_expr(expr)
+            state = job.get("state", {})
+            payload = job.get("payload", {})
+            message = payload.get("message", "")
+            task_preview = message[:300].strip() + ("…" if len(message) > 300 else "")
+            jobs.append({
+                "id": job["id"], "name": job["name"], "source": "openclaw",
+                "kind": schedule.get("kind", "cron"), "category": _categorize(job["name"]),
+                "hour": parsed["hour"], "minute": parsed["minute"], "days": parsed["days"],
+                "expr": expr, "tz": tz, "enabled": job.get("enabled", True),
+                "agent_id": job.get("agentId"), "wake_mode": job.get("wakeMode", "now"),
+                "session_target": job.get("sessionTarget", "isolated"),
+                "status": state.get("lastStatus", "unknown"),
+                "next_run": _ms_to_relative(state.get("nextRunAtMs")),
+                "last_run": _ms_to_relative(state.get("lastRunAtMs")),
+                "duration_ms": state.get("lastDurationMs"),
+                "consecutive_errors": state.get("consecutiveErrors", 0),
+                "last_error": state.get("lastError"),
+                "target": job.get("sessionTarget", "isolated"),
+                "task_preview": task_preview, "timeout_s": payload.get("timeoutSeconds"),
+            })
     elif cfg.get("host"):
         raw = _fetch_openclaw_crons_ssh(cfg["host"], cfg["ssh_user"], cfg.get("openclaw_cmd", "openclaw"))
         if not raw:

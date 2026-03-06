@@ -17,7 +17,8 @@
     "specs": "128 GB RAM · GPU",
     "os": "windows",
     "location": "Home",
-    "fetch": "ssh",
+    "fetch": "node",
+    "node_name": "YourNodeDisplayName",
     "host": "100.x.x.x",
     "ssh_user": "username",
     "openclaw_cmd": "openclaw"
