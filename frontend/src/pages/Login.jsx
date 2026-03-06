@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock, User } from 'lucide-react';
+import { Lock, User, Crosshair } from 'lucide-react';
 import { login } from '../api';
 import { useStore } from '../store';
 
@@ -32,11 +32,9 @@ export default function Login() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
-          <img
-            src="https://raw.githubusercontent.com/travislius/claw-missions/main/docs/logo.png"
-            alt="Claw Missions"
-            className="w-16 h-16 rounded-2xl mx-auto mb-4 object-cover"
-          />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gray-900 border border-red-500/30 mb-4">
+            <Crosshair className="w-8 h-8 text-red-500" />
+          </div>
           <h1 className="text-2xl font-bold text-white">Claw Missions</h1>
           <p className="text-gray-500 text-sm mt-1">Mission control for your digital life</p>
         </div>
