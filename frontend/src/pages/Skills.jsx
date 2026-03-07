@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { RefreshCw, Puzzle, Search, Star, Package } from 'lucide-react';
+import { RefreshCw, Puzzle, Search, Star, Package, X, ExternalLink } from 'lucide-react';
 import api from '../api';
 
 function timeAgo(ms) {
@@ -19,6 +19,55 @@ const SOURCE_STYLES = {
   builtin: { label: 'Built-in', className: 'bg-gray-700/50 text-gray-400 border-gray-600/30' },
 };
 
+// ── Skill Viewer Modal ────────────────────────────────────────────────────────
+function SkillViewer({ skillId, onClose }) {
+  const [content, setContent] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.get(`/system/skills/${skillId}`)
+      .then(r => setContent(r.data))
+      .catch(() => setContent({ content: 'Failed to load skill file.', path: '' }))
+      .finally(() => setLoading(false));
+  }, [skillId]);
+
+  // Strip YAML frontmatter for display
+  const body = content?.content
+    ? content.content.replace(/^---[\s\S]*?---\n?/, '').trimStart()
+    : '';
+
+  return (
+    <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
+      onClick={onClose}>
+      <div onClick={e => e.stopPropagation()}
+        className="bg-gray-950 border border-gray-700 rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col shadow-2xl">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-800 shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <Puzzle className="w-4 h-4 text-purple-400 shrink-0" />
+            <code className="text-xs text-gray-400 truncate">{content?.path || skillId}</code>
+          </div>
+          <button onClick={onClose} className="text-gray-600 hover:text-white transition ml-3 shrink-0">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        {/* Content */}
+        <div className="flex-1 overflow-auto p-5">
+          {loading ? (
+            <div className="flex items-center justify-center h-32 text-gray-500">
+              <RefreshCw className="w-4 h-4 animate-spin mr-2" /> Loading…
+            </div>
+          ) : (
+            <pre className="text-xs text-gray-300 font-mono leading-relaxed whitespace-pre-wrap break-words">
+              {body}
+            </pre>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Skills() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -26,6 +75,7 @@ export default function Skills() {
   const [filter, setFilter] = useState('all'); // all | user | builtin
   const [refreshing, setRefreshing] = useState(false);
   const [expanded, setExpanded] = useState(null);
+  const [viewing, setViewing] = useState(null); // skill id being viewed
 
   const fetchData = async (bg = false) => {
     if (!bg) setLoading(true);
@@ -117,7 +167,8 @@ export default function Skills() {
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             {filtered.filter(s => s.source === 'user').map(skill => (
               <SkillCard key={skill.id} skill={skill} expanded={expanded === skill.id}
-                onToggle={() => setExpanded(expanded === skill.id ? null : skill.id)} />
+                onToggle={() => setExpanded(expanded === skill.id ? null : skill.id)}
+                onView={() => setViewing(skill.id)} />
             ))}
             {filtered.filter(s => s.source === 'user').length === 0 && filter === 'user' && (
               <p className="text-gray-600 text-sm col-span-3">No custom skills match your search.</p>
@@ -139,7 +190,8 @@ export default function Skills() {
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             {filtered.filter(s => s.source === 'builtin').map(skill => (
               <SkillCard key={skill.id} skill={skill} expanded={expanded === skill.id}
-                onToggle={() => setExpanded(expanded === skill.id ? null : skill.id)} />
+                onToggle={() => setExpanded(expanded === skill.id ? null : skill.id)}
+                onView={() => setViewing(skill.id)} />
             ))}
           </div>
         </div>
@@ -151,11 +203,13 @@ export default function Skills() {
           <p>No skills match "{search}"</p>
         </div>
       )}
+
+      {viewing && <SkillViewer skillId={viewing} onClose={() => setViewing(null)} />}
     </div>
   );
 }
 
-function SkillCard({ skill, expanded, onToggle }) {
+function SkillCard({ skill, expanded, onToggle, onView }) {
   const src = SOURCE_STYLES[skill.source] || SOURCE_STYLES.builtin;
 
   return (
@@ -185,9 +239,18 @@ function SkillCard({ skill, expanded, onToggle }) {
       </p>
 
       {expanded && (
-        <div className="mt-3 pt-3 border-t border-gray-800 flex items-center justify-between">
-          <code className="text-xs text-gray-600 truncate max-w-[200px]">{skill.path}</code>
-          <span className="text-xs text-gray-600 shrink-0 ml-2">updated {timeAgo(skill.updated_at)}</span>
+        <div className="mt-3 pt-3 border-t border-gray-800 flex items-center justify-between gap-2">
+          <button
+            onClick={e => { e.stopPropagation(); onView(); }}
+            className="flex items-center gap-1.5 min-w-0 text-left group/path"
+            title="View SKILL.md"
+          >
+            <ExternalLink className="w-3 h-3 text-gray-600 group-hover/path:text-purple-400 shrink-0 transition" />
+            <code className="text-xs text-gray-600 group-hover/path:text-purple-400 truncate transition">
+              {skill.path.replace(/\/Users\/[^/]+/, '~')}
+            </code>
+          </button>
+          <span className="text-xs text-gray-600 shrink-0">updated {timeAgo(skill.updated_at)}</span>
         </div>
       )}
     </div>

@@ -470,6 +470,28 @@ def update_project_section(
     return {"ok": True}
 
 
+@router.get("/skills/{skill_id}", tags=["system"])
+def get_skill_content(skill_id: str, current_user=Depends(get_current_user)):
+    """Return the raw SKILL.md content for a given skill id."""
+    for skills_dir in [USER_SKILLS_DIR, BUILTIN_SKILLS_DIR]:
+        skill_file = skills_dir / skill_id / "SKILL.md"
+        if skill_file.exists():
+            # Security: ensure we don't escape the skills dirs
+            try:
+                skill_file.resolve().relative_to(skills_dir.resolve())
+            except ValueError:
+                raise HTTPException(status_code=403, detail="Access denied")
+            content = skill_file.read_text(encoding="utf-8")
+            stat = skill_file.stat()
+            return {
+                "id": skill_id,
+                "content": content,
+                "path": str(skill_file),
+                "updated_at": int(stat.st_mtime * 1000),
+            }
+    raise HTTPException(status_code=404, detail=f"Skill '{skill_id}' not found")
+
+
 @router.get("/projects", tags=["system"])
 def get_projects(current_user=Depends(get_current_user)):
     """Return PROJECTS.md content and metadata."""
