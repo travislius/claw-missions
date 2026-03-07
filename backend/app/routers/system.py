@@ -14,6 +14,7 @@ router = APIRouter()
 
 CLAWD_DIR = Path("/Users/tiali/clawd")
 SESSIONS_DIR = Path("/Users/tiali/.openclaw/agents/main/sessions")
+PROJECTS_FILE = Path("/Users/tiali/clawd/PROJECTS.md")
 
 
 @router.get("/memory", tags=["system"])
@@ -381,3 +382,18 @@ def get_sessions(current_user=Depends(get_current_user)):
             "total_tokens": total_input + total_output,
         }
     }
+
+
+@router.get("/projects", tags=["system"])
+def get_projects(current_user=Depends(get_current_user)):
+    """Return PROJECTS.md content and metadata."""
+    try:
+        content = PROJECTS_FILE.read_text(encoding="utf-8")
+        stat = PROJECTS_FILE.stat()
+        return {
+            "content": content,
+            "updated_at": int(stat.st_mtime * 1000),
+            "size": stat.st_size,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Cannot read PROJECTS.md: {e}")
