@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { LayoutGrid, List, Upload as UploadIcon } from 'lucide-react';
 import { useStore } from '../store';
 import { getFiles, getTags, getStats, searchFiles } from '../api';
 import FileGrid from '../components/FileGrid';
@@ -99,9 +100,9 @@ export default function Browse() {
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <h2 className="text-xl font-semibold text-white">
-          {searchQuery ? `Search: "${searchQuery}"` : selectedTag ? `Tag filter` : 'All Files'}
+          {searchQuery ? `Search: "${searchQuery}"` : selectedTag ? `Tag filter` : 'Documents'}
         </h2>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value)}
@@ -112,10 +113,18 @@ export default function Browse() {
             ))}
           </select>
           <button
-            onClick={() => setShowUpload(true)}
-            className="text-sm text-ocean-400 hover:text-ocean-300 transition md:hidden"
+            onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+            className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition"
+            title={viewMode === 'grid' ? 'List view' : 'Grid view'}
           >
-            + Upload
+            {viewMode === 'grid' ? <List className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
+          </button>
+          <button
+            onClick={() => setShowUpload(true)}
+            className="flex items-center gap-1.5 bg-ocean-600 hover:bg-ocean-500 text-white text-sm font-medium px-3 py-2 rounded-lg transition"
+          >
+            <UploadIcon className="w-4 h-4" />
+            <span>Upload</span>
           </button>
         </div>
       </div>

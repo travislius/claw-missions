@@ -1,8 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  FolderOpen, Monitor, ChevronDown, ChevronRight, Database,
-  CalendarDays, LayoutDashboard, Users, Brain, GripVertical, Radio
+  FolderOpen, Monitor, CalendarDays, LayoutDashboard, Users, Brain, GripVertical, Radio
 } from 'lucide-react';
 import { useStore } from '../store';
 
@@ -19,11 +18,11 @@ const ICON_MAP = {
 const DEFAULT_NAV = [
   { id: 'home',      label: 'Home',              path: '/',          icon: 'LayoutDashboard', section: 'main' },
   { id: 'memory',    label: 'Memory',            path: '/memory',    icon: 'Brain',           section: 'main' },
-  { id: 'resources', label: 'Machine Resources',  path: '/resources', icon: 'Monitor',         section: 'monitor' },
+  { id: 'resources', label: 'System',             path: '/resources', icon: 'Monitor',         section: 'monitor' },
   { id: 'calendar',  label: 'Schedule',           path: '/calendar',  icon: 'CalendarDays',    section: 'monitor' },
   { id: 'team',      label: 'Team',              path: '/team',      icon: 'Users',           section: 'monitor' },
   { id: 'sessions',  label: 'Sessions',           path: '/sessions',  icon: 'Radio',           section: 'monitor' },
-  { id: 'files',     label: 'All Files',          path: '/files',     icon: 'FolderOpen',      section: 'vault' },
+  { id: 'files',     label: 'Documents',          path: '/files',     icon: 'FolderOpen',      section: 'vault' },
 ];
 
 const STORAGE_KEY = 'clawmissions_nav_order';
@@ -147,17 +146,7 @@ export default function Sidebar({ onRefreshTags }) {
         })}
       </div>
 
-      {/* Storage Stats — pinned at bottom */}
-      {stats && (
-        <div className="mt-auto p-4 border-t border-gray-800">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Storage</h3>
-          <div className="flex items-center gap-2 text-gray-400 text-sm">
-            <Database className="w-4 h-4 shrink-0" />
-            <span>{formatBytes(stats.total_size)}</span>
-          </div>
-          <p className="text-gray-600 text-xs mt-1">{stats.total_files ?? 0} files</p>
-        </div>
-      )}
+
     </aside>
   );
 }
