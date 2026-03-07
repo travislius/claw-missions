@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   FolderOpen, Monitor, ChevronDown, ChevronRight, Database,
-  CalendarDays, LayoutDashboard, Users, Brain, GripVertical
+  CalendarDays, LayoutDashboard, Users, Brain, GripVertical, Radio
 } from 'lucide-react';
 import { useStore } from '../store';
 
@@ -13,6 +13,7 @@ const ICON_MAP = {
   CalendarDays,
   Users,
   FolderOpen,
+  Radio,
 };
 
 const DEFAULT_NAV = [
@@ -21,6 +22,7 @@ const DEFAULT_NAV = [
   { id: 'resources', label: 'Machine Resources',  path: '/resources', icon: 'Monitor',         section: 'monitor' },
   { id: 'calendar',  label: 'Schedule',           path: '/calendar',  icon: 'CalendarDays',    section: 'monitor' },
   { id: 'team',      label: 'Team',              path: '/team',      icon: 'Users',           section: 'monitor' },
+  { id: 'sessions',  label: 'Sessions',           path: '/sessions',  icon: 'Radio',           section: 'monitor' },
   { id: 'files',     label: 'All Files',          path: '/files',     icon: 'FolderOpen',      section: 'vault' },
 ];
 

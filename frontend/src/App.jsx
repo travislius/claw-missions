@@ -10,6 +10,7 @@ import Resources from './pages/Resources';
 import CalendarPage from './pages/Calendar';
 import Team from './pages/Team';
 import Memory from './pages/Memory';
+import Sessions from './pages/Sessions';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 
@@ -72,6 +73,7 @@ export default function App() {
             <Route path="/resources" element={<Resources />} />
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/team" element={<Team />} />
+            <Route path="/sessions" element={<Sessions />} />
           </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

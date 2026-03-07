@@ -1,5 +1,6 @@
 import glob
 import json
+import os
 import subprocess
 import time
 from datetime import datetime, timedelta
@@ -12,6 +13,7 @@ from ..auth import get_current_user
 router = APIRouter()
 
 CLAWD_DIR = Path("/Users/tiali/clawd")
+SESSIONS_DIR = Path("/Users/tiali/.openclaw/agents/main/sessions")
 
 
 @router.get("/memory", tags=["system"])
@@ -289,4 +291,93 @@ def get_resources_max(current_user=Depends(get_current_user)):
             "process_count": int(raw.get("proc_count") or 0),
             "boot_time": None,
         },
+    }
+
+
+@router.get("/sessions", tags=["system"])
+def get_sessions(current_user=Depends(get_current_user)):
+    """Return OpenClaw session list with stats."""
+    sessions_file = SESSIONS_DIR / "sessions.json"
+    try:
+        raw = json.loads(sessions_file.read_text())
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Cannot read sessions: {e}")
+
+    sessions = []
+    for key, meta in raw.items():
+        parts = key.split(":")
+        if len(parts) >= 3:
+            kind = parts[2]
+        else:
+            kind = "unknown"
+
+        msg_count = 0
+        last_msg = None
+        session_id = meta.get("sessionId", "")
+        jsonl_path = SESSIONS_DIR / f"{session_id}.jsonl"
+        if jsonl_path.exists():
+            try:
+                lines = jsonl_path.read_text(encoding="utf-8", errors="ignore").strip().split("\n")
+                for line in lines:
+                    if not line.strip():
+                        continue
+                    try:
+                        obj = json.loads(line)
+                        role = obj.get("role")
+                        if role in ("user", "assistant"):
+                            msg_count += 1
+                            content = obj.get("content", "")
+                            if isinstance(content, str) and content.strip():
+                                last_msg = {"role": role, "text": content[:120]}
+                            elif isinstance(content, list):
+                                for block in content:
+                                    if isinstance(block, dict) and block.get("type") == "text":
+                                        text = block.get("text", "")[:120]
+                                        if text.strip():
+                                            last_msg = {"role": role, "text": text}
+                                            break
+                    except Exception:
+                        continue
+            except Exception:
+                pass
+
+        origin = meta.get("origin", {})
+        label = meta.get("label") or origin.get("label") or key
+
+        sessions.append({
+            "key": key,
+            "kind": kind,
+            "label": label,
+            "session_id": session_id,
+            "model": meta.get("model", "unknown"),
+            "model_provider": meta.get("modelProvider", ""),
+            "updated_at": meta.get("updatedAt"),
+            "chat_type": meta.get("chatType", ""),
+            "compaction_count": meta.get("compactionCount", 0),
+            "input_tokens": meta.get("inputTokens", 0),
+            "output_tokens": meta.get("outputTokens", 0),
+            "cache_read": meta.get("cacheRead", 0),
+            "cache_write": meta.get("cacheWrite", 0),
+            "total_tokens": meta.get("totalTokens", 0),
+            "context_tokens": meta.get("contextTokens", 0),
+            "message_count": msg_count,
+            "last_message": last_msg,
+            "auth_profile": meta.get("authProfileOverride", ""),
+        })
+
+    sessions.sort(key=lambda s: s["updated_at"] or 0, reverse=True)
+
+    total_input = sum(s["input_tokens"] for s in sessions)
+    total_output = sum(s["output_tokens"] for s in sessions)
+    total_cache_read = sum(s["cache_read"] for s in sessions)
+
+    return {
+        "sessions": sessions,
+        "total": len(sessions),
+        "stats": {
+            "total_input_tokens": total_input,
+            "total_output_tokens": total_output,
+            "total_cache_read": total_cache_read,
+            "total_tokens": total_input + total_output,
+        }
     }
