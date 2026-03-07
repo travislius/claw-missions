@@ -185,11 +185,21 @@ function TaskRow({ task, onEdit, onDelete, expanded, onToggle }) {
 
 // ── Task Card (Board View) ──────────────────────────────────────────────────
 
-function TaskCard({ task, onEdit, onDelete }) {
+function TaskCard({ task, onEdit, onDelete, onDragStart }) {
   const tagList = task.tags ? task.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
 
+  const handleDragStart = (e) => {
+    e.dataTransfer.setData('text/plain', String(task.id));
+    e.dataTransfer.effectAllowed = 'move';
+    if (onDragStart) onDragStart(task.id);
+  };
+
   return (
-    <div className="bg-gray-800/60 border border-gray-700/50 rounded-lg p-3 space-y-2 hover:border-gray-600 transition">
+    <div
+      draggable={true}
+      onDragStart={handleDragStart}
+      className="bg-gray-800/60 border border-gray-700/50 rounded-lg p-3 space-y-2 hover:border-gray-600 transition cursor-grab active:cursor-grabbing"
+    >
       <div className="flex items-start gap-2">
         <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${PRIORITY_DOT[task.priority] || PRIORITY_DOT.medium}`} />
         <span className="flex-1 text-sm text-white font-medium">{task.title}</span>
@@ -220,7 +230,8 @@ function TaskCard({ task, onEdit, onDelete }) {
 export default function Tasks() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState('list'); // list | board
+  const [view, setView] = useState('board'); // list | board
+  const [dragOverCol, setDragOverCol] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterCreator, setFilterCreator] = useState('all');
   const [filterPriority, setFilterPriority] = useState('all');
@@ -285,6 +296,27 @@ export default function Tasks() {
   };
 
   const toggleExpand = (id) => setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
+
+  const handleDrop = async (e, newStatus) => {
+    e.preventDefault();
+    setDragOverCol(null);
+    const taskId = e.dataTransfer.getData('text/plain');
+    if (!taskId) return;
+
+    const task = tasks.find(t => String(t.id) === taskId);
+    if (!task || task.status === newStatus) return;
+
+    // Optimistic update
+    const oldTasks = [...tasks];
+    setTasks(prev => prev.map(t => String(t.id) === taskId ? { ...t, status: newStatus } : t));
+
+    try {
+      await api.patch(`/tasks/${taskId}`, { status: newStatus });
+    } catch (err) {
+      console.error('Failed to move task:', err);
+      setTasks(oldTasks); // revert
+    }
+  };
 
   // ── Filter pills ──────────────────────────────────────────────────────
 
@@ -383,13 +415,20 @@ export default function Tasks() {
       ) : (
         /* ── Board View ── */
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {BOARD_COLUMNS.map(status => {
-            const colTasks = filteredTasks.filter(t => t.status === status);
+          {BOARD_COLUMNS.map(colStatus => {
+            const colTasks = filteredTasks.filter(t => t.status === colStatus);
             return (
-              <div key={status} className="space-y-2">
+              <div
+                key={colStatus}
+                className={`space-y-2 rounded-xl p-2 border transition ${dragOverCol === colStatus ? 'border-ocean-500/50 bg-ocean-500/5' : 'border-transparent'}`}
+                onDragOver={e => { e.preventDefault(); setDragOverCol(colStatus); }}
+                onDragEnter={() => setDragOverCol(colStatus)}
+                onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDragOverCol(null); }}
+                onDrop={e => handleDrop(e, colStatus)}
+              >
                 <div className="flex items-center gap-2 mb-2">
-                  <span className={`text-xs px-2 py-1 rounded-full border font-medium ${STATUS_BADGE[status]}`}>
-                    {STATUS_LABELS[status]}
+                  <span className={`text-xs px-2 py-1 rounded-full border font-medium ${STATUS_BADGE[colStatus]}`}>
+                    {STATUS_LABELS[colStatus]}
                   </span>
                   <span className="text-xs text-gray-600">{colTasks.length}</span>
                 </div>

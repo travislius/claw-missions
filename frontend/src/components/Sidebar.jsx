@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  FolderOpen, Monitor, CalendarDays, LayoutDashboard, Users, Brain, GripVertical, Radio, FolderKanban, ListTodo
+  FolderOpen, Monitor, CalendarDays, LayoutDashboard, Users, Brain, GripVertical, Radio, FolderKanban, ListTodo, Puzzle
 } from 'lucide-react';
 import { useStore } from '../store';
 
@@ -15,6 +15,7 @@ const ICON_MAP = {
   Radio,
   FolderKanban,
   ListTodo,
+  Puzzle,
 };
 
 const DEFAULT_NAV = [
@@ -27,6 +28,7 @@ const DEFAULT_NAV = [
   { id: 'team',      label: 'Team',              path: '/team',      icon: 'Users',           section: 'monitor' },
   { id: 'sessions',  label: 'Sessions',           path: '/sessions',  icon: 'Radio',           section: 'monitor' },
   { id: 'files',     label: 'Documents',          path: '/files',     icon: 'FolderOpen',      section: 'vault' },
+  { id: 'skills',    label: 'Skills',             path: '/skills',    icon: 'Puzzle',          section: 'vault' },
 ];
 
 const STORAGE_KEY = 'clawmissions_nav_order';

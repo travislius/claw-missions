@@ -384,6 +384,92 @@ def get_sessions(current_user=Depends(get_current_user)):
     }
 
 
+BUILTIN_SKILLS_DIR = Path("/opt/homebrew/lib/node_modules/openclaw/skills")
+USER_SKILLS_DIR = Path.home() / "clawd" / "skills"
+
+
+def _parse_skill(skill_dir: Path, source: str) -> dict:
+    """Parse a SKILL.md frontmatter into a skill dict."""
+    skill_file = skill_dir / "SKILL.md"
+    if not skill_file.exists():
+        return None
+    try:
+        text = skill_file.read_text(encoding="utf-8")
+        name = skill_dir.name
+        description = ""
+        emoji = ""
+        # Parse YAML-ish frontmatter between --- markers
+        if text.startswith("---"):
+            end = text.find("---", 3)
+            if end > 0:
+                front = text[3:end]
+                for line in front.splitlines():
+                    if line.startswith("name:"):
+                        name = line.split(":", 1)[1].strip().strip('"')
+                    elif line.startswith("description:"):
+                        description = line.split(":", 1)[1].strip().strip('"')
+                    elif '"emoji":' in line:
+                        import re
+                        m = re.search(r'"emoji":\s*"([^"]+)"', line)
+                        if m:
+                            emoji = m.group(1)
+        stat = skill_file.stat()
+        return {
+            "id": skill_dir.name,
+            "name": name,
+            "description": description,
+            "emoji": emoji,
+            "source": source,
+            "path": str(skill_dir),
+            "updated_at": int(stat.st_mtime * 1000),
+        }
+    except Exception:
+        return None
+
+
+@router.get("/skills", tags=["system"])
+def get_skills(current_user=Depends(get_current_user)):
+    """Return all installed skills (builtin + user)."""
+    skills = []
+    for skills_dir, source in [(USER_SKILLS_DIR, "user"), (BUILTIN_SKILLS_DIR, "builtin")]:
+        if skills_dir.exists():
+            for skill_dir in sorted(skills_dir.iterdir()):
+                if skill_dir.is_dir():
+                    skill = _parse_skill(skill_dir, source)
+                    if skill:
+                        skills.append(skill)
+    # Sort: user skills first, then builtin, both alphabetical
+    skills.sort(key=lambda s: (0 if s["source"] == "user" else 1, s["name"].lower()))
+    return {"skills": skills, "total": len(skills)}
+
+
+@router.patch("/projects", tags=["system"])
+def update_project_section(
+    payload: dict,
+    current_user=Depends(get_current_user),
+):
+    """Update a specific section in PROJECTS.md."""
+    import re
+
+    section = payload.get("section")
+    content = payload.get("content")
+    if not section or not content:
+        raise HTTPException(status_code=400, detail="section and content required")
+
+    try:
+        full = PROJECTS_FILE.read_text(encoding="utf-8")
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Cannot read PROJECTS.md: {e}")
+
+    pattern = rf'(## {re.escape(section)}.*?)(?=\n## |\Z)'
+    new_full, count = re.subn(pattern, content.rstrip(), full, flags=re.DOTALL)
+    if count == 0:
+        raise HTTPException(status_code=404, detail=f"Section '{section}' not found")
+
+    PROJECTS_FILE.write_text(new_full, encoding="utf-8")
+    return {"ok": True}
+
+
 @router.get("/projects", tags=["system"])
 def get_projects(current_user=Depends(get_current_user)):
     """Return PROJECTS.md content and metadata."""
