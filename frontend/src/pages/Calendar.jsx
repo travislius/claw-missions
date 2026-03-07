@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Calendar as CalIcon, RefreshCw, X, AlertTriangle, CheckCircle,
-  HelpCircle, ChevronDown, ChevronUp, Edit2, Save, Loader, WifiOff
+  HelpCircle, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
+  Edit2, Save, Loader, WifiOff
 } from 'lucide-react';
 import api from '../api';
 
@@ -81,6 +82,25 @@ function computeLayout(dayJobs) {
     i = j;
   }
   return layout;
+}
+
+// ── helpers (date) ────────────────────────────────────────────────────────────
+function isToday(date) {
+  const t = new Date();
+  return date.getDate() === t.getDate() && date.getMonth() === t.getMonth() && date.getFullYear() === t.getFullYear();
+}
+
+// ── Current-time indicator ────────────────────────────────────────────────────
+function NowLine() {
+  const now = new Date();
+  const topPx = (now.getHours() * 60 + now.getMinutes()) / 60 * HOUR_PX;
+  return (
+    <div className="absolute left-0 right-0 z-20 pointer-events-none" style={{ top: `${topPx}px` }}>
+      <div className="h-0.5 bg-red-500 opacity-70 relative">
+        <div className="absolute -left-1 -top-1 w-2.5 h-2.5 rounded-full bg-red-500" />
+      </div>
+    </div>
+  );
 }
 
 // ── Edit Modal ────────────────────────────────────────────────────────────────
@@ -423,11 +443,25 @@ export default function CalendarPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeAgent = searchParams.get('agent') || 'tia';
 
+  // Detect initial view based on screen width
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const [calView, setCalView] = useState(isMobile ? 'day' : 'week');
+  const [dayDate, setDayDate] = useState(new Date());
+
   const [data, setData]       = useState(null);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
   const [editing, setEditing]   = useState(null);
   const gridRef = useRef(null);
+
+  // Auto-switch to day view when screen narrows below 768px
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) setCalView('day');
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -505,9 +539,29 @@ export default function CalendarPage() {
               {data.total} cron jobs · click tile to view · ✏️ to edit
             </p>
           </div>
-          <button onClick={fetchData} className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition" title="Refresh">
-            <RefreshCw className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 bg-gray-800 rounded-lg p-1">
+              <button
+                onClick={() => setCalView('week')}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition ${
+                  calView === 'week' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                Week
+              </button>
+              <button
+                onClick={() => setCalView('day')}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition ${
+                  calView === 'day' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                Day
+              </button>
+            </div>
+            <button onClick={fetchData} className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition" title="Refresh">
+              <RefreshCw className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Agent tab switcher */}
@@ -530,55 +584,144 @@ export default function CalendarPage() {
         <Legend summary={data} />
       </div>
 
-      {/* Grid */}
-      <div className="flex flex-col flex-1 bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-        {/* Day header */}
-        <div className="flex shrink-0 border-b border-gray-800 bg-gray-900 sticky top-0 z-10">
-          <div className="w-12 shrink-0 border-r border-gray-800" />
-          {DAYS.map((day, i) => (
-            <div key={i} className={`flex-1 min-w-0 py-2 text-center border-r border-gray-800 last:border-0 ${i === todayIdx ? 'bg-ocean-900/30' : ''}`}>
-              <p className={`text-xs font-semibold uppercase tracking-wider ${i === todayIdx ? 'text-ocean-400' : 'text-gray-500'}`}>{day}</p>
-              {i === todayIdx && <div className="w-1.5 h-1.5 rounded-full bg-ocean-400 mx-auto mt-0.5" />}
-              <p className="text-xs text-gray-600 mt-0.5">{byDay[i].length}</p>
-            </div>
-          ))}
+      {/* Day navigation (day view only) */}
+      {calView === 'day' && (
+        <div className="mb-3 flex items-center justify-between bg-gray-900 border border-gray-800 rounded-xl px-4 py-2">
+          <button onClick={() => setDayDate(d => { const n = new Date(d); n.setDate(n.getDate()-1); return n; })}
+            className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <div className="text-center">
+            <span className="text-white font-semibold">
+              {dayDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+            </span>
+            {isToday(dayDate) && <span className="ml-2 text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full">Today</span>}
+          </div>
+          <div className="flex items-center gap-1">
+            {!isToday(dayDate) && (
+              <button onClick={() => setDayDate(new Date())}
+                className="text-xs text-ocean-400 hover:text-ocean-300 px-2 py-1 rounded-lg hover:bg-gray-800 transition mr-1">
+                Today
+              </button>
+            )}
+            <button onClick={() => setDayDate(d => { const n = new Date(d); n.setDate(n.getDate()+1); return n; })}
+              className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
+      )}
 
-        {/* Scrollable timeline */}
-        <div className="flex flex-1 overflow-y-auto" ref={gridRef}>
-          {/* Time gutter */}
-          <div className="w-12 shrink-0 border-r border-gray-800 relative" style={{ minHeight: `${TOTAL_H}px` }}>
-            {Array.from({ length: 24 }, (_, h) => (
-              <div key={h} className="absolute w-full flex items-start justify-end pr-2 pt-1" style={{ top: `${h * HOUR_PX}px`, height: `${HOUR_PX}px` }}>
-                <span className="text-xs text-gray-600 font-mono leading-none">
-                  {h === 0 ? '12A' : h < 12 ? `${h}A` : h === 12 ? '12P' : `${h - 12}P`}
-                </span>
+      {/* ── Week View Grid ── */}
+      {calView === 'week' && (
+        <div className="flex flex-col flex-1 bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+          {/* Day header */}
+          <div className="flex shrink-0 border-b border-gray-800 bg-gray-900 sticky top-0 z-10">
+            <div className="w-12 shrink-0 border-r border-gray-800" />
+            {DAYS.map((day, i) => (
+              <div key={i} className={`flex-1 min-w-0 py-2 text-center border-r border-gray-800 last:border-0 ${i === todayIdx ? 'bg-ocean-900/30' : ''}`}>
+                <p className={`text-xs font-semibold uppercase tracking-wider ${i === todayIdx ? 'text-ocean-400' : 'text-gray-500'}`}>{day}</p>
+                {i === todayIdx && <div className="w-1.5 h-1.5 rounded-full bg-ocean-400 mx-auto mt-0.5" />}
+                <p className="text-xs text-gray-600 mt-0.5">{byDay[i].length}</p>
               </div>
             ))}
           </div>
 
-          {/* Day columns */}
-          {DAYS.map((_, dayIdx) => (
-            <div
-              key={dayIdx}
-              className={`flex-1 min-w-0 relative border-r border-gray-800 last:border-0 ${dayIdx === todayIdx ? 'bg-ocean-900/10' : ''}`}
-              style={{ height: `${TOTAL_H}px` }}
-            >
+          {/* Scrollable timeline */}
+          <div className="flex flex-1 overflow-y-auto" ref={gridRef}>
+            {/* Time gutter */}
+            <div className="w-12 shrink-0 border-r border-gray-800 relative" style={{ minHeight: `${TOTAL_H}px` }}>
               {Array.from({ length: 24 }, (_, h) => (
-                <div key={h} className={`absolute w-full border-t ${h % 6 === 0 ? 'border-gray-700' : 'border-gray-800/50'}`} style={{ top: `${h * HOUR_PX}px` }} />
-              ))}
-              {byDay[dayIdx].map(job => (
-                <CronTile
-                  key={job.id}
-                  job={job}
-                  layout={layouts[dayIdx].get(job.id) || { col: 0, total: 1 }}
-                  onClick={setSelected}
-                />
+                <div key={h} className="absolute w-full flex items-start justify-end pr-2 pt-1" style={{ top: `${h * HOUR_PX}px`, height: `${HOUR_PX}px` }}>
+                  <span className="text-xs text-gray-600 font-mono leading-none">
+                    {h === 0 ? '12A' : h < 12 ? `${h}A` : h === 12 ? '12P' : `${h - 12}P`}
+                  </span>
+                </div>
               ))}
             </div>
-          ))}
+
+            {/* Day columns */}
+            {DAYS.map((_, dayIdx) => (
+              <div
+                key={dayIdx}
+                className={`flex-1 min-w-0 relative border-r border-gray-800 last:border-0 ${dayIdx === todayIdx ? 'bg-ocean-900/10' : ''}`}
+                style={{ height: `${TOTAL_H}px` }}
+              >
+                {Array.from({ length: 24 }, (_, h) => (
+                  <div key={h} className={`absolute w-full border-t ${h % 6 === 0 ? 'border-gray-700' : 'border-gray-800/50'}`} style={{ top: `${h * HOUR_PX}px` }} />
+                ))}
+                {dayIdx === todayIdx && <NowLine />}
+                {byDay[dayIdx].map(job => (
+                  <CronTile
+                    key={job.id}
+                    job={job}
+                    layout={layouts[dayIdx].get(job.id) || { col: 0, total: 1 }}
+                    onClick={setSelected}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* ── Day View Grid ── */}
+      {calView === 'day' && (() => {
+        // Map dayDate to Mon=0..Sun=6
+        const dayIdx = (dayDate.getDay() + 6) % 7;
+        const dayJobs = byDay[dayIdx];
+        const dayLayout = layouts[dayIdx];
+        const isDayToday = isToday(dayDate);
+
+        return (
+          <div className="flex flex-col flex-1 bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+            {/* Single day header */}
+            <div className="flex shrink-0 border-b border-gray-800 bg-gray-900 sticky top-0 z-10">
+              <div className="w-14 shrink-0 border-r border-gray-800" />
+              <div className={`flex-1 py-2 text-center ${isDayToday ? 'bg-ocean-900/30' : ''}`}>
+                <p className={`text-xs font-semibold uppercase tracking-wider ${isDayToday ? 'text-ocean-400' : 'text-gray-500'}`}>
+                  {dayDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                </p>
+                {isDayToday && <div className="w-1.5 h-1.5 rounded-full bg-ocean-400 mx-auto mt-0.5" />}
+                <p className="text-xs text-gray-600 mt-0.5">{dayJobs.length} job{dayJobs.length !== 1 ? 's' : ''}</p>
+              </div>
+            </div>
+
+            {/* Scrollable timeline */}
+            <div className="flex flex-1 overflow-y-auto" ref={gridRef}>
+              {/* Time gutter */}
+              <div className="w-14 shrink-0 border-r border-gray-800 relative" style={{ minHeight: `${TOTAL_H}px` }}>
+                {Array.from({ length: 24 }, (_, h) => (
+                  <div key={h} className="absolute w-full flex items-start justify-end pr-2 pt-1" style={{ top: `${h * HOUR_PX}px`, height: `${HOUR_PX}px` }}>
+                    <span className="text-xs text-gray-600 font-mono leading-none">
+                      {h === 0 ? '12A' : h < 12 ? `${h}A` : h === 12 ? '12P' : `${h - 12}P`}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Single day column */}
+              <div
+                className={`flex-1 relative ${isDayToday ? 'bg-ocean-900/10' : ''}`}
+                style={{ height: `${TOTAL_H}px` }}
+              >
+                {Array.from({ length: 24 }, (_, h) => (
+                  <div key={h} className={`absolute w-full border-t ${h % 6 === 0 ? 'border-gray-700' : 'border-gray-800/50'}`} style={{ top: `${h * HOUR_PX}px` }} />
+                ))}
+                {isDayToday && <NowLine />}
+                {dayJobs.map(job => (
+                  <CronTile
+                    key={job.id}
+                    job={job}
+                    layout={dayLayout.get(job.id) || { col: 0, total: 1 }}
+                    onClick={setSelected}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {selected && !editing && (
         <DetailModal job={selected} onClose={() => setSelected(null)} onEdit={(j) => { setSelected(null); setEditing(j); }} />
