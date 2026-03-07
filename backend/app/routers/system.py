@@ -1,11 +1,47 @@
+import glob
 import json
 import subprocess
 import time
+from datetime import datetime, timedelta
+from pathlib import Path
+
 import psutil
 from fastapi import APIRouter, Depends, HTTPException
 from ..auth import get_current_user
 
 router = APIRouter()
+
+CLAWD_DIR = Path("/Users/tiali/clawd")
+
+
+@router.get("/memory", tags=["system"])
+def get_memory(current_user=Depends(get_current_user)):
+    """Return Tia's soul, long-term memory, and recent daily logs."""
+    def read_file(path):
+        try:
+            return Path(path).read_text(encoding="utf-8")
+        except Exception:
+            return None
+
+    today = datetime.now().strftime("%Y-%m-%d")
+
+    # Find last 3 daily memory files
+    daily_files = sorted(
+        glob.glob(str(CLAWD_DIR / "memory" / "*.md")),
+        reverse=True
+    )[:3]
+    daily = []
+    for f in daily_files:
+        content = read_file(f)
+        if content:
+            daily.append({"date": Path(f).stem, "content": content})
+
+    return {
+        "soul": read_file(CLAWD_DIR / "SOUL.md"),
+        "memory": read_file(CLAWD_DIR / "MEMORY.md"),
+        "daily": daily,
+        "today": today,
+    }
 
 _boot_time = psutil.boot_time()
 

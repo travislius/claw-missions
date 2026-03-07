@@ -1,9 +1,46 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  FolderOpen, Monitor, ChevronDown, ChevronRight, Database, CalendarDays, LayoutDashboard, Users
+  FolderOpen, Monitor, ChevronDown, ChevronRight, Database,
+  CalendarDays, LayoutDashboard, Users, Brain, GripVertical
 } from 'lucide-react';
 import { useStore } from '../store';
+
+const ICON_MAP = {
+  LayoutDashboard,
+  Brain,
+  Monitor,
+  CalendarDays,
+  Users,
+  FolderOpen,
+};
+
+const DEFAULT_NAV = [
+  { id: 'home',      label: 'Home',              path: '/',          icon: 'LayoutDashboard', section: 'main' },
+  { id: 'memory',    label: 'Memory',            path: '/memory',    icon: 'Brain',           section: 'main' },
+  { id: 'resources', label: 'Machine Resources',  path: '/resources', icon: 'Monitor',         section: 'monitor' },
+  { id: 'calendar',  label: 'Schedule',           path: '/calendar',  icon: 'CalendarDays',    section: 'monitor' },
+  { id: 'team',      label: 'Team',              path: '/team',      icon: 'Users',           section: 'monitor' },
+  { id: 'files',     label: 'All Files',          path: '/files',     icon: 'FolderOpen',      section: 'vault' },
+];
+
+const STORAGE_KEY = 'clawmissions_nav_order';
+
+function getOrderedNav() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const order = JSON.parse(saved);
+      const navMap = Object.fromEntries(DEFAULT_NAV.map(n => [n.id, n]));
+      const ordered = order.map(id => navMap[id]).filter(Boolean);
+      // Add any new items not in saved order
+      const seen = new Set(order);
+      DEFAULT_NAV.forEach(n => { if (!seen.has(n.id)) ordered.push(n); });
+      return ordered;
+    }
+  } catch {}
+  return [...DEFAULT_NAV];
+}
 
 function formatBytes(bytes) {
   if (!bytes) return '0 B';
@@ -15,102 +52,100 @@ function formatBytes(bytes) {
 
 export default function Sidebar({ onRefreshTags }) {
   const { stats, sidebarOpen, setSidebarOpen } = useStore();
-  const [vaultOpen, setVaultOpen] = useState(true);
+  const [navItems, setNavItems] = useState(getOrderedNav);
+  const [dragIdx, setDragIdx] = useState(null);
+  const [overIdx, setOverIdx] = useState(null);
+  const dragRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
-
-  const isHome      = location.pathname === '/';
-  const isFiles     = location.pathname === '/files';
-  const isResources = location.pathname === '/resources';
-  const isCalendar  = location.pathname === '/calendar';
-  const isTeam      = location.pathname === '/team';
 
   const goTo = (path) => {
     navigate(path);
     setSidebarOpen(false);
   };
 
+  const handleDragStart = (e, idx) => {
+    setDragIdx(idx);
+    dragRef.current = idx;
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e, idx) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setOverIdx(idx);
+  };
+
+  const handleDragLeave = () => {
+    setOverIdx(null);
+  };
+
+  const handleDrop = (e, dropIdx) => {
+    e.preventDefault();
+    const fromIdx = dragRef.current;
+    if (fromIdx === null || fromIdx === dropIdx) {
+      setDragIdx(null);
+      setOverIdx(null);
+      return;
+    }
+    const updated = [...navItems];
+    const [moved] = updated.splice(fromIdx, 1);
+    updated.splice(dropIdx, 0, moved);
+    setNavItems(updated);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated.map(n => n.id)));
+    setDragIdx(null);
+    setOverIdx(null);
+  };
+
+  const handleDragEnd = () => {
+    setDragIdx(null);
+    setOverIdx(null);
+  };
+
   return (
-    <aside className={`w-64 bg-gray-900 dark:bg-gray-900 bg-gray-50 border-r border-gray-800 dark:border-gray-800 border-gray-200 flex flex-col shrink-0 overflow-y-auto
+    <aside className={`w-64 bg-gray-900 border-r border-gray-800 flex flex-col shrink-0 overflow-y-auto
       fixed md:relative inset-y-0 left-0 z-40 transform transition-transform duration-200 ease-in-out
       ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
 
-      {/* ── Home ── */}
-      <div className="p-4 pb-2">
-        <button
-          onClick={() => goTo('/')}
-          className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition mb-1 ${
-            isHome ? 'bg-red-500/20 text-red-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-          }`}
-        >
-          <LayoutDashboard className="w-4 h-4" />
-          Home
-        </button>
+      {/* Nav Items */}
+      <div className="p-4 space-y-1">
+        {navItems.map((item, idx) => {
+          const IconComp = ICON_MAP[item.icon] || FolderOpen;
+          const isActive = item.path === '/'
+            ? location.pathname === '/'
+            : location.pathname.startsWith(item.path);
+
+          return (
+            <div
+              key={item.id}
+              draggable
+              onDragStart={(e) => handleDragStart(e, idx)}
+              onDragOver={(e) => handleDragOver(e, idx)}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, idx)}
+              onDragEnd={handleDragEnd}
+              className={`group transition-all ${dragIdx === idx ? 'opacity-40' : ''} ${
+                overIdx === idx && dragIdx !== idx ? 'border-t-2 border-red-500' : 'border-t-2 border-transparent'
+              }`}
+            >
+              <button
+                onClick={() => goTo(item.path)}
+                className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition ${
+                  isActive
+                    ? 'bg-red-500/20 text-red-400'
+                    : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                }`}
+              >
+                <GripVertical className="w-3 h-3 text-gray-600 opacity-0 group-hover:opacity-100 transition cursor-grab shrink-0" />
+                <IconComp className="w-4 h-4 shrink-0" />
+                <span className="flex-1 text-left">{item.label}</span>
+              </button>
+            </div>
+          );
+        })}
       </div>
 
-      {/* ── Machine Resources ── */}
-      <div className="px-4 pb-2">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Monitor</p>
-        <button
-          onClick={() => goTo('/resources')}
-          className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition ${
-            isResources
-              ? 'bg-red-500/20 text-red-400'
-              : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-          }`}
-        >
-          <Monitor className="w-4 h-4" />
-          Machine Resources
-        </button>
-        <button
-          onClick={() => goTo('/calendar')}
-          className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition ${
-            isCalendar ? 'bg-red-500/20 text-red-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-          }`}
-        >
-          <CalendarDays className="w-4 h-4" />
-          Schedule
-        </button>
-        <button
-          onClick={() => goTo('/team')}
-          className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition ${
-            isTeam ? 'bg-red-500/20 text-red-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-          }`}
-        >
-          <Users className="w-4 h-4" />
-          Team
-        </button>
-      </div>
-
-      {/* ── File Vault ── */}
-      <div className="p-4 pt-2">
-        <button
-          className="w-full flex items-center justify-between mb-2 group"
-          onClick={() => setVaultOpen(!vaultOpen)}
-        >
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider group-hover:text-gray-400 transition">
-            File Vault
-          </p>
-          {vaultOpen
-            ? <ChevronDown className="w-3.5 h-3.5 text-gray-600" />
-            : <ChevronRight className="w-3.5 h-3.5 text-gray-600" />
-          }
-        </button>
-
-        {vaultOpen && (
-          <button
-            onClick={() => goTo('/files')}
-            className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition ${
-              isFiles ? 'bg-ocean-600/20 text-ocean-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-            }`}
-          >
-            <FolderOpen className="w-4 h-4" />
-            All Files
-          </button>
-        )}
-      </div>
-
-      {/* Storage Stats */}
+      {/* Storage Stats — pinned at bottom */}
       {stats && (
         <div className="mt-auto p-4 border-t border-gray-800">
           <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Storage</h3>

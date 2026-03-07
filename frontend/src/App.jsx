@@ -9,6 +9,7 @@ import SearchPage from './pages/Search';
 import Resources from './pages/Resources';
 import CalendarPage from './pages/Calendar';
 import Team from './pages/Team';
+import Memory from './pages/Memory';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 
@@ -67,6 +68,7 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/files" element={<Browse />} />
             <Route path="/search" element={<SearchPage />} />
+            <Route path="/memory" element={<Memory />} />
             <Route path="/resources" element={<Resources />} />
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/team" element={<Team />} />
