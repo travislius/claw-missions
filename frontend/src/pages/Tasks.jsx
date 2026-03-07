@@ -25,18 +25,21 @@ const PRIORITY_DOT = {
 };
 
 const STATUS_BADGE = {
-  todo: 'bg-gray-600/30 text-gray-300 border-gray-600',
-  'in-progress': 'bg-sky-500/20 text-sky-400 border-sky-500/40',
-  done: 'bg-green-500/20 text-green-400 border-green-500/40',
-  blocked: 'bg-red-500/20 text-red-400 border-red-500/40',
+  backlog:      'bg-slate-600/30 text-slate-400 border-slate-600/60',
+  todo:         'bg-gray-600/30 text-gray-300 border-gray-600',
+  'in-progress':'bg-sky-500/20 text-sky-400 border-sky-500/40',
+  done:         'bg-green-500/20 text-green-400 border-green-500/40',
+  blocked:      'bg-red-500/20 text-red-400 border-red-500/40',
 };
 
-const STATUS_LABELS = { todo: 'Todo', 'in-progress': 'In Progress', done: 'Done', blocked: 'Blocked' };
+const STATUS_LABELS = {
+  backlog: 'Backlog', todo: 'Todo', 'in-progress': 'In Progress', done: 'Done', blocked: 'Blocked',
+};
 const PRIORITY_OPTIONS = ['low', 'medium', 'high', 'urgent'];
-const STATUS_OPTIONS = ['todo', 'in-progress', 'done', 'blocked'];
+const STATUS_OPTIONS = ['backlog', 'todo', 'in-progress', 'done', 'blocked'];
 const CREATOR_OPTIONS = ['tia', 'travis'];
 
-const BOARD_COLUMNS = ['todo', 'in-progress', 'done', 'blocked'];
+const BOARD_COLUMNS = ['backlog', 'todo', 'in-progress', 'done', 'blocked'];
 
 // ── Task Form Modal ─────────────────────────────────────────────────────────
 
@@ -364,7 +367,7 @@ export default function Tasks() {
         <span className="text-xs text-gray-500 mr-1">Status:</span>
         <Pill label="All" active={filterStatus === 'all'} onClick={() => setFilterStatus('all')} />
         {STATUS_OPTIONS.map(s => (
-          <Pill key={s} label={STATUS_LABELS[s]} active={filterStatus === s} onClick={() => setFilterStatus(s)} />
+          <Pill key={s} label={s === 'in-progress' ? 'In Progress' : STATUS_LABELS[s]} active={filterStatus === s} onClick={() => setFilterStatus(s)} />
         ))}
         <span className="text-gray-700 mx-1">|</span>
         <span className="text-xs text-gray-500 mr-1">By:</span>
@@ -414,13 +417,15 @@ export default function Tasks() {
         </div>
       ) : (
         /* ── Board View ── */
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="flex gap-3 overflow-x-auto pb-2" style={{ minWidth: 0 }}>
           {BOARD_COLUMNS.map(colStatus => {
             const colTasks = filteredTasks.filter(t => t.status === colStatus);
             return (
               <div
                 key={colStatus}
-                className={`space-y-2 rounded-xl p-2 border transition ${dragOverCol === colStatus ? 'border-ocean-500/50 bg-ocean-500/5' : 'border-transparent'}`}
+                className={`flex-none w-56 space-y-2 rounded-xl p-2 border transition ${
+                  dragOverCol === colStatus ? 'border-sky-500/50 bg-sky-500/5' : 'border-transparent'
+                }`}
                 onDragOver={e => { e.preventDefault(); setDragOverCol(colStatus); }}
                 onDragEnter={() => setDragOverCol(colStatus)}
                 onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDragOverCol(null); }}
@@ -438,7 +443,7 @@ export default function Tasks() {
                   ))}
                   {colTasks.length === 0 && (
                     <div className="text-xs text-gray-700 text-center py-8 border border-dashed border-gray-800 rounded-lg">
-                      No tasks
+                      Drop here
                     </div>
                   )}
                 </div>
