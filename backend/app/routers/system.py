@@ -462,7 +462,8 @@ def update_project_section(
         raise HTTPException(status_code=503, detail=f"Cannot read PROJECTS.md: {e}")
 
     pattern = rf'(## {re.escape(section)}.*?)(?=\n## |\Z)'
-    new_full, count = re.subn(pattern, content.rstrip(), full, flags=re.DOTALL)
+    replacement = content.rstrip()
+    new_full, count = re.subn(pattern, lambda _: replacement, full, flags=re.DOTALL)
     if count == 0:
         raise HTTPException(status_code=404, detail=f"Section '{section}' not found")
 
