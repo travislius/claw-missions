@@ -48,7 +48,10 @@ export default function Header() {
   };
 
   return (
-    <header className="h-14 sm:h-16 bg-gray-900 border-b border-gray-800 flex items-center px-3 sm:px-4 gap-2 sm:gap-4 shrink-0">
+    <header
+      className="bg-gray-900 border-b border-gray-800 flex items-center px-3 sm:px-4 gap-2 sm:gap-4 shrink-0"
+      style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))', paddingBottom: '0.75rem', minHeight: '3.5rem' }}
+    >
       {/* Hamburger (mobile) */}
       <button onClick={toggleSidebar} className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition md:hidden">
         <Menu className="w-5 h-5" />
