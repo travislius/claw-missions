@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Wifi, WifiOff, Monitor, CalendarDays, ChevronRight,
+  Wifi, WifiOff, Monitor, CalendarDays, ChevronRight, Terminal,
   Apple, Cpu, MemoryStick, HardDrive, MapPin, RefreshCw
 } from 'lucide-react';
 import api from '../api';
@@ -9,12 +9,14 @@ import api from '../api';
 const OS_ICON = {
   macOS:   <Apple className="w-3.5 h-3.5" />,
   windows: <Monitor className="w-3.5 h-3.5" />,
+  linux:   <Terminal className="w-3.5 h-3.5" />,
 };
 
 const ROLE_COLOR = {
   tia:    'border-ocean-500/40 bg-ocean-500/5',
   dexter: 'border-amber-500/40 bg-amber-500/5',
   sia:    'border-purple-500/40 bg-purple-500/5',
+  zed:    'border-zinc-500/40 bg-zinc-500/5',
 };
 
 const ACCENT = {

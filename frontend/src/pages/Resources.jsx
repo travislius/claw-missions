@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Cpu, MemoryStick, HardDrive, Wifi, Clock, Activity,
-  RefreshCw, Zap, Monitor, Apple
+  RefreshCw, Zap, Monitor, Apple, Terminal
 } from 'lucide-react';
 import api from '../api';
 
@@ -61,8 +61,9 @@ function StatRow({ label, value, sub }) {
 }
 
 const MACHINES = [
-  { id: 'tia',  label: 'Tia 🌿',  subtitle: 'Mac Mini M4',    endpoint: '/system/resources',     icon: Apple,   accent: 'ocean' },
-  { id: 'max',  label: 'Max 🔬',  subtitle: 'Windows PC',     endpoint: '/system/resources/max', icon: Monitor, accent: 'yellow' },
+  { id: 'tia',  label: 'Tia 🌿',  subtitle: 'Mac Mini M4',       endpoint: '/system/resources',     icon: Apple,    accent: 'ocean' },
+  { id: 'max',  label: 'Max 🔬',  subtitle: 'Windows PC',        endpoint: '/system/resources/max', icon: Monitor,  accent: 'yellow' },
+  { id: 'zed',  label: 'Zed 🔩',  subtitle: 'HP ZBook · Linux',  endpoint: '/system/resources/zed', icon: Terminal, accent: 'green' },
 ];
 
 export default function Resources() {

@@ -295,6 +295,117 @@ def get_resources_max(current_user=Depends(get_current_user)):
     }
 
 
+_ZED_SSH = "zed@100.125.85.113"
+
+_ZED_SCRIPT = """\
+import json, psutil, time
+mem  = psutil.virtual_memory()
+swap = psutil.swap_memory()
+cpu  = psutil.cpu_percent(interval=0.3)
+cpu_cores = psutil.cpu_percent(interval=0.3, percpu=True)
+freq = psutil.cpu_freq()
+net  = psutil.net_io_counters()
+boot = psutil.boot_time()
+uptime = int(time.time() - boot)
+days, rem = divmod(uptime, 86400)
+hours, rem2 = divmod(rem, 3600)
+mins = rem2 // 60
+uptime_h = (f"{days}d " if days else "") + f"{hours}h {mins}m"
+seen = set()
+disks = []
+for p in psutil.disk_partitions(all=False):
+    if p.device in seen: continue
+    seen.add(p.device)
+    try:
+        u = psutil.disk_usage(p.mountpoint)
+        if u.total < 1024**3: continue
+        disks.append({"device": p.device, "mountpoint": p.mountpoint, "fstype": p.fstype,
+            "total_b": u.total, "used_b": u.used, "free_b": u.free, "percent": u.percent})
+    except: pass
+print(json.dumps({"cpu": cpu, "cpu_cores": cpu_cores,
+    "cpu_phys": psutil.cpu_count(logical=False), "cpu_logi": psutil.cpu_count(logical=True),
+    "freq": round(freq.current) if freq else None, "freq_max": round(freq.max) if freq else None,
+    "load": list(psutil.getloadavg()),
+    "mem_total": mem.total, "mem_used": mem.used, "mem_avail": mem.available, "mem_pct": mem.percent,
+    "swap_total": swap.total, "swap_used": swap.used, "swap_pct": swap.percent,
+    "disks": disks, "procs": len(psutil.pids()),
+    "net_sent": net.bytes_sent, "net_recv": net.bytes_recv,
+    "net_pkts_sent": net.packets_sent, "net_pkts_recv": net.packets_recv,
+    "uptime_h": uptime_h, "uptime_s": uptime}))
+"""
+
+
+@router.get("/resources/zed", tags=["system"])
+def get_resources_zed(current_user=Depends(get_current_user)):
+    """Fetch Zed (HP ZBook Ultra / Linux) system resources via SSH."""
+    try:
+        result = subprocess.run(
+            ["ssh", "-q", "-o", "ConnectTimeout=8", "-o", "BatchMode=yes",
+             "-o", "StrictHostKeyChecking=no", "-o", "LogLevel=ERROR",
+             _ZED_SSH, "python3"],
+            input=_ZED_SCRIPT,
+            capture_output=True, text=True, timeout=20
+        )
+        if result.returncode != 0:
+            raise HTTPException(status_code=503, detail=f"SSH failed: {result.stderr[:200]}")
+        raw = json.loads(result.stdout)
+    except subprocess.TimeoutExpired:
+        raise HTTPException(status_code=503, detail="Zed unreachable (timeout)")
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=502, detail=f"Bad response from Zed: {e}")
+
+    disks = []
+    for d in (raw.get("disks") or []):
+        disks.append({
+            "device": d["device"], "mountpoint": d["mountpoint"], "fstype": d["fstype"],
+            "total": _fmt(d["total_b"]), "used": _fmt(d["used_b"]),
+            "free": _fmt(d["free_b"]), "percent": d["percent"],
+        })
+
+    uptime_secs = int(raw.get("uptime_s", 0))
+
+    return {
+        "cpu": {
+            "percent": float(raw.get("cpu") or 0),
+            "per_core": raw.get("cpu_cores") or [],
+            "count_logical": raw.get("cpu_logi"),
+            "count_physical": raw.get("cpu_phys"),
+            "freq_mhz": raw.get("freq"),
+            "freq_max_mhz": raw.get("freq_max"),
+            "load_avg": raw.get("load") or [],
+        },
+        "memory": {
+            "total": _fmt(int(raw.get("mem_total") or 0)),
+            "used": _fmt(int(raw.get("mem_used") or 0)),
+            "available": _fmt(int(raw.get("mem_avail") or 0)),
+            "percent": float(raw.get("mem_pct") or 0),
+            "swap_total": _fmt(int(raw.get("swap_total") or 0)),
+            "swap_used": _fmt(int(raw.get("swap_used") or 0)),
+            "swap_percent": float(raw.get("swap_pct") or 0),
+        },
+        "disks": disks,
+        "network": {
+            "bytes_sent": _fmt(int(raw.get("net_sent") or 0)),
+            "bytes_recv": _fmt(int(raw.get("net_recv") or 0)),
+            "packets_sent": raw.get("net_pkts_sent") or 0,
+            "packets_recv": raw.get("net_pkts_recv") or 0,
+            "active_interfaces": ["wlp193s0"],
+            "upload_speed": {"bytes": 0, "human": "—"},
+            "download_speed": {"bytes": 0, "human": "—"},
+        },
+        "gpu": {
+            "name": "Radeon 890M (unified)",
+            "vram_gb": 32,
+        },
+        "system": {
+            "uptime_seconds": uptime_secs,
+            "uptime_human": raw.get("uptime_h") or "—",
+            "process_count": int(raw.get("procs") or 0),
+            "boot_time": None,
+        },
+    }
+
+
 @router.get("/sessions", tags=["system"])
 def get_sessions(current_user=Depends(get_current_user)):
     """Return OpenClaw session list with stats."""
