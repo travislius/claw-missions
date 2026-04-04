@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Table
+from sqlalchemy import Boolean, Column, Integer, String, DateTime, Text, ForeignKey, Table
 from sqlalchemy.orm import relationship
 
 from .database import Base
@@ -64,3 +64,57 @@ class Task(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     due_date = Column(String, default=None, nullable=True)
+
+
+class NoteChannel(Base):
+    __tablename__ = "note_channels"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, nullable=False)
+    slug = Column(String, unique=True, nullable=False, index=True)
+    description = Column(Text, default="")
+    color = Column(String, default="slate")
+    sort_order = Column(Integer, default=0)
+    is_seeded = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    topics = relationship(
+        "NoteTopic",
+        back_populates="channel",
+        cascade="all, delete-orphan",
+        order_by="desc(NoteTopic.updated_at)",
+    )
+
+
+class NoteTopic(Base):
+    __tablename__ = "note_topics"
+
+    id = Column(Integer, primary_key=True, index=True)
+    channel_id = Column(Integer, ForeignKey("note_channels.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(String, nullable=False)
+    body = Column(Text, default="")
+    author = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    channel = relationship("NoteChannel", back_populates="topics")
+    replies = relationship(
+        "NoteReply",
+        back_populates="topic",
+        cascade="all, delete-orphan",
+        order_by="NoteReply.created_at",
+    )
+
+
+class NoteReply(Base):
+    __tablename__ = "note_replies"
+
+    id = Column(Integer, primary_key=True, index=True)
+    topic_id = Column(Integer, ForeignKey("note_topics.id", ondelete="CASCADE"), nullable=False, index=True)
+    body = Column(Text, default="")
+    author = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    topic = relationship("NoteTopic", back_populates="replies")

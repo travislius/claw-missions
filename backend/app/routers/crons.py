@@ -96,6 +96,54 @@ def _parse_expr(expr: str) -> dict:
     return {"minute": minute, "hour": hour, "days": _parse_dow(dow)}
 
 
+def _format_openclaw_job(job: dict) -> dict | None:
+    if not job.get("enabled", True):
+        return None
+
+    schedule = job.get("schedule", {})
+    kind = schedule.get("kind", "cron")
+    expr = schedule.get("expr", "0 0 * * *")
+    tz = schedule.get("tz", "America/Los_Angeles")
+    parsed = _parse_expr(expr) if kind == "cron" else {"minute": 0, "hour": 0, "days": []}
+
+    state = job.get("state", {})
+    payload = job.get("payload", {})
+    message = payload.get("message", "")
+    task_preview = message[:300].strip() + ("…" if len(message) > 300 else "")
+
+    return {
+        "id": job["id"],
+        "name": job["name"],
+        "source": "openclaw",
+        "kind": kind,
+        "category": _categorize(job["name"]),
+        "hour": parsed["hour"],
+        "minute": parsed["minute"],
+        "days": parsed["days"],
+        "expr": expr,
+        "tz": tz,
+        "enabled": job.get("enabled", True),
+        "agent_id": job.get("agentId"),
+        "wake_mode": job.get("wakeMode", "now"),
+        "session_target": job.get("sessionTarget", "isolated"),
+        "status": state.get("lastStatus", "unknown"),
+        "next_run": _ms_to_relative(state.get("nextRunAtMs")),
+        "next_run_at_ms": state.get("nextRunAtMs"),
+        "last_run": _ms_to_relative(state.get("lastRunAtMs")),
+        "last_run_at_ms": state.get("lastRunAtMs"),
+        "duration_ms": state.get("lastDurationMs"),
+        "consecutive_errors": state.get("consecutiveErrors", 0),
+        "last_error": state.get("lastError"),
+        "target": job.get("sessionTarget", "isolated"),
+        "task_preview": task_preview,
+        "timeout_s": payload.get("timeoutSeconds"),
+        "at": schedule.get("at"),
+        "every_ms": schedule.get("everyMs"),
+        "anchor_ms": schedule.get("anchorMs"),
+        "supports_drag": kind == "at",
+    }
+
+
 # ── helpers ──────────────────────────────────────────────────────────────────
 
 def _ms_to_relative(ms: int | None) -> str | None:
@@ -197,44 +245,9 @@ def _fetch_openclaw_crons() -> list[dict]:
 
     out = []
     for job in jobs:
-        if not job.get("enabled", True):
-            continue
-        schedule = job.get("schedule", {})
-        expr = schedule.get("expr", "0 0 * * *")
-        tz   = schedule.get("tz", "America/Los_Angeles")
-        parsed = _parse_expr(expr)
-
-        state = job.get("state", {})
-        payload = job.get("payload", {})
-        message = payload.get("message", "")
-        # Truncate task description to ~300 chars for modal
-        task_preview = message[:300].strip() + ("…" if len(message) > 300 else "")
-
-        out.append({
-            "id":        job["id"],
-            "name":      job["name"],
-            "source":    "openclaw",
-            "kind":      schedule.get("kind", "cron"),
-            "category":  _categorize(job["name"]),
-            "hour":      parsed["hour"],
-            "minute":    parsed["minute"],
-            "days":      parsed["days"],
-            "expr":      expr,
-            "tz":        tz,
-            "enabled":   job.get("enabled", True),
-            "agent_id":  job.get("agentId"),
-            "wake_mode": job.get("wakeMode", "now"),
-            "session_target": job.get("sessionTarget", "isolated"),
-            "status":    state.get("lastStatus", "unknown"),
-            "next_run":  _ms_to_relative(state.get("nextRunAtMs")),
-            "last_run":  _ms_to_relative(state.get("lastRunAtMs")),
-            "duration_ms": state.get("lastDurationMs"),
-            "consecutive_errors": state.get("consecutiveErrors", 0),
-            "last_error": state.get("lastError"),
-            "target":    job.get("sessionTarget", "isolated"),
-            "task_preview": task_preview,
-            "timeout_s": payload.get("timeoutSeconds"),
-        })
+        formatted = _format_openclaw_job(job)
+        if formatted:
+            out.append(formatted)
     return out
 
 
@@ -342,32 +355,9 @@ def get_cron_jobs(
                     "agent": agent, "online": False, "error": "Node offline — run OpenClawNode.lnk on Dexter to connect"}
         jobs = []
         for job in raw:
-            if not job.get("enabled", True):
-                continue
-            schedule = job.get("schedule", {})
-            expr = schedule.get("expr", "0 0 * * *")
-            tz   = schedule.get("tz", "America/Los_Angeles")
-            parsed = _parse_expr(expr)
-            state = job.get("state", {})
-            payload = job.get("payload", {})
-            message = payload.get("message", "")
-            task_preview = message[:300].strip() + ("…" if len(message) > 300 else "")
-            jobs.append({
-                "id": job["id"], "name": job["name"], "source": "openclaw",
-                "kind": schedule.get("kind", "cron"), "category": _categorize(job["name"]),
-                "hour": parsed["hour"], "minute": parsed["minute"], "days": parsed["days"],
-                "expr": expr, "tz": tz, "enabled": job.get("enabled", True),
-                "agent_id": job.get("agentId"), "wake_mode": job.get("wakeMode", "now"),
-                "session_target": job.get("sessionTarget", "isolated"),
-                "status": state.get("lastStatus", "unknown"),
-                "next_run": _ms_to_relative(state.get("nextRunAtMs")),
-                "last_run": _ms_to_relative(state.get("lastRunAtMs")),
-                "duration_ms": state.get("lastDurationMs"),
-                "consecutive_errors": state.get("consecutiveErrors", 0),
-                "last_error": state.get("lastError"),
-                "target": job.get("sessionTarget", "isolated"),
-                "task_preview": task_preview, "timeout_s": payload.get("timeoutSeconds"),
-            })
+            formatted = _format_openclaw_job(job)
+            if formatted:
+                jobs.append(formatted)
     elif cfg.get("host"):
         raw = _fetch_openclaw_crons_ssh(cfg["host"], cfg["ssh_user"], cfg.get("openclaw_cmd", "openclaw"))
         if not raw:
@@ -376,32 +366,9 @@ def get_cron_jobs(
         # Parse the raw jobs same way as local
         jobs = []
         for job in raw:
-            if not job.get("enabled", True):
-                continue
-            schedule = job.get("schedule", {})
-            expr = schedule.get("expr", "0 0 * * *")
-            tz   = schedule.get("tz", "America/Los_Angeles")
-            parsed = _parse_expr(expr)
-            state = job.get("state", {})
-            payload = job.get("payload", {})
-            message = payload.get("message", "")
-            task_preview = message[:300].strip() + ("…" if len(message) > 300 else "")
-            jobs.append({
-                "id": job["id"], "name": job["name"], "source": "openclaw",
-                "kind": schedule.get("kind", "cron"), "category": _categorize(job["name"]),
-                "hour": parsed["hour"], "minute": parsed["minute"], "days": parsed["days"],
-                "expr": expr, "tz": tz, "enabled": job.get("enabled", True),
-                "agent_id": job.get("agentId"), "wake_mode": job.get("wakeMode", "now"),
-                "session_target": job.get("sessionTarget", "isolated"),
-                "status": state.get("lastStatus", "unknown"),
-                "next_run": _ms_to_relative(state.get("nextRunAtMs")),
-                "last_run": _ms_to_relative(state.get("lastRunAtMs")),
-                "duration_ms": state.get("lastDurationMs"),
-                "consecutive_errors": state.get("consecutiveErrors", 0),
-                "last_error": state.get("lastError"),
-                "target": job.get("sessionTarget", "isolated"),
-                "task_preview": task_preview, "timeout_s": payload.get("timeoutSeconds"),
-            })
+            formatted = _format_openclaw_job(job)
+            if formatted:
+                jobs.append(formatted)
     else:
         return {"jobs": [], "total": 0, "by_category": {}, "by_status": {},
                 "agent": agent, "online": False, "error": "No connection configured for this agent"}
@@ -431,6 +398,7 @@ def get_cron_jobs(
 class EditCronRequest(BaseModel):
     name:           Optional[str] = None
     cron:           Optional[str] = None   # raw cron expression e.g. "0 3 * * *"
+    at:             Optional[str] = None   # ISO timestamp for one-shot jobs
     tz:             Optional[str] = None   # IANA timezone
     session:        Optional[str] = None   # main | isolated
     wake:           Optional[str] = None   # now | next-heartbeat
@@ -444,6 +412,7 @@ def edit_cron_job(job_id: str, body: EditCronRequest, current_user=Depends(get_c
 
     if body.name            is not None: args.extend(["--name",             body.name])
     if body.cron            is not None: args.extend(["--cron",             body.cron])
+    if body.at              is not None: args.extend(["--at",               body.at])
     if body.tz              is not None: args.extend(["--tz",               body.tz])
     if body.session         is not None: args.extend(["--session",          body.session])
     if body.wake            is not None: args.extend(["--wake",             body.wake])

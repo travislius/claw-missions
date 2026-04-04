@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
-  Wifi, WifiOff, Monitor, CalendarDays, ChevronRight, Terminal,
+  Wifi, WifiOff, Monitor, Terminal,
   Apple, Cpu, MapPin, RefreshCw, X
 } from 'lucide-react';
 import api from '../api';
@@ -118,10 +117,10 @@ function DeviceModal({ member, endpoint, onClose }) {
   );
 }
 
-function MemberCard({ member, onViewCalendar, onViewDevice, onDragStart, onDragOver, onDrop, isDragging }) {
+function MemberCard({ member, onViewDevice, onDragStart, onDragOver, onDrop, isDragging }) {
   const a = ACCENT[member.id] || ACCENT.tia;
   const deviceEndpoint = DEVICE_ENDPOINTS[member.id];
-  const deviceDisabled = !deviceEndpoint;
+  const clickable = !!deviceEndpoint;
 
   return (
     <div
@@ -129,8 +128,9 @@ function MemberCard({ member, onViewCalendar, onViewDevice, onDragStart, onDragO
       onDragStart={() => onDragStart(member.id)}
       onDragOver={(e) => onDragOver(e, member.id)}
       onDrop={() => onDrop(member.id)}
-      className={`bg-gray-900 border rounded-2xl overflow-hidden cursor-move transition ${ROLE_COLOR[member.id] || 'border-gray-800'} ${isDragging ? 'opacity-60 scale-[0.98]' : ''}`}
-      title="Drag to reorder"
+      onClick={() => clickable && onViewDevice(member)}
+      className={`bg-gray-900 border rounded-2xl overflow-hidden transition ${ROLE_COLOR[member.id] || 'border-gray-800'} ${isDragging ? 'opacity-60 scale-[0.98]' : ''} ${clickable ? 'cursor-pointer hover:brightness-110' : 'cursor-move'}`}
+      title={clickable ? 'Click for device status' : 'No device endpoint'}
     >
       {/* Header */}
       <div className="px-5 pt-5 pb-4 flex items-start justify-between">
@@ -164,33 +164,6 @@ function MemberCard({ member, onViewCalendar, onViewDevice, onDragStart, onDragO
         </div>
       </div>
 
-      {/* Footer actions */}
-      <div className="px-4 pb-4 flex gap-2">
-        <button
-          onClick={() => onViewDevice(member)}
-          disabled={deviceDisabled}
-          className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition
-            ${deviceDisabled
-              ? 'bg-gray-800 text-gray-600 cursor-not-allowed'
-              : `${a.badge} hover:brightness-125 cursor-pointer`}`}
-        >
-          <Monitor className="w-3.5 h-3.5" />
-          {deviceDisabled ? 'Mobile Device' : 'Device'}
-        </button>
-        <button
-          onClick={() => onViewCalendar(member.id)}
-          disabled={!member.online}
-          className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition
-            ${member.online
-              ? `${a.badge} hover:brightness-125 cursor-pointer`
-              : 'bg-gray-800 text-gray-600 cursor-not-allowed'}`}
-        >
-          <CalendarDays className="w-3.5 h-3.5" />
-          {member.online ? 'View Schedule' : 'Offline'}
-          {member.online && <ChevronRight className="w-3 h-3" />}
-        </button>
-      </div>
-
       {/* Connection hint for offline machines */}
       {!member.online && MOBILE_MEMBER_IDS.has(member.id) && (
         <div className="mx-4 mb-4 px-3 py-2 bg-purple-500/10 rounded-lg">
@@ -222,7 +195,6 @@ export default function Team() {
   const [loading, setLoading] = useState(true);
   const [draggingId, setDraggingId] = useState(null);
   const [activeDeviceMember, setActiveDeviceMember] = useState(null);
-  const navigate = useNavigate();
 
   const fetchTeam = async () => {
     try {
@@ -286,7 +258,6 @@ export default function Team() {
               if (draggingId && draggingId !== id) moveMember(draggingId, id);
             }}
             onDrop={() => setDraggingId(null)}
-            onViewCalendar={(id) => navigate(`/calendar?agent=${id}`)}
           />
         ))}
       </div>

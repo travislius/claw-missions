@@ -2,18 +2,19 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   Calendar as CalIcon, RefreshCw, X, AlertTriangle, CheckCircle,
   HelpCircle, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
-  Edit2, Save, Loader, WifiOff
+  Edit2, Save, Loader, WifiOff, GripVertical,
 } from 'lucide-react';
 import api from '../api';
 
 const ACTIVE_AGENT = 'tia';
+const AGENTS = [{ id: 'tia', label: 'Tia Schedule' }];
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const HOUR_PX = 96;          // pixels per hour — bigger = more breathing room
-const TILE_MINS = 28;        // treat each tile as occupying this many minutes for overlap detection
+const HOUR_PX = 96;
+const TILE_MINS = 28;
 const TOTAL_H = 24 * HOUR_PX;
+const DRAG_MINUTE_STEP = 15;
 
-// ── category config ──────────────────────────────────────────────────────────
 const CAT = {
   trading:  { label: 'Trading',  bg: 'bg-amber-500/20',   border: 'border-amber-500/50',  text: 'text-amber-300',  dot: 'bg-amber-400',  badge: 'bg-amber-500/30 text-amber-300' },
   youtube:  { label: 'YouTube',  bg: 'bg-purple-500/20',  border: 'border-purple-500/50', text: 'text-purple-300', dot: 'bg-purple-400', badge: 'bg-purple-500/30 text-purple-300' },
@@ -23,32 +24,31 @@ const CAT = {
   system:   { label: 'System',   bg: 'bg-gray-500/20',    border: 'border-gray-500/50',   text: 'text-gray-400',   dot: 'bg-gray-500',   badge: 'bg-gray-500/30 text-gray-400' },
 };
 
-// OpenClaw schedule kinds
 const KIND_BADGE = {
-  cron:     'bg-gray-700 text-gray-400',
-  interval: 'bg-indigo-900/50 text-indigo-300',
-  once:     'bg-rose-900/50 text-rose-300',
+  cron: 'bg-gray-700 text-gray-300',
+  every: 'bg-indigo-900/50 text-indigo-300',
+  at: 'bg-rose-900/50 text-rose-300',
 };
 
-// Edit form options
-const SESSION_OPTS  = ['isolated', 'main'];
-const WAKE_OPTS     = ['now', 'next-heartbeat'];
+const SESSION_OPTS = ['isolated', 'main'];
+const WAKE_OPTS = ['now', 'next-heartbeat'];
 const TZ_OPTS = [
   'America/Los_Angeles', 'America/New_York', 'America/Chicago',
   'America/Denver', 'UTC', 'Europe/London', 'Asia/Shanghai', 'Asia/Tokyo',
 ];
 
-// ── helpers ───────────────────────────────────────────────────────────────────
 function StatusIcon({ status, size = 'w-3 h-3' }) {
-  if (status === 'ok')    return <CheckCircle   className={`${size} text-green-400 shrink-0`} />;
+  if (status === 'ok') return <CheckCircle className={`${size} text-green-400 shrink-0`} />;
   if (status === 'error') return <AlertTriangle className={`${size} text-red-400 shrink-0`} />;
-  return                         <HelpCircle    className={`${size} text-gray-500 shrink-0`} />;
+  return <HelpCircle className={`${size} text-gray-500 shrink-0`} />;
 }
+
 function fmtTime(h, m) {
   const ap = h >= 12 ? 'PM' : 'AM';
   const hh = h % 12 || 12;
   return `${hh}:${String(m).padStart(2, '0')} ${ap}`;
 }
+
 function fmtDuration(ms) {
   if (!ms) return null;
   if (ms < 1000) return `${ms}ms`;
@@ -56,22 +56,174 @@ function fmtDuration(ms) {
   return `${(ms / 60000).toFixed(1)}m`;
 }
 
-// ── overlap layout ────────────────────────────────────────────────────────────
-// Returns Map<id, {col, total}>
+function fmtAbsolute(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleString([], {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
+function fmtEvery(ms) {
+  if (!ms) return 'Interval';
+  const mins = Math.round(ms / 60000);
+  if (mins < 60) return `Every ${mins}m`;
+  const hours = mins / 60;
+  if (Number.isInteger(hours)) return `Every ${hours}h`;
+  return `Every ${(hours).toFixed(1)}h`;
+}
+
+function toDate(value) {
+  if (value == null) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function isToday(date) {
+  const t = new Date();
+  return date.getDate() === t.getDate() && date.getMonth() === t.getMonth() && date.getFullYear() === t.getFullYear();
+}
+
+function sameLocalDate(a, b) {
+  return a && b
+    && a.getFullYear() === b.getFullYear()
+    && a.getMonth() === b.getMonth()
+    && a.getDate() === b.getDate();
+}
+
+function startOfDay(date) {
+  const next = new Date(date);
+  next.setHours(0, 0, 0, 0);
+  return next;
+}
+
+function startOfWeek(date) {
+  const next = startOfDay(date);
+  const offset = (next.getDay() + 6) % 7;
+  next.setDate(next.getDate() - offset);
+  return next;
+}
+
+function addDays(date, amount) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + amount);
+  return next;
+}
+
+function dayDiff(a, b) {
+  return Math.round((startOfDay(a).getTime() - startOfDay(b).getTime()) / 86400000);
+}
+
+function dateKey(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function roundMinutes(mins) {
+  const rounded = Math.round(mins / DRAG_MINUTE_STEP) * DRAG_MINUTE_STEP;
+  return Math.max(0, Math.min(23 * 60 + 45, rounded));
+}
+
+function toDatetimeLocalValue(value) {
+  const date = toDate(value);
+  if (!date) return '';
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function fromDropPosition(targetDate, clientY, element) {
+  const rect = element.getBoundingClientRect();
+  const mins = roundMinutes(((clientY - rect.top) / rect.height) * 24 * 60);
+  const next = new Date(targetDate);
+  next.setHours(Math.floor(mins / 60), mins % 60, 0, 0);
+  return next;
+}
+
+function normalizeJobs(rawJobs, weekStart) {
+  return rawJobs.map((job) => {
+    const normalized = {
+      ...job,
+      scheduledAt: null,
+      weekDayIndices: [],
+      isDraggable: Boolean(job.supports_drag && job.source === 'openclaw' && job.kind === 'at'),
+    };
+
+    if (job.kind === 'at') {
+      const scheduledAt = toDate(job.at || job.next_run_at_ms);
+      if (scheduledAt) {
+        normalized.scheduledAt = scheduledAt;
+        normalized.hour = scheduledAt.getHours();
+        normalized.minute = scheduledAt.getMinutes();
+        const diff = dayDiff(scheduledAt, weekStart);
+        normalized.weekDayIndices = diff >= 0 && diff < 7 ? [diff] : [];
+      }
+      return normalized;
+    }
+
+    if (job.kind === 'every') {
+      const anchor = toDate(job.next_run_at_ms || job.anchor_ms);
+      if (anchor) {
+        normalized.scheduledAt = anchor;
+        normalized.hour = anchor.getHours();
+        normalized.minute = anchor.getMinutes();
+        const diff = dayDiff(anchor, weekStart);
+        normalized.weekDayIndices = diff >= 0 && diff < 7 ? [diff] : [];
+      }
+      return normalized;
+    }
+
+    normalized.weekDayIndices = Array.isArray(job.days) ? job.days : [];
+    return normalized;
+  });
+}
+
+function occursOnDate(job, date) {
+  if (job.kind === 'cron') {
+    return job.weekDayIndices.includes((date.getDay() + 6) % 7);
+  }
+  return job.scheduledAt ? sameLocalDate(job.scheduledAt, date) : false;
+}
+
+function scheduleSummary(job) {
+  if (job.kind === 'at') return job.scheduledAt ? fmtAbsolute(job.scheduledAt) : 'One-time job';
+  if (job.kind === 'every') return `${fmtEvery(job.every_ms)}${job.scheduledAt ? ` · next ${fmtAbsolute(job.scheduledAt)}` : ''}`;
+  return job.expr;
+}
+
+function applyOptimisticMove(rawJobs, jobId, targetDate) {
+  return rawJobs.map((job) => {
+    if (job.id !== jobId) return job;
+    return {
+      ...job,
+      at: targetDate.toISOString(),
+      next_run_at_ms: targetDate.getTime(),
+      next_run: `Scheduled for ${fmtAbsolute(targetDate)}`,
+    };
+  });
+}
+
 function computeLayout(dayJobs) {
   const sorted = [...dayJobs].sort((a, b) => (a.hour * 60 + a.minute) - (b.hour * 60 + b.minute));
   const layout = new Map();
 
   let i = 0;
   while (i < sorted.length) {
-    // Build cluster: all jobs whose start is within TILE_MINS of cluster start
     const clusterStart = sorted[i].hour * 60 + sorted[i].minute;
     const cluster = [sorted[i]];
     let j = i + 1;
     while (j < sorted.length) {
       const t = sorted[j].hour * 60 + sorted[j].minute;
-      if (t - clusterStart < TILE_MINS) { cluster.push(sorted[j]); j++; }
-      else break;
+      if (t - clusterStart < TILE_MINS) {
+        cluster.push(sorted[j]);
+        j += 1;
+      } else {
+        break;
+      }
     }
     cluster.forEach((job, idx) => layout.set(job.id, { col: idx, total: cluster.length }));
     i = j;
@@ -79,13 +231,6 @@ function computeLayout(dayJobs) {
   return layout;
 }
 
-// ── helpers (date) ────────────────────────────────────────────────────────────
-function isToday(date) {
-  const t = new Date();
-  return date.getDate() === t.getDate() && date.getMonth() === t.getMonth() && date.getFullYear() === t.getFullYear();
-}
-
-// ── Current-time indicator ────────────────────────────────────────────────────
 function NowLine() {
   const now = new Date();
   const topPx = (now.getHours() * 60 + now.getMinutes()) / 60 * HOUR_PX;
@@ -98,40 +243,51 @@ function NowLine() {
   );
 }
 
-// ── Edit Modal ────────────────────────────────────────────────────────────────
 function EditModal({ job, onClose, onSaved }) {
   const [form, setForm] = useState({
-    name:            job.name,
-    cron:            job.expr,
-    tz:              job.tz === 'system' ? 'America/Los_Angeles' : job.tz,
-    session:         job.session_target || 'isolated',
-    wake:            job.wake_mode || 'now',
-    enabled:         job.enabled ?? true,
+    name: job.name,
+    cron: job.expr,
+    at: toDatetimeLocalValue(job.at || job.next_run_at_ms),
+    tz: job.tz === 'system' ? 'America/Los_Angeles' : (job.tz || 'America/Los_Angeles'),
+    session: job.session_target || 'isolated',
+    wake: job.wake_mode || 'now',
+    enabled: job.enabled ?? true,
     timeout_seconds: job.timeout_s || '',
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   const save = async () => {
     setSaving(true);
     setError(null);
     try {
-      const payload = { name: form.name, cron: form.cron, tz: form.tz,
-        session: form.session, wake: form.wake, enabled: form.enabled };
+      const payload = {
+        name: form.name,
+        session: form.session,
+        wake: form.wake,
+        enabled: form.enabled,
+      };
+      if (job.kind === 'cron') {
+        payload.cron = form.cron;
+        payload.tz = form.tz;
+      }
+      if (job.kind === 'at') {
+        if (!form.at) throw new Error('Pick a valid date and time');
+        payload.at = new Date(form.at).toISOString();
+      }
       if (form.timeout_seconds) payload.timeout_seconds = Number(form.timeout_seconds);
       await api.patch(`/crons/${job.id}`, payload);
       onSaved();
       onClose();
     } catch (e) {
-      setError(e.response?.data?.detail || 'Save failed');
+      setError(e.response?.data?.detail || e.message || 'Save failed');
     } finally {
       setSaving(false);
     }
   };
 
-  // Live cron expression breakdown
   const parts = form.cron.trim().split(/\s+/);
   const cronLabels = ['min', 'hour', 'dom', 'month', 'dow'];
 
@@ -141,7 +297,7 @@ function EditModal({ job, onClose, onSaved }) {
       <div className="relative bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-800 flex items-center justify-between">
           <h2 className="text-base font-bold text-white flex items-center gap-2">
-            <Edit2 className="w-4 h-4 text-ocean-400" /> Edit Cron
+            <Edit2 className="w-4 h-4 text-ocean-400" /> Edit Schedule
           </h2>
           <button onClick={onClose} className="p-1.5 text-gray-500 hover:text-white hover:bg-gray-700 rounded-lg transition">
             <X className="w-4 h-4" />
@@ -149,80 +305,97 @@ function EditModal({ job, onClose, onSaved }) {
         </div>
 
         <div className="px-5 py-4 space-y-4 max-h-[70vh] overflow-y-auto">
-          {/* Name */}
           <div>
             <label className="text-xs text-gray-500 uppercase tracking-wider block mb-1">Name</label>
             <input
               value={form.name}
-              onChange={e => set('name', e.target.value)}
+              onChange={(e) => set('name', e.target.value)}
               className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-ocean-500"
             />
           </div>
 
-          {/* Cron expression + breakdown */}
-          <div>
-            <label className="text-xs text-gray-500 uppercase tracking-wider block mb-1">Schedule (cron expr)</label>
-            <input
-              value={form.cron}
-              onChange={e => set('cron', e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-ocean-500"
-              placeholder="0 3 * * *"
-            />
-            {/* Visual breakdown */}
-            <div className="flex gap-1.5 mt-1.5">
-              {cronLabels.map((label, i) => (
-                <div key={label} className="flex-1 bg-gray-800/60 rounded px-1.5 py-1 text-center">
-                  <p className="text-xs text-gray-600">{label}</p>
-                  <p className="text-xs font-mono text-gray-300">{parts[i] ?? '?'}</p>
+          {job.kind === 'cron' && (
+            <>
+              <div>
+                <label className="text-xs text-gray-500 uppercase tracking-wider block mb-1">Schedule (cron expr)</label>
+                <input
+                  value={form.cron}
+                  onChange={(e) => set('cron', e.target.value)}
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-ocean-500"
+                  placeholder="0 3 * * *"
+                />
+                <div className="flex gap-1.5 mt-1.5">
+                  {cronLabels.map((label, i) => (
+                    <div key={label} className="flex-1 bg-gray-800/60 rounded px-1.5 py-1 text-center">
+                      <p className="text-xs text-gray-600">{label}</p>
+                      <p className="text-xs font-mono text-gray-300">{parts[i] ?? '?'}</p>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+
+              <div>
+                <label className="text-xs text-gray-500 uppercase tracking-wider block mb-1">Timezone</label>
+                <select
+                  value={form.tz}
+                  onChange={(e) => set('tz', e.target.value)}
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-ocean-500"
+                >
+                  {TZ_OPTS.map((tz) => <option key={tz} value={tz}>{tz}</option>)}
+                </select>
+              </div>
+            </>
+          )}
+
+          {job.kind === 'at' && (
+            <div>
+              <label className="text-xs text-gray-500 uppercase tracking-wider block mb-1">Run at</label>
+              <input
+                type="datetime-local"
+                value={form.at}
+                onChange={(e) => set('at', e.target.value)}
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-ocean-500"
+              />
+              <p className="mt-1 text-xs text-gray-500">Shown in your browser timezone and saved as an absolute timestamp.</p>
             </div>
-          </div>
+          )}
 
-          {/* Timezone */}
-          <div>
-            <label className="text-xs text-gray-500 uppercase tracking-wider block mb-1">Timezone</label>
-            <select
-              value={form.tz}
-              onChange={e => set('tz', e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-ocean-500"
-            >
-              {TZ_OPTS.map(tz => <option key={tz} value={tz}>{tz}</option>)}
-            </select>
-          </div>
+          {job.kind === 'every' && (
+            <div className="bg-gray-800/60 border border-gray-700 rounded-lg px-3 py-3 text-sm text-gray-300">
+              Interval jobs are shown on the calendar for visibility, but drag rescheduling is disabled for this schedule type.
+            </div>
+          )}
 
-          {/* Session + Wake */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs text-gray-500 uppercase tracking-wider block mb-1">Session target</label>
               <select
                 value={form.session}
-                onChange={e => set('session', e.target.value)}
+                onChange={(e) => set('session', e.target.value)}
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-ocean-500"
               >
-                {SESSION_OPTS.map(s => <option key={s} value={s}>{s}</option>)}
+                {SESSION_OPTS.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
             <div>
               <label className="text-xs text-gray-500 uppercase tracking-wider block mb-1">Wake mode</label>
               <select
                 value={form.wake}
-                onChange={e => set('wake', e.target.value)}
+                onChange={(e) => set('wake', e.target.value)}
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-ocean-500"
               >
-                {WAKE_OPTS.map(w => <option key={w} value={w}>{w}</option>)}
+                {WAKE_OPTS.map((w) => <option key={w} value={w}>{w}</option>)}
               </select>
             </div>
           </div>
 
-          {/* Timeout + Enabled */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs text-gray-500 uppercase tracking-wider block mb-1">Timeout (seconds)</label>
               <input
                 type="number"
                 value={form.timeout_seconds}
-                onChange={e => set('timeout_seconds', e.target.value)}
+                onChange={(e) => set('timeout_seconds', e.target.value)}
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-ocean-500"
                 placeholder="120"
               />
@@ -261,7 +434,6 @@ function EditModal({ job, onClose, onSaved }) {
   );
 }
 
-// ── Detail Modal ──────────────────────────────────────────────────────────────
 function DetailModal({ job, onClose, onEdit }) {
   const c = CAT[job.category] || CAT.system;
   const [expanded, setExpanded] = useState(false);
@@ -314,14 +486,8 @@ function DetailModal({ job, onClose, onEdit }) {
                 <p className="text-sm font-mono text-white">{fmtTime(job.hour, job.minute)}</p>
               </div>
               <div className="bg-gray-800/60 rounded-lg px-3 py-2">
-                <p className="text-xs text-gray-500 mb-0.5">Days</p>
-                <div className="flex gap-1">
-                  {DAYS.map((d, i) => (
-                    <span key={i} className={`text-xs font-mono px-1 rounded ${job.days.includes(i) ? `${c.badge} font-bold` : 'text-gray-600'}`}>
-                      {d[0]}
-                    </span>
-                  ))}
-                </div>
+                <p className="text-xs text-gray-500 mb-0.5">Pattern</p>
+                <p className="text-sm text-white">{scheduleSummary(job)}</p>
               </div>
               <div className="bg-gray-800/60 rounded-lg px-3 py-2">
                 <p className="text-xs text-gray-500 mb-0.5">Next run</p>
@@ -345,8 +511,10 @@ function DetailModal({ job, onClose, onEdit }) {
               )}
             </div>
             <div className="mt-2 flex items-center gap-2 flex-wrap">
-              <code className="text-xs text-gray-400 bg-gray-800 px-2 py-1 rounded font-mono">{job.expr}</code>
-              {job.tz !== 'system' && <span className="text-xs text-gray-600">{job.tz}</span>}
+              {job.kind === 'cron' && <code className="text-xs text-gray-400 bg-gray-800 px-2 py-1 rounded font-mono">{job.expr}</code>}
+              {job.kind === 'cron' && job.tz !== 'system' && <span className="text-xs text-gray-600">{job.tz}</span>}
+              {job.isDraggable && <span className="text-xs text-rose-300 bg-rose-500/10 px-2 py-1 rounded">Drag enabled</span>}
+              {!job.isDraggable && job.source === 'openclaw' && <span className="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded">Drag disabled for this schedule type</span>}
             </div>
           </div>
 
@@ -386,33 +554,39 @@ function DetailModal({ job, onClose, onEdit }) {
   );
 }
 
-// ── Cron Tile ─────────────────────────────────────────────────────────────────
-function CronTile({ job, layout, onClick }) {
+function CronTile({ job, layout, onClick, onDragStart, onDragEnd, saving }) {
   const c = CAT[job.category] || CAT.system;
   const { col, total } = layout;
   const topPx = (job.hour * 60 + job.minute) / 60 * HOUR_PX;
-  const pct   = (v) => `${(v * 100).toFixed(1)}%`;
-  const left  = pct(col / total);
+  const pct = (v) => `${(v * 100).toFixed(1)}%`;
+  const left = pct(col / total);
   const width = pct(1 / total);
-  const gap   = total > 1 ? 2 : 0;
+  const gap = total > 1 ? 2 : 0;
 
   return (
     <button
+      draggable={job.isDraggable && !saving}
+      onDragStart={(event) => onDragStart(event, job)}
+      onDragEnd={onDragEnd}
       onClick={() => onClick(job)}
-      className="absolute bg-gray-800/90 border border-gray-700/80 rounded-lg px-1.5 py-1 text-left hover:bg-gray-750 hover:border-gray-600 transition cursor-pointer overflow-hidden"
-      style={{ top: `${topPx}px`, left: `calc(${left} + 2px)`, width: `calc(${width} - ${4 + gap}px)`, minHeight: '30px', zIndex: 1 }}
+      title={job.isDraggable ? 'Drag to reschedule' : job.source === 'openclaw' ? 'Recurring and interval jobs cannot be dragged yet' : 'View details'}
+      className={`absolute border rounded-lg px-1.5 py-1 text-left transition overflow-hidden ${
+        job.isDraggable
+          ? 'bg-rose-900/35 border-rose-500/40 hover:border-rose-400 cursor-grab active:cursor-grabbing'
+          : 'bg-gray-800/90 border-gray-700/80 hover:bg-gray-750 hover:border-gray-600 cursor-pointer'
+      } ${saving ? 'opacity-60' : ''}`}
+      style={{ top: `${topPx}px`, left: `calc(${left} + 2px)`, width: `calc(${width} - ${4 + gap}px)`, minHeight: '34px', zIndex: 1 }}
     >
       <div className="flex items-center gap-1.5">
-        <span className={`w-2 h-2 rounded-full shrink-0 ${c.dot}`} />
+        {job.isDraggable ? <GripVertical className="w-3 h-3 text-rose-300 shrink-0" /> : <span className={`w-2 h-2 rounded-full shrink-0 ${c.dot}`} />}
         <StatusIcon status={job.status} size="w-2.5 h-2.5" />
-        <span className="text-xs font-medium text-gray-200 truncate leading-tight">{job.name}</span>
+        <span className="text-xs font-medium text-gray-100 truncate leading-tight">{job.name}</span>
       </div>
-      <p className="text-xs text-gray-500 leading-none mt-0.5 pl-3.5">{fmtTime(job.hour, job.minute)}</p>
+      <p className="text-xs text-gray-400 leading-none mt-0.5 pl-4">{fmtTime(job.hour, job.minute)}</p>
     </button>
   );
 }
 
-// ── Legend ────────────────────────────────────────────────────────────────────
 function Legend({ summary }) {
   return (
     <div className="flex flex-wrap gap-3">
@@ -428,6 +602,7 @@ function Legend({ summary }) {
         );
       })}
       <div className="flex items-center gap-3 ml-auto">
+        <div className="flex items-center gap-1.5"><GripVertical className="w-3 h-3 text-rose-300" /><span className="text-xs text-gray-400">one-time draggable</span></div>
         <div className="flex items-center gap-1.5"><CheckCircle className="w-3 h-3 text-green-400" /><span className="text-xs text-gray-400">{summary.by_status?.ok ?? 0} ok</span></div>
         <div className="flex items-center gap-1.5"><AlertTriangle className="w-3 h-3 text-red-400" /><span className="text-xs text-gray-400">{summary.by_status?.error ?? 0} errors</span></div>
       </div>
@@ -435,7 +610,6 @@ function Legend({ summary }) {
   );
 }
 
-// ── Category Filter Bar ───────────────────────────────────────────────────────
 function CategoryFilter({ active, counts, onChange }) {
   return (
     <div className="flex flex-wrap gap-2">
@@ -473,23 +647,53 @@ function CategoryFilter({ active, counts, onChange }) {
   );
 }
 
-// ── Main ──────────────────────────────────────────────────────────────────────
+function DropPreview({ preview }) {
+  if (!preview) return null;
+  return (
+    <div className="absolute inset-x-0 z-30 pointer-events-none" style={{ top: `${preview.top}px` }}>
+      <div className="h-0.5 bg-rose-400/80" />
+      <div className="absolute right-2 -top-3 px-2 py-0.5 rounded-full bg-rose-500 text-[11px] font-medium text-white shadow-lg">
+        {preview.label}
+      </div>
+    </div>
+  );
+}
+
 export default function CalendarPage() {
   const activeAgent = ACTIVE_AGENT;
-
-  // Detect initial view based on screen width
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
   const [calView, setCalView] = useState(isMobile ? 'day' : 'week');
   const [dayDate, setDayDate] = useState(new Date());
   const [filterCat, setFilterCat] = useState(null);
-
-  const [data, setData]       = useState(null);
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
-  const [editing, setEditing]   = useState(null);
+  const [editing, setEditing] = useState(null);
+  const [draggingId, setDraggingId] = useState(null);
+  const [savingJobId, setSavingJobId] = useState(null);
+  const [dropPreview, setDropPreview] = useState(null);
+  const [notice, setNotice] = useState(null);
   const gridRef = useRef(null);
 
-  // Auto-switch to day view when screen narrows below 768px
+  const fetchData = useCallback(async ({ background = false } = {}) => {
+    if (!background) {
+      setLoading(true);
+      setData(null);
+    }
+    try {
+      const res = await api.get(`/crons/jobs?agent=${activeAgent}`);
+      setData(res.data);
+    } catch (e) {
+      console.error(e);
+      setNotice({ type: 'error', text: 'Could not refresh schedule data.' });
+    } finally {
+      if (!background) setLoading(false);
+    }
+  }, [activeAgent]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 768) setCalView('day');
@@ -498,96 +702,181 @@ export default function CalendarPage() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setData(null);
-    try {
-      const res = await api.get(`/crons/jobs?agent=tia`);
-      setData(res.data);
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
-  }, []);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
+  const weekStart = startOfWeek(dayDate);
+  const weekDates = DAYS.map((_, idx) => addDays(weekStart, idx));
+  const allJobs = normalizeJobs(data?.jobs || [], weekStart);
+  const catCounts = allJobs.reduce((acc, j) => { acc[j.category] = (acc[j.category] || 0) + 1; return acc; }, {});
+  const jobs = filterCat ? allJobs.filter((j) => j.category === filterCat) : allJobs;
+  const byDay = weekDates.map((date) => jobs.filter((job) => occursOnDate(job, date)));
+  const layouts = byDay.map(computeLayout);
+  const todayKey = dateKey(new Date());
 
   useEffect(() => {
     if (data && gridRef.current) {
-      const firstHour = Math.min(...(data.jobs || []).map(j => j.hour));
+      const firstHour = Math.min(...(allJobs.length ? allJobs : [{ hour: 8 }]).map((j) => j.hour ?? 8));
       setTimeout(() => gridRef.current?.scrollTo({ top: Math.max(0, (firstHour - 0.5) * HOUR_PX), behavior: 'smooth' }), 150);
     }
-  }, [data]);
+  }, [data, allJobs]);
 
-  if (loading) return (
-    <div className="flex items-center justify-center h-64 text-gray-500">
-      <RefreshCw className="w-5 h-5 animate-spin mr-2" /> Fetching schedule…
-    </div>
-  );
+  const clearDragState = useCallback(() => {
+    setDraggingId(null);
+    setDropPreview(null);
+  }, []);
+
+  const handleDragStart = useCallback((event, job) => {
+    if (!job.isDraggable) {
+      event.preventDefault();
+      return;
+    }
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', job.id);
+    setDraggingId(job.id);
+    setNotice(null);
+  }, []);
+
+  const updateDropPreview = useCallback((event, targetDate) => {
+    if (!draggingId) return null;
+    const target = fromDropPosition(targetDate, event.clientY, event.currentTarget);
+    setDropPreview({
+      dayKey: dateKey(targetDate),
+      top: ((target.getHours() * 60 + target.getMinutes()) / 60) * HOUR_PX,
+      label: fmtAbsolute(target),
+    });
+    return target;
+  }, [draggingId]);
+
+  const handleDrop = useCallback(async (event, targetDate) => {
+    event.preventDefault();
+    const target = updateDropPreview(event, targetDate);
+    const job = allJobs.find((item) => item.id === draggingId);
+    if (!job || !job.isDraggable || !target) {
+      clearDragState();
+      return;
+    }
+
+    const snapshot = JSON.parse(JSON.stringify(data));
+    clearDragState();
+    setSavingJobId(job.id);
+    setData((current) => current ? { ...current, jobs: applyOptimisticMove(current.jobs || [], job.id, target) } : current);
+
+    try {
+      await api.patch(`/crons/${job.id}`, { at: target.toISOString() });
+      await fetchData({ background: true });
+      setNotice({ type: 'success', text: `${job.name} moved to ${fmtAbsolute(target)}.` });
+    } catch (e) {
+      setData(snapshot);
+      setNotice({ type: 'error', text: e.response?.data?.detail || 'Could not reschedule this job.' });
+    } finally {
+      setSavingJobId(null);
+    }
+  }, [allJobs, clearDragState, data, draggingId, fetchData, updateDropPreview]);
+
+  const handleDragOver = useCallback((event, targetDate) => {
+    const job = allJobs.find((item) => item.id === draggingId);
+    if (!job?.isDraggable) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    updateDropPreview(event, targetDate);
+  }, [allJobs, draggingId, updateDropPreview]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64 text-gray-500">
+        <RefreshCw className="w-5 h-5 animate-spin mr-2" /> Fetching schedule…
+      </div>
+    );
+  }
 
   if (!data) return null;
 
-  if (data.online === false) return (
-    <div className="flex flex-col items-center justify-center h-64 gap-3 text-gray-500">
-      <WifiOff className="w-8 h-8 text-gray-600" />
-      <p className="text-sm font-medium">Agent offline</p>
-      <p className="text-xs text-gray-600">{data.error || 'Could not connect'}</p>
-    </div>
-  );
+  if (data.online === false) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-3 text-gray-500">
+        <WifiOff className="w-8 h-8 text-gray-600" />
+        <p className="text-sm font-medium">Agent offline</p>
+        <p className="text-xs text-gray-600">{data.error || 'Could not connect'}</p>
+      </div>
+    );
+  }
 
-  const allJobs = data.jobs || [];
-  const catCounts = allJobs.reduce((acc, j) => { acc[j.category] = (acc[j.category] || 0) + 1; return acc; }, {});
-  const jobs = filterCat ? allJobs.filter(j => j.category === filterCat) : allJobs;
-  const byDay = DAYS.map((_, di) => jobs.filter(j => j.days.includes(di)));
-  const layouts = byDay.map(computeLayout);
-  const todayIdx = (new Date().getDay() + 6) % 7;
+  const weekLabel = `${weekDates[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekDates[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+  const dayIdx = (dayDate.getDay() + 6) % 7;
+  const dayJobs = jobs.filter((job) => occursOnDate(job, dayDate));
+  const dayLayout = computeLayout(dayJobs);
 
   return (
     <div className="flex flex-col h-full max-w-full">
-      {/* Page header */}
       <div className="mb-4 flex flex-col gap-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4">
           <div>
             <h1 className="text-xl font-bold text-white flex items-center gap-2">
               <CalIcon className="w-5 h-5 text-red-400" />
-              {AGENTS.find(a => a.id === activeAgent)?.label ?? 'Schedule'}
+              {AGENTS.find((a) => a.id === activeAgent)?.label ?? 'Schedule'}
             </h1>
             <p className="text-xs text-gray-500 mt-0.5">
-              {data.total} cron jobs · click tile to view · ✏️ to edit
+              {data.total} cron jobs · drag one-time tiles to reschedule · recurring jobs stay locked
             </p>
           </div>
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1 bg-gray-800 rounded-lg p-1">
               <button
                 onClick={() => setCalView('week')}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition ${
-                  calView === 'week' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'
-                }`}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition ${calView === 'week' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'}`}
               >
                 Week
               </button>
               <button
                 onClick={() => setCalView('day')}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition ${
-                  calView === 'day' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'
-                }`}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition ${calView === 'day' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'}`}
               >
                 Day
               </button>
             </div>
-            <button onClick={fetchData} className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition" title="Refresh">
+            <button onClick={() => fetchData()} className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition" title="Refresh">
               <RefreshCw className="w-4 h-4" />
             </button>
           </div>
         </div>
 
+        {notice && (
+          <div className={`rounded-xl border px-4 py-3 text-sm ${
+            notice.type === 'error'
+              ? 'bg-red-950/40 border-red-500/30 text-red-200'
+              : 'bg-emerald-950/30 border-emerald-500/30 text-emerald-200'
+          }`}>
+            {notice.text}
+          </div>
+        )}
+
         <Legend summary={data} />
         <CategoryFilter active={filterCat} counts={catCounts} onChange={setFilterCat} />
       </div>
 
-      {/* Day navigation (day view only) */}
+      {calView === 'week' && (
+        <div className="mb-3 flex items-center justify-between bg-gray-900 border border-gray-800 rounded-xl px-4 py-2">
+          <button onClick={() => setDayDate((d) => addDays(d, -7))} className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <div className="text-center">
+            <span className="text-white font-semibold">{weekLabel}</span>
+            {weekDates.some((date) => sameLocalDate(date, new Date())) && <span className="ml-2 text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full">This week</span>}
+          </div>
+          <div className="flex items-center gap-1">
+            {dayDiff(new Date(), weekStart) < 0 || dayDiff(new Date(), weekStart) > 6 ? (
+              <button onClick={() => setDayDate(new Date())} className="text-xs text-ocean-400 hover:text-ocean-300 px-2 py-1 rounded-lg hover:bg-gray-800 transition mr-1">
+                Today
+              </button>
+            ) : null}
+            <button onClick={() => setDayDate((d) => addDays(d, 7))} className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {calView === 'day' && (
         <div className="mb-3 flex items-center justify-between bg-gray-900 border border-gray-800 rounded-xl px-4 py-2">
-          <button onClick={() => setDayDate(d => { const n = new Date(d); n.setDate(n.getDate()-1); return n; })}
-            className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">
+          <button onClick={() => setDayDate((d) => addDays(d, -1))} className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">
             <ChevronLeft className="w-4 h-4" />
           </button>
           <div className="text-center">
@@ -598,37 +887,31 @@ export default function CalendarPage() {
           </div>
           <div className="flex items-center gap-1">
             {!isToday(dayDate) && (
-              <button onClick={() => setDayDate(new Date())}
-                className="text-xs text-ocean-400 hover:text-ocean-300 px-2 py-1 rounded-lg hover:bg-gray-800 transition mr-1">
+              <button onClick={() => setDayDate(new Date())} className="text-xs text-ocean-400 hover:text-ocean-300 px-2 py-1 rounded-lg hover:bg-gray-800 transition mr-1">
                 Today
               </button>
             )}
-            <button onClick={() => setDayDate(d => { const n = new Date(d); n.setDate(n.getDate()+1); return n; })}
-              className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">
+            <button onClick={() => setDayDate((d) => addDays(d, 1))} className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
       )}
 
-      {/* ── Week View Grid ── */}
       {calView === 'week' && (
         <div className="flex flex-col flex-1 bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-          {/* Day header */}
           <div className="flex shrink-0 border-b border-gray-800 bg-gray-900 sticky top-0 z-10">
             <div className="w-12 shrink-0 border-r border-gray-800" />
-            {DAYS.map((day, i) => (
-              <div key={i} className={`flex-1 min-w-0 py-2 text-center border-r border-gray-800 last:border-0 ${i === todayIdx ? 'bg-ocean-900/30' : ''}`}>
-                <p className={`text-xs font-semibold uppercase tracking-wider ${i === todayIdx ? 'text-ocean-400' : 'text-gray-500'}`}>{day}</p>
-                {i === todayIdx && <div className="w-1.5 h-1.5 rounded-full bg-ocean-400 mx-auto mt-0.5" />}
+            {weekDates.map((date, i) => (
+              <div key={dateKey(date)} className={`flex-1 min-w-0 py-2 text-center border-r border-gray-800 last:border-0 ${dateKey(date) === todayKey ? 'bg-ocean-900/30' : ''}`}>
+                <p className={`text-xs font-semibold uppercase tracking-wider ${dateKey(date) === todayKey ? 'text-ocean-400' : 'text-gray-500'}`}>{DAYS[i]}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
                 <p className="text-xs text-gray-600 mt-0.5">{byDay[i].length}</p>
               </div>
             ))}
           </div>
 
-          {/* Scrollable timeline */}
           <div className="flex flex-1 overflow-y-auto" ref={gridRef}>
-            {/* Time gutter */}
             <div className="w-12 shrink-0 border-r border-gray-800 relative" style={{ minHeight: `${TOTAL_H}px` }}>
               {Array.from({ length: 24 }, (_, h) => (
                 <div key={h} className="absolute w-full flex items-start justify-end pr-2 pt-1" style={{ top: `${h * HOUR_PX}px`, height: `${HOUR_PX}px` }}>
@@ -639,23 +922,29 @@ export default function CalendarPage() {
               ))}
             </div>
 
-            {/* Day columns */}
-            {DAYS.map((_, dayIdx) => (
+            {weekDates.map((date, idx) => (
               <div
-                key={dayIdx}
-                className={`flex-1 min-w-0 relative border-r border-gray-800 last:border-0 ${dayIdx === todayIdx ? 'bg-ocean-900/10' : ''}`}
+                key={dateKey(date)}
+                onDragOver={(event) => handleDragOver(event, date)}
+                onDrop={(event) => handleDrop(event, date)}
+                onDragLeave={() => setDropPreview((current) => current?.dayKey === dateKey(date) ? null : current)}
+                className={`flex-1 min-w-0 relative border-r border-gray-800 last:border-0 ${dateKey(date) === todayKey ? 'bg-ocean-900/10' : ''} ${draggingId ? 'bg-white/[0.01]' : ''}`}
                 style={{ height: `${TOTAL_H}px` }}
               >
                 {Array.from({ length: 24 }, (_, h) => (
-                  <div key={h} className={`absolute w-full border-t ${h % 6 === 0 ? 'border-gray-700' : 'border-gray-800/50'}`} style={{ top: `${h * HOUR_PX}px` }} />
+                  <div key={h} className="absolute w-full border-t border-gray-800/50" style={{ top: `${h * HOUR_PX}px` }} />
                 ))}
-                {dayIdx === todayIdx && <NowLine />}
-                {byDay[dayIdx].map(job => (
+                {dateKey(date) === todayKey && <NowLine />}
+                {dropPreview?.dayKey === dateKey(date) && <DropPreview preview={dropPreview} />}
+                {byDay[idx].map((job) => (
                   <CronTile
                     key={job.id}
                     job={job}
-                    layout={layouts[dayIdx].get(job.id) || { col: 0, total: 1 }}
+                    layout={layouts[idx].get(job.id) || { col: 0, total: 1 }}
                     onClick={setSelected}
+                    onDragStart={handleDragStart}
+                    onDragEnd={clearDragState}
+                    saving={savingJobId === job.id}
                   />
                 ))}
               </div>
@@ -664,69 +953,62 @@ export default function CalendarPage() {
         </div>
       )}
 
-      {/* ── Day View Grid ── */}
-      {calView === 'day' && (() => {
-        // Map dayDate to Mon=0..Sun=6
-        const dayIdx = (dayDate.getDay() + 6) % 7;
-        const dayJobs = byDay[dayIdx];
-        const dayLayout = layouts[dayIdx];
-        const isDayToday = isToday(dayDate);
-
-        return (
-          <div className="flex flex-col flex-1 bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-            {/* Single day header */}
-            <div className="flex shrink-0 border-b border-gray-800 bg-gray-900 sticky top-0 z-10">
-              <div className="w-14 shrink-0 border-r border-gray-800" />
-              <div className={`flex-1 py-2 text-center ${isDayToday ? 'bg-ocean-900/30' : ''}`}>
-                <p className={`text-xs font-semibold uppercase tracking-wider ${isDayToday ? 'text-ocean-400' : 'text-gray-500'}`}>
-                  {dayDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                </p>
-                {isDayToday && <div className="w-1.5 h-1.5 rounded-full bg-ocean-400 mx-auto mt-0.5" />}
-                <p className="text-xs text-gray-600 mt-0.5">{dayJobs.length} job{dayJobs.length !== 1 ? 's' : ''}</p>
-              </div>
-            </div>
-
-            {/* Scrollable timeline */}
-            <div className="flex flex-1 overflow-y-auto" ref={gridRef}>
-              {/* Time gutter */}
-              <div className="w-14 shrink-0 border-r border-gray-800 relative" style={{ minHeight: `${TOTAL_H}px` }}>
-                {Array.from({ length: 24 }, (_, h) => (
-                  <div key={h} className="absolute w-full flex items-start justify-end pr-2 pt-1" style={{ top: `${h * HOUR_PX}px`, height: `${HOUR_PX}px` }}>
-                    <span className="text-xs text-gray-600 font-mono leading-none">
-                      {h === 0 ? '12A' : h < 12 ? `${h}A` : h === 12 ? '12P' : `${h - 12}P`}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Single day column */}
-              <div
-                className={`flex-1 relative ${isDayToday ? 'bg-ocean-900/10' : ''}`}
-                style={{ height: `${TOTAL_H}px` }}
-              >
-                {Array.from({ length: 24 }, (_, h) => (
-                  <div key={h} className={`absolute w-full border-t ${h % 6 === 0 ? 'border-gray-700' : 'border-gray-800/50'}`} style={{ top: `${h * HOUR_PX}px` }} />
-                ))}
-                {isDayToday && <NowLine />}
-                {dayJobs.map(job => (
-                  <CronTile
-                    key={job.id}
-                    job={job}
-                    layout={dayLayout.get(job.id) || { col: 0, total: 1 }}
-                    onClick={setSelected}
-                  />
-                ))}
-              </div>
+      {calView === 'day' && (
+        <div className="flex flex-col flex-1 bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+          <div className="flex shrink-0 border-b border-gray-800 bg-gray-900 sticky top-0 z-10">
+            <div className="w-14 shrink-0 border-r border-gray-800" />
+            <div className={`flex-1 py-2 text-center ${isToday(dayDate) ? 'bg-ocean-900/30' : ''}`}>
+              <p className={`text-xs font-semibold uppercase tracking-wider ${isToday(dayDate) ? 'text-ocean-400' : 'text-gray-500'}`}>
+                {dayDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+              </p>
+              <p className="text-xs text-gray-600 mt-0.5">{dayJobs.length} job{dayJobs.length !== 1 ? 's' : ''}</p>
             </div>
           </div>
-        );
-      })()}
+
+          <div className="flex flex-1 overflow-y-auto" ref={gridRef}>
+            <div className="w-14 shrink-0 border-r border-gray-800 relative" style={{ minHeight: `${TOTAL_H}px` }}>
+              {Array.from({ length: 24 }, (_, h) => (
+                <div key={h} className="absolute w-full flex items-start justify-end pr-2 pt-1" style={{ top: `${h * HOUR_PX}px`, height: `${HOUR_PX}px` }}>
+                  <span className="text-xs text-gray-600 font-mono leading-none">
+                    {h === 0 ? '12A' : h < 12 ? `${h}A` : h === 12 ? '12P' : `${h - 12}P`}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div
+              onDragOver={(event) => handleDragOver(event, dayDate)}
+              onDrop={(event) => handleDrop(event, dayDate)}
+              onDragLeave={() => setDropPreview((current) => current?.dayKey === dateKey(dayDate) ? null : current)}
+              className={`flex-1 relative ${isToday(dayDate) ? 'bg-ocean-900/10' : ''} ${draggingId ? 'bg-white/[0.01]' : ''}`}
+              style={{ height: `${TOTAL_H}px` }}
+            >
+              {Array.from({ length: 24 }, (_, h) => (
+                <div key={h} className="absolute w-full border-t border-gray-800/50" style={{ top: `${h * HOUR_PX}px` }} />
+              ))}
+              {isToday(dayDate) && <NowLine />}
+              {dropPreview?.dayKey === dateKey(dayDate) && <DropPreview preview={dropPreview} />}
+              {dayJobs.map((job) => (
+                <CronTile
+                  key={job.id}
+                  job={job}
+                  layout={dayLayout.get(job.id) || { col: 0, total: 1 }}
+                  onClick={setSelected}
+                  onDragStart={handleDragStart}
+                  onDragEnd={clearDragState}
+                  saving={savingJobId === job.id}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {selected && !editing && (
         <DetailModal job={selected} onClose={() => setSelected(null)} onEdit={(j) => { setSelected(null); setEditing(j); }} />
       )}
       {editing && (
-        <EditModal job={editing} onClose={() => setEditing(null)} onSaved={fetchData} />
+        <EditModal job={editing} onClose={() => setEditing(null)} onSaved={() => fetchData({ background: true })} />
       )}
     </div>
   );

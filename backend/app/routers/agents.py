@@ -2,6 +2,7 @@
 Coding agents router — running instances + config info.
 """
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -13,8 +14,31 @@ from ..auth import get_current_user
 
 router = APIRouter()
 
-CODEX_CONFIG = Path.home() / ".codex" / "config.toml"
-CLAUDE_CONFIG = Path.home() / ".claude.json"
+
+def _first_existing_path(*candidates: str) -> Path:
+    for candidate in candidates:
+        if not candidate:
+            continue
+        path = Path(candidate).expanduser()
+        if path.exists():
+            return path
+    return Path(candidates[0]).expanduser()
+
+
+AGENT_STATUS_FILE = _first_existing_path(
+    os.getenv('CLAWMISSIONS_AGENT_STATUS_FILE', ''),
+    '/Users/tiali/clawmissions-data/agent_status.json',
+)
+CODEX_CONFIG = _first_existing_path(
+    os.getenv('CLAWMISSIONS_CODEX_CONFIG', ''),
+    '/Users/tiali/.codex/config.toml',
+    str(Path.home() / '.codex' / 'config.toml'),
+)
+CLAUDE_CONFIG = _first_existing_path(
+    os.getenv('CLAWMISSIONS_CLAUDE_CONFIG', ''),
+    '/Users/tiali/.claude.json',
+    str(Path.home() / '.claude.json'),
+)
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
@@ -46,8 +70,14 @@ def _toml_load(path: Path) -> dict:
 
 
 def _cmd_which(tool: str) -> str | None:
+    env_key = f'CLAWMISSIONS_{tool.upper()}_PATH'
+    forced = os.getenv(env_key)
+    if forced:
+        forced_path = Path(forced).expanduser()
+        if forced_path.exists():
+            return str(forced_path)
     try:
-        r = subprocess.run(["which", tool], capture_output=True, text=True, timeout=3)
+        r = subprocess.run(['which', tool], capture_output=True, text=True, timeout=3)
         return r.stdout.strip() if r.returncode == 0 else None
     except Exception:
         return None
@@ -178,17 +208,32 @@ def _claude_config() -> dict:
     return cfg
 
 
+def _load_status_file() -> dict | None:
+    try:
+        if AGENT_STATUS_FILE.exists():
+            data = json.loads(AGENT_STATUS_FILE.read_text(encoding='utf-8'))
+            if isinstance(data, dict):
+                return data
+    except Exception:
+        pass
+    return None
+
+
 # ── routes ────────────────────────────────────────────────────────────────────
 
-@router.get("/agents", tags=["system"])
+@router.get('/agents', tags=['system'])
 def get_agents(current_user=Depends(get_current_user)):
     """Return running coding agent processes and configuration for all known agents."""
-    running = _get_running_agents()
+    status = _load_status_file() or {}
+    running = status.get('running') if isinstance(status.get('running'), list) else _get_running_agents()
     return {
-        "running": running,
-        "running_count": len(running),
-        "configs": {
-            "codex": _codex_config(),
-            "claude": _claude_config(),
+        'running': running,
+        'running_count': len(running),
+        'status_source': 'file' if status.get('running') is not None else 'local',
+        'status_file': str(AGENT_STATUS_FILE),
+        'status_generated_at': status.get('generated_at'),
+        'configs': {
+            'codex': _codex_config(),
+            'claude': _claude_config(),
         },
     }

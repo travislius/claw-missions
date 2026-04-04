@@ -65,4 +65,15 @@ export const bulkDeleteFiles = (fileIds) =>
 // Stats
 export const getStats = () => api.get('/stats');
 
+// Notes
+export const getNoteCategories = () => api.get('/notes/categories');
+export const updateNoteCategory = (categoryId, data) => api.put(`/notes/categories/${categoryId}`, data);
+export const getCategoryNotes = (categoryId) => api.get(`/notes/categories/${categoryId}/notes`);
+export const getNote = (noteId) => api.get(`/notes/notes/${noteId}`);
+export const createNote = (data) => api.post('/notes/notes', data);
+export const updateNote = (noteId, data) => api.put(`/notes/notes/${noteId}`, data);
+export const createNoteReply = (noteId, data) => api.post(`/notes/notes/${noteId}/replies`, data);
+export const updateNoteReply = (replyId, data) => api.put(`/notes/replies/${replyId}`, data);
+export const getNotesSummary = () => api.get('/notes/summary');
+
 export default api;

@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from .config import settings
 from .database import engine, SessionLocal, Base, get_db
 from .models import User
+from .models import NoteChannel
 from .auth import hash_password, get_current_user
 
 from .routers import auth as auth_router
@@ -18,6 +19,7 @@ from .routers import system as system_router
 from .routers import crons as crons_router
 from .routers import tasks as tasks_router
 from .routers import agents as agents_router
+from .routers import notes as notes_router
 
 Base.metadata.create_all(bind=engine)
 
@@ -26,6 +28,7 @@ tags_metadata = [
     {"name": "files", "description": "File management — upload, download, browse, search, tag assignment"},
     {"name": "tags", "description": "Tag CRUD — create, list, update, delete tags"},
     {"name": "system", "description": "Health check and storage statistics"},
+    {"name": "notes", "description": "Organized notes — categories, notes, replies"},
 ]
 
 app = FastAPI(
@@ -55,6 +58,7 @@ app.include_router(system_router.router, prefix="/api/system", tags=["system"])
 app.include_router(crons_router.router, prefix="/api/crons", tags=["crons"])
 app.include_router(tasks_router.router, prefix="/api/tasks", tags=["tasks"])
 app.include_router(agents_router.router, prefix="/api/system", tags=["system"])
+app.include_router(notes_router.router, prefix="/api/notes", tags=["notes"])
 
 
 @app.on_event("startup")
@@ -69,6 +73,40 @@ def create_default_user():
                 api_key=secrets.token_hex(16),
             )
             db.add(user)
+            db.commit()
+        if not db.query(NoteChannel).first():
+            for idx, channel in enumerate(
+                [
+                    {
+                        "name": "General",
+                        "slug": "general",
+                        "description": "Shared notes, status updates, and anything that does not need a niche lane.",
+                        "color": "slate",
+                    },
+                    {
+                        "name": "Ops",
+                        "slug": "ops",
+                        "description": "Incidents, infrastructure observations, and runbook-ish notes.",
+                        "color": "red",
+                    },
+                    {
+                        "name": "Ideas",
+                        "slug": "ideas",
+                        "description": "Loose proposals, experiments, and product thinking worth capturing.",
+                        "color": "amber",
+                    },
+                ]
+            ):
+                db.add(
+                    NoteChannel(
+                        name=channel["name"],
+                        slug=channel["slug"],
+                        description=channel["description"],
+                        color=channel["color"],
+                        sort_order=idx,
+                        is_seeded=True,
+                    )
+                )
             db.commit()
     finally:
         db.close()

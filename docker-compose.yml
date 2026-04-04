@@ -10,6 +10,7 @@ services:
       - /Users/tiali/.ssh/id_ed25519:/root/.ssh/id_ed25519:ro
       - /Users/tiali/.ssh/known_hosts:/root/.ssh/known_hosts:ro
       - /Users/tiali/clawd:/Users/tiali/clawd:ro
+      - /opt/homebrew/lib/node_modules/openclaw/skills:/opt/homebrew/lib/node_modules/openclaw/skills:ro
     environment:
       OPENCLAW_CRON_PATH: /openclaw/cron/jobs.json
     env_file:

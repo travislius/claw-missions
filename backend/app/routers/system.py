@@ -284,12 +284,18 @@ for line in subprocess.check_output(['df','-B1','--output=source,target,fstype,s
 proc_count = sum(1 for e in os.listdir('/proc') if e.isdigit())
 
 # GPU - try nvidia-smi first, fall back to lspci
-gpu_name = None; gpu_ram_gb = None
+gpu_name = None; gpu_ram_gb = None; gpu_util = None; gpu_temp = None; gpu_mem_used = None; gpu_mem_total = None; gpu_power = None; gpu_power_cap = None
 try:
-    out = subprocess.check_output(['nvidia-smi','--query-gpu=name,memory.total','--format=csv,noheader,nounits'], timeout=3).decode().strip()
-    parts = out.split(',')
-    gpu_name = parts[0].strip()
-    gpu_ram_gb = round(int(parts[1].strip()) / 1024, 1) if len(parts) > 1 else None
+    out = subprocess.check_output(['nvidia-smi','--query-gpu=name,memory.total,memory.used,utilization.gpu,temperature.gpu,power.draw,power.limit','--format=csv,noheader,nounits'], timeout=3).decode().strip()
+    parts = [p.strip() for p in out.split(',')]
+    gpu_name = parts[0]
+    gpu_mem_total = int(parts[1]) if len(parts) > 1 and parts[1] not in ('[N/A]','') else None
+    gpu_ram_gb = round(gpu_mem_total / 1024, 1) if gpu_mem_total else None
+    gpu_mem_used = int(parts[2]) if len(parts) > 2 and parts[2] not in ('[N/A]','') else None
+    gpu_util = int(parts[3]) if len(parts) > 3 and parts[3] not in ('[N/A]','') else None
+    gpu_temp = int(parts[4]) if len(parts) > 4 and parts[4] not in ('[N/A]','') else None
+    gpu_power = float(parts[5]) if len(parts) > 5 and parts[5] not in ('[N/A]','') else None
+    gpu_power_cap = float(parts[6]) if len(parts) > 6 and parts[6] not in ('[N/A]','') else None
 except:
     try:
         lspci = subprocess.check_output(['lspci'], timeout=3).decode()
@@ -298,7 +304,7 @@ except:
                 gpu_name = line.split(':')[-1].strip(); break
     except: pass
 
-print(json.dumps({'cpu_pct':cpu_pct,'cpu_cores':cpu_cores,'load_avg':load_avg,'mem_total':mem_total,'mem_used':mem_used,'mem_free':mem_free,'mem_pct':mem_pct,'disks':disks,'proc_count':proc_count,'uptime_sec':uptime_sec,'gpu_name':gpu_name,'gpu_ram_gb':gpu_ram_gb}))
+print(json.dumps({'cpu_pct':cpu_pct,'cpu_cores':cpu_cores,'load_avg':load_avg,'mem_total':mem_total,'mem_used':mem_used,'mem_free':mem_free,'mem_pct':mem_pct,'disks':disks,'proc_count':proc_count,'uptime_sec':uptime_sec,'gpu_name':gpu_name,'gpu_ram_gb':gpu_ram_gb,'gpu_util':gpu_util,'gpu_temp':gpu_temp,'gpu_mem_used':gpu_mem_used,'gpu_mem_total':gpu_mem_total,'gpu_power':gpu_power,'gpu_power_cap':gpu_power_cap}))
 "
 """
 
@@ -386,6 +392,11 @@ def get_resources_max(current_user=Depends(get_current_user)):
         "gpu": {
             "name": raw.get("gpu_name"),
             "vram_gb": raw.get("gpu_ram_gb"),
+            "usage_pct": float(raw["gpu_util"]) if raw.get("gpu_util") is not None else None,
+            "vram_used_gb": round(raw["gpu_mem_used"] / 1024, 2) if raw.get("gpu_mem_used") is not None else None,
+            "temp_c": raw.get("gpu_temp"),
+            "power_w": round(raw["gpu_power"], 1) if raw.get("gpu_power") is not None else None,
+            "power_cap_w": round(raw["gpu_power_cap"], 1) if raw.get("gpu_power_cap") is not None else None,
         },
         "system": {
             "uptime_seconds": uptime_secs,
@@ -646,8 +657,27 @@ def get_sessions(current_user=Depends(get_current_user)):
     }
 
 
-BUILTIN_SKILLS_DIR = Path("/opt/homebrew/lib/node_modules/openclaw/skills")
-USER_SKILLS_DIR = Path.home() / "clawd" / "skills"
+def _first_existing_dir(*candidates: str) -> Path:
+    for candidate in candidates:
+        if not candidate:
+            continue
+        path = Path(candidate).expanduser()
+        if path.exists():
+            return path
+    return Path(candidates[0]).expanduser()
+
+
+BUILTIN_SKILLS_DIR = _first_existing_dir(
+    os.getenv("CLAWMISSIONS_BUILTIN_SKILLS_DIR", ""),
+    "/opt/homebrew/lib/node_modules/openclaw/skills",
+    "/usr/local/lib/node_modules/openclaw/skills",
+    "/app/openclaw/skills",
+)
+USER_SKILLS_DIR = _first_existing_dir(
+    os.getenv("CLAWMISSIONS_USER_SKILLS_DIR", ""),
+    str(CLAWD_DIR / "skills"),
+    str(Path.home() / "clawd" / "skills"),
+)
 
 
 def _parse_skill(skill_dir: Path, source: str) -> dict:

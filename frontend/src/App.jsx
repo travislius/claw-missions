@@ -9,6 +9,7 @@ import SearchPage from './pages/Search';
 import CalendarPage from './pages/Calendar';
 import Team from './pages/Team';
 import Projects from './pages/Projects';
+import Notes from './pages/Notes';
 import Skills from './pages/Skills';
 import Memory from './pages/Memory';
 import Sessions from './pages/Sessions';
@@ -77,6 +78,8 @@ export default function App() {
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/team" element={<Team />} />
             <Route path="/projects" element={<Projects />} />
+            <Route path="/notes" element={<Notes />} />
+            <Route path="/notes/:categorySlug/:noteId" element={<Notes />} />
             <Route path="/skills" element={<Skills />} />
             <Route path="/sessions" element={<Sessions />} />
             <Route path="/tasks" element={<Tasks />} />

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Crosshair, ChevronRight, Pin, PinOff, Plus, RefreshCw,
   Monitor, FolderOpen, CalendarDays, Users, Radio, Brain,
-  ListTodo, FolderKanban, Shield, Bot, Puzzle
+  ListTodo, FolderKanban, Shield, Bot, Puzzle, NotebookText
 } from 'lucide-react';
 import api from '../api';
 
@@ -17,6 +17,7 @@ const WIDGET_DEFS = [
   { id: 'memory',    label: 'Memory',    icon: Brain,        color: 'blue',   endpoint: null },
   { id: 'tasks',     label: 'Tasks',     icon: ListTodo,     color: 'red',    endpoint: '/tasks' },
   { id: 'projects',  label: 'Projects',  icon: FolderKanban, color: 'amber',  endpoint: '/system/projects' },
+  { id: 'notes',     label: 'Notes',     icon: NotebookText, color: 'blue',   endpoint: '/notes/summary' },
   { id: 'monitor',   label: 'Monitor',   icon: Shield,       color: 'green',  endpoint: '/system/health-check' },
   { id: 'agents',    label: 'Agents',    icon: Bot,          color: 'purple', endpoint: '/system/agents' },
   { id: 'skills',    label: 'Skills',    icon: Puzzle,       color: 'ocean',  endpoint: '/system/skills' },
@@ -78,7 +79,7 @@ function WidgetCard({ def, data, onUnpin, dragHandlers }) {
   const c = COLORS[def.color];
   const Icon = def.icon;
 
-  const routes = { system: '/team', documents: '/files', schedule: '/calendar', team: '/team', sessions: '/sessions', memory: '/memory', tasks: '/tasks', projects: '/projects', monitor: '/monitor', agents: '/agents', skills: '/skills' };
+  const routes = { system: '/team', documents: '/files', schedule: '/calendar', team: '/team', sessions: '/sessions', memory: '/memory', tasks: '/tasks', projects: '/projects', notes: '/notes', monitor: '/monitor', agents: '/agents', skills: '/skills' };
 
   const renderContent = () => {
     switch (def.id) {
@@ -171,6 +172,15 @@ function WidgetCard({ def, data, onUnpin, dragHandlers }) {
           <>
             <div className="text-lg font-bold text-white">{sections}</div>
             <div className="text-[10px] text-gray-500">active projects</div>
+          </>
+        );
+      }
+      case 'notes': {
+        if (data?.total_topics == null) return <Shimmer />;
+        return (
+          <>
+            <div className="text-lg font-bold text-white">{data.total_topics}</div>
+            <div className="text-[10px] text-gray-500">{data.total_channels} categories · {data.total_replies} replies</div>
           </>
         );
       }
