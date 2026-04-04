@@ -56,7 +56,7 @@ function persistOrder(members) {
 
 function StatusBadge({ member }) {
   if (member.online) return (
-    <span className="flex items-center gap-1.5 text-xs text-green-400">
+    <span className="flex items-center gap-1.5 text-xs text-seafoam-500">
       <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" /> Online
     </span>
   );
@@ -89,20 +89,20 @@ function DeviceModal({ member, endpoint, onClose }) {
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 bg-ocean-900/20 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div
-        className="w-full max-w-5xl max-h-[90vh] overflow-y-auto bg-gray-950 border border-gray-800 rounded-2xl shadow-2xl"
+        className="w-full max-w-5xl max-h-[90vh] overflow-y-auto bg-white border border-ocean-100 rounded-2xl shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 z-10 px-5 py-4 bg-gray-950/95 backdrop-blur border-b border-gray-800 flex items-start justify-between gap-4">
+        <div className="sticky top-0 z-10 px-5 py-4 bg-white/95 backdrop-blur border-b border-ocean-100 flex items-start justify-between gap-4">
           <div>
             <p className={`text-xs font-semibold uppercase tracking-wider ${a.text}`}>Device Status</p>
-            <h2 className="text-lg font-bold text-white mt-1">{member.name}</h2>
+            <h2 className="text-lg font-bold text-gray-800 mt-1">{member.name}</h2>
             <p className="text-xs text-gray-500 mt-0.5">{member.machine} / Live resource telemetry</p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-gray-500 hover:text-white hover:bg-gray-800 transition"
+            className="p-2 rounded-lg text-gray-500 hover:text-ocean-700 hover:bg-sky-50 transition"
             aria-label="Close device status"
           >
             <X className="w-4 h-4" />
@@ -129,13 +129,13 @@ function MemberCard({ member, onViewDevice, onDragStart, onDragOver, onDrop, isD
       onDragOver={(e) => onDragOver(e, member.id)}
       onDrop={() => onDrop(member.id)}
       onClick={() => clickable && onViewDevice(member)}
-      className={`bg-gray-900 border rounded-2xl overflow-hidden transition ${ROLE_COLOR[member.id] || 'border-gray-800'} ${isDragging ? 'opacity-60 scale-[0.98]' : ''} ${clickable ? 'cursor-pointer hover:brightness-110' : 'cursor-move'}`}
+      className={`bg-white border rounded-2xl overflow-hidden transition ${ROLE_COLOR[member.id] || 'border-ocean-100'} ${isDragging ? 'opacity-60 scale-[0.98]' : ''} ${clickable ? 'cursor-pointer hover:brightness-110' : 'cursor-move'}`}
       title={clickable ? 'Click for device status' : 'No device endpoint'}
     >
       {/* Header */}
       <div className="px-5 pt-5 pb-4 flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl bg-gray-800`}>
+          <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl bg-sky-50`}>
             {member.emoji}
           </div>
           <div>
@@ -148,9 +148,9 @@ function MemberCard({ member, onViewDevice, onDragStart, onDragOver, onDrop, isD
 
       {/* Specs */}
       <div className="px-5 pb-4 space-y-2">
-        <div className="flex items-center gap-2 text-xs text-gray-400">
+        <div className="flex items-center gap-2 text-xs text-gray-600">
           {OS_ICON[member.os] || <Monitor className="w-3.5 h-3.5" />}
-          <span className="font-medium text-gray-300">{member.machine}</span>
+          <span className="font-medium text-gray-700">{member.machine}</span>
         </div>
         <div className="grid grid-cols-1 gap-1.5">
           <div className="flex items-center gap-2 text-xs text-gray-500">
@@ -173,14 +173,14 @@ function MemberCard({ member, onViewDevice, onDragStart, onDragOver, onDrop, isD
         </div>
       )}
       {!member.online && member.has_host && !MOBILE_MEMBER_IDS.has(member.id) && (
-        <div className="mx-4 mb-4 px-3 py-2 bg-gray-800/60 rounded-lg">
+        <div className="mx-4 mb-4 px-3 py-2 bg-sky-50/90 rounded-lg">
           <p className="text-xs text-gray-600 flex items-center gap-1.5">
             <WifiOff className="w-3 h-3" /> SSH key auth needed to connect
           </p>
         </div>
       )}
       {!member.online && !member.has_host && !MOBILE_MEMBER_IDS.has(member.id) && (
-        <div className="mx-4 mb-4 px-3 py-2 bg-gray-800/60 rounded-lg">
+        <div className="mx-4 mb-4 px-3 py-2 bg-sky-50/90 rounded-lg">
           <p className="text-xs text-gray-600 flex items-center gap-1.5">
             <WifiOff className="w-3 h-3" /> Tailscale IP not configured
           </p>
@@ -235,12 +235,12 @@ export default function Team() {
     <div className="max-w-4xl mx-auto">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-white">The Team</h1>
+          <h1 className="text-xl font-bold text-gray-800">The Team</h1>
           <p className="text-xs text-gray-500 mt-0.5">
             {onlineCount}/{members.length} machines online
           </p>
         </div>
-        <button onClick={fetchTeam} className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition">
+        <button onClick={fetchTeam} className="p-2 text-gray-500 hover:text-ocean-700 hover:bg-sky-50 rounded-lg transition">
           <RefreshCw className="w-4 h-4" />
         </button>
       </div>

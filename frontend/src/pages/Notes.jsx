@@ -15,8 +15,8 @@ import {
 } from '../api';
 
 const CATEGORY_STYLES = {
-  slate: 'border-gray-700 bg-gray-900/80 text-gray-200',
-  red: 'border-red-500/30 bg-red-500/10 text-red-100',
+  slate: 'border-ocean-200 bg-white/90 text-gray-700',
+  red: 'border-coral-200 bg-coral-500/10 text-coral-600',
   amber: 'border-amber-500/30 bg-amber-500/10 text-amber-100',
   blue: 'border-sky-500/30 bg-sky-500/10 text-sky-100',
   green: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-100',
@@ -55,9 +55,9 @@ function Markdown({ children }) {
 
 function EmptyState({ title, text }) {
   return (
-    <div className="h-full min-h-[260px] rounded-[28px] border border-dashed border-gray-700 bg-gray-950/60 px-6 py-10 text-center">
+    <div className="h-full min-h-[260px] rounded-[28px] border border-dashed border-ocean-200 bg-white/90 px-6 py-10 text-center">
       <Sparkles className="mx-auto mb-3 h-6 w-6 text-gray-600" />
-      <h3 className="text-base font-semibold text-white">{title}</h3>
+      <h3 className="text-base font-semibold text-gray-800">{title}</h3>
       <p className="mx-auto mt-2 max-w-md text-sm text-gray-500">{text}</p>
     </div>
   );
@@ -65,10 +65,10 @@ function EmptyState({ title, text }) {
 
 function PaneShell({ title, subtitle, actions, children, className = '' }) {
   return (
-    <section className={`rounded-[28px] border border-gray-800 bg-[#080c14]/90 shadow-[0_30px_80px_rgba(0,0,0,0.35)] ${className}`}>
-      <div className="flex items-start justify-between gap-3 border-b border-gray-800 px-4 py-4">
+    <section className={`rounded-[28px] border border-ocean-100 bg-[#080c14]/90 shadow-[0_30px_80px_rgba(0,0,0,0.35)] ${className}`}>
+      <div className="flex items-start justify-between gap-3 border-b border-ocean-100 px-4 py-4">
         <div>
-          <h2 className="text-sm font-semibold text-white">{title}</h2>
+          <h2 className="text-sm font-semibold text-gray-800">{title}</h2>
           {subtitle ? <p className="mt-1 text-xs text-gray-500">{subtitle}</p> : null}
         </div>
         {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
@@ -87,7 +87,7 @@ function ActionButton({ icon: Icon, label, onClick, active = false, disabled = f
       className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition ${
         active
           ? 'border-sky-500/40 bg-sky-500/10 text-sky-100'
-          : 'border-gray-700 bg-gray-900/60 text-gray-300 hover:border-gray-600 hover:text-white'
+          : 'border-ocean-200 bg-white/80 text-gray-700 hover:border-ocean-200 hover:text-ocean-700'
       } disabled:cursor-not-allowed disabled:opacity-50`}
     >
       <Icon className="h-4 w-4" />
@@ -439,8 +439,8 @@ export default function Notes() {
             <NotebookPen className="h-3.5 w-3.5" />
             Notes
           </div>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white">Organized notes with direct links and editing</h1>
-          <p className="mt-2 max-w-3xl text-sm text-gray-400">
+          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-gray-800">Organized notes with direct links and editing</h1>
+          <p className="mt-2 max-w-3xl text-sm text-gray-600">
             Browse notes by category, keep the reader front and center, and send a stable link for any note.
           </p>
         </div>
@@ -456,7 +456,7 @@ export default function Notes() {
               setEditingNote(false);
               setNewNoteDraft({ title: '', body: '' });
             }}
-            className="rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-500"
+            className="rounded-xl bg-coral-500 px-4 py-2 text-sm font-medium text-gray-800 transition hover:bg-coral-600"
           >
             {showComposer ? 'Close new note' : 'New note'}
           </button>
@@ -464,7 +464,7 @@ export default function Notes() {
       </div>
 
       {error ? (
-        <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">{error}</div>
+        <div className="rounded-2xl border border-coral-200 bg-coral-500/10 px-4 py-3 text-sm text-coral-600">{error}</div>
       ) : null}
 
       <div className="flex flex-col gap-4 xl:h-[calc(100vh-12.5rem)] xl:min-h-[720px] xl:flex-row">
@@ -503,16 +503,16 @@ export default function Notes() {
                       className={`w-full rounded-2xl border px-4 py-4 text-left transition ${
                         active
                           ? style
-                          : 'border-gray-800 bg-gray-950/70 text-gray-300 hover:border-gray-700 hover:bg-gray-900/80'
+                          : 'border-ocean-100 bg-white/90 text-gray-700 hover:border-ocean-200 hover:bg-white/90'
                       }`}
                     >
                       <div className="flex items-center justify-between gap-3">
                         <span className="truncate text-sm font-medium">{category.name}</span>
-                        <span className="rounded-full border border-gray-700 px-2 py-1 text-[11px] text-gray-400">
+                        <span className="rounded-full border border-ocean-200 px-2 py-1 text-[11px] text-gray-600">
                           {category.topic_count}
                         </span>
                       </div>
-                      <p className="mt-2 line-clamp-2 text-xs text-gray-400">{category.description || 'No description yet.'}</p>
+                      <p className="mt-2 line-clamp-2 text-xs text-gray-600">{category.description || 'No description yet.'}</p>
                       <div className="mt-3 text-[11px] text-gray-500">Updated {timeAgo(category.latest_activity_at)}</div>
                     </button>
                   );
@@ -522,28 +522,28 @@ export default function Notes() {
               {editingCategory && activeCategory ? (
                 <form onSubmit={handleUpdateCategory} className="rounded-2xl border border-sky-500/20 bg-sky-500/5 p-4">
                   <div>
-                    <label className="text-xs text-gray-400">Name</label>
+                    <label className="text-xs text-gray-600">Name</label>
                     <input
                       value={categoryDraft.name}
                       onChange={(event) => setCategoryDraft((current) => ({ ...current, name: event.target.value }))}
-                      className="mt-1 w-full rounded-xl border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none"
+                      className="mt-1 w-full rounded-xl border border-ocean-200 bg-white px-3 py-2 text-sm text-gray-800 focus:border-sky-500 focus:outline-none"
                     />
                   </div>
                   <div className="mt-3">
-                    <label className="text-xs text-gray-400">Description</label>
+                    <label className="text-xs text-gray-600">Description</label>
                     <textarea
                       value={categoryDraft.description}
                       onChange={(event) => setCategoryDraft((current) => ({ ...current, description: event.target.value }))}
                       rows={4}
-                      className="mt-1 w-full rounded-xl border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none"
+                      className="mt-1 w-full rounded-xl border border-ocean-200 bg-white px-3 py-2 text-sm text-gray-800 focus:border-sky-500 focus:outline-none"
                     />
                   </div>
                   <div className="mt-3">
-                    <label className="text-xs text-gray-400">Accent</label>
+                    <label className="text-xs text-gray-600">Accent</label>
                     <select
                       value={categoryDraft.color}
                       onChange={(event) => setCategoryDraft((current) => ({ ...current, color: event.target.value }))}
-                      className="mt-1 w-full rounded-xl border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none"
+                      className="mt-1 w-full rounded-xl border border-ocean-200 bg-white px-3 py-2 text-sm text-gray-800 focus:border-sky-500 focus:outline-none"
                     >
                       <option value="slate">Slate</option>
                       <option value="red">Red</option>
@@ -556,7 +556,7 @@ export default function Notes() {
                     <button
                       type="submit"
                       disabled={savingCategory || !categoryDraft.name.trim()}
-                      className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-sky-500 disabled:opacity-50"
+                      className="inline-flex items-center gap-2 rounded-xl bg-ocean-500 px-4 py-2 text-sm font-medium text-gray-800 transition hover:bg-ocean-600 disabled:opacity-50"
                     >
                       <Save className="h-4 w-4" />
                       {savingCategory ? 'Saving...' : 'Save category'}
@@ -576,31 +576,31 @@ export default function Notes() {
           >
             <div className="flex h-full flex-col">
               {showComposer && activeCategory ? (
-                <form onSubmit={handleCreateNote} className="m-3 rounded-2xl border border-red-500/20 bg-red-500/5 p-4">
+                <form onSubmit={handleCreateNote} className="m-3 rounded-2xl border border-coral-200 bg-coral-500/5 p-4">
                   <div>
-                    <label className="text-xs text-gray-400">Title</label>
+                    <label className="text-xs text-gray-600">Title</label>
                     <input
                       value={newNoteDraft.title}
                       onChange={(event) => setNewNoteDraft((current) => ({ ...current, title: event.target.value }))}
                       placeholder={`New note in ${activeCategory.name}`}
-                      className="mt-1 w-full rounded-xl border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-white focus:border-red-500 focus:outline-none"
+                      className="mt-1 w-full rounded-xl border border-ocean-200 bg-white px-3 py-2 text-sm text-gray-800 focus:border-coral-500 focus:outline-none"
                     />
                   </div>
                   <div className="mt-3">
-                    <label className="text-xs text-gray-400">Body</label>
+                    <label className="text-xs text-gray-600">Body</label>
                     <textarea
                       value={newNoteDraft.body}
                       onChange={(event) => setNewNoteDraft((current) => ({ ...current, body: event.target.value }))}
                       rows={8}
                       placeholder={markdownPlaceholder('Write the note in markdown')}
-                      className="mt-1 w-full rounded-xl border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-white focus:border-red-500 focus:outline-none"
+                      className="mt-1 w-full rounded-xl border border-ocean-200 bg-white px-3 py-2 text-sm text-gray-800 focus:border-coral-500 focus:outline-none"
                     />
                   </div>
                   <div className="mt-3 flex justify-end">
                     <button
                       type="submit"
                       disabled={savingNote || !newNoteDraft.title.trim() || !newNoteDraft.body.trim()}
-                      className="rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-500 disabled:opacity-50"
+                      className="rounded-xl bg-coral-500 px-4 py-2 text-sm font-medium text-gray-800 transition hover:bg-coral-600 disabled:opacity-50"
                     >
                       {savingNote ? 'Saving...' : 'Create note'}
                     </button>
@@ -623,15 +623,15 @@ export default function Notes() {
                         className={`block w-full rounded-2xl border px-4 py-4 text-left transition ${
                           active
                             ? 'border-sky-500/30 bg-sky-500/10'
-                            : 'border-gray-800 bg-gray-950/70 hover:border-gray-700 hover:bg-gray-900/80'
+                            : 'border-ocean-100 bg-white/90 hover:border-ocean-200 hover:bg-white/90'
                         }`}
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
-                            <h3 className="truncate text-sm font-semibold text-white">{note.title}</h3>
-                            <p className="mt-2 line-clamp-4 text-xs leading-6 text-gray-400">{note.body_preview || 'No preview yet.'}</p>
+                            <h3 className="truncate text-sm font-semibold text-gray-800">{note.title}</h3>
+                            <p className="mt-2 line-clamp-4 text-xs leading-6 text-gray-600">{note.body_preview || 'No preview yet.'}</p>
                           </div>
-                          <span className="shrink-0 rounded-full border border-gray-700 px-2 py-1 text-[11px] text-gray-400">
+                          <span className="shrink-0 rounded-full border border-ocean-200 px-2 py-1 text-[11px] text-gray-600">
                             {note.reply_count}
                           </span>
                         </div>
@@ -675,27 +675,27 @@ export default function Notes() {
                 {editingNote ? (
                   <form onSubmit={handleUpdateNote} className="rounded-[28px] border border-sky-500/20 bg-sky-500/5 p-5">
                     <div>
-                      <label className="text-xs text-gray-400">Title</label>
+                      <label className="text-xs text-gray-600">Title</label>
                       <input
                         value={editNoteDraft.title}
                         onChange={(event) => setEditNoteDraft((current) => ({ ...current, title: event.target.value }))}
-                        className="mt-1 w-full rounded-xl border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none"
+                        className="mt-1 w-full rounded-xl border border-ocean-200 bg-white px-3 py-2 text-sm text-gray-800 focus:border-sky-500 focus:outline-none"
                       />
                     </div>
                     <div className="mt-4">
-                      <label className="text-xs text-gray-400">Body</label>
+                      <label className="text-xs text-gray-600">Body</label>
                       <textarea
                         value={editNoteDraft.body}
                         onChange={(event) => setEditNoteDraft((current) => ({ ...current, body: event.target.value }))}
                         rows={14}
-                        className="mt-1 w-full rounded-xl border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none"
+                        className="mt-1 w-full rounded-xl border border-ocean-200 bg-white px-3 py-2 text-sm text-gray-800 focus:border-sky-500 focus:outline-none"
                       />
                     </div>
                     <div className="mt-4 flex justify-end">
                       <button
                         type="submit"
                         disabled={savingNote || !editNoteDraft.title.trim() || !editNoteDraft.body.trim()}
-                        className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-sky-500 disabled:opacity-50"
+                        className="inline-flex items-center gap-2 rounded-xl bg-ocean-500 px-4 py-2 text-sm font-medium text-gray-800 transition hover:bg-ocean-600 disabled:opacity-50"
                       >
                         <Save className="h-4 w-4" />
                         {savingNote ? 'Saving...' : 'Save note'}
@@ -703,11 +703,11 @@ export default function Notes() {
                     </div>
                   </form>
                 ) : (
-                  <article className="rounded-[32px] border border-gray-800 bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.08),transparent_35%),linear-gradient(180deg,rgba(15,23,42,0.92),rgba(2,6,23,0.92))] px-6 py-6">
+                  <article className="rounded-[32px] border border-ocean-100 bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.08),transparent_35%),linear-gradient(180deg,rgba(15,23,42,0.92),rgba(2,6,23,0.92))] px-6 py-6">
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div>
                         <div className="text-xs uppercase tracking-[0.2em] text-sky-300">{activeCategory?.name || noteDetail.channel_slug}</div>
-                        <h2 className="mt-2 text-3xl font-semibold tracking-tight text-white">{noteDetail.title}</h2>
+                        <h2 className="mt-2 text-3xl font-semibold tracking-tight text-gray-800">{noteDetail.title}</h2>
                       </div>
                       <div className="text-right text-xs text-gray-500">
                         <div>By {noteDetail.author}</div>
@@ -722,20 +722,20 @@ export default function Notes() {
 
                 <section className="space-y-4">
                   <div className="flex items-center justify-between gap-3">
-                    <h3 className="text-sm font-semibold text-white">Replies</h3>
+                    <h3 className="text-sm font-semibold text-gray-800">Replies</h3>
                     <span className="text-xs text-gray-500">{noteDetail.reply_count} total</span>
                   </div>
 
                   {noteDetail.replies.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-gray-700 bg-gray-950/40 px-4 py-5 text-sm text-gray-500">
+                    <div className="rounded-2xl border border-dashed border-ocean-200 bg-sky-50/70 px-4 py-5 text-sm text-gray-500">
                       No replies yet. Add supporting context, follow-up decisions, or code snippets here.
                     </div>
                   ) : (
                     noteDetail.replies.map((reply) => (
-                      <article key={reply.id} className="rounded-2xl border border-gray-800 bg-gray-950/70 px-4 py-4">
+                      <article key={reply.id} className="rounded-2xl border border-ocean-100 bg-white/90 px-4 py-4">
                         <div className="flex items-center justify-between gap-3">
                           <div className="text-xs text-gray-500">
-                            <span className="text-gray-300">{reply.author}</span>
+                            <span className="text-gray-700">{reply.author}</span>
                             <span className="ml-2">updated {timeAgo(reply.updated_at)}</span>
                           </div>
                           <button
@@ -744,7 +744,7 @@ export default function Notes() {
                               setEditingReplyId(reply.id);
                               setEditingReplyBody(reply.body);
                             }}
-                            className="text-xs text-gray-500 transition hover:text-white"
+                            className="text-xs text-gray-500 transition hover:text-ocean-700"
                           >
                             Edit
                           </button>
@@ -756,7 +756,7 @@ export default function Notes() {
                               value={editingReplyBody}
                               onChange={(event) => setEditingReplyBody(event.target.value)}
                               rows={7}
-                              className="w-full rounded-xl border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none"
+                              className="w-full rounded-xl border border-ocean-200 bg-white px-3 py-2 text-sm text-gray-800 focus:border-sky-500 focus:outline-none"
                             />
                             <div className="mt-3 flex justify-end gap-2">
                               <button
@@ -765,14 +765,14 @@ export default function Notes() {
                                   setEditingReplyId(null);
                                   setEditingReplyBody('');
                                 }}
-                                className="rounded-xl border border-gray-700 px-3 py-2 text-sm text-gray-300 transition hover:border-gray-600 hover:text-white"
+                                className="rounded-xl border border-ocean-200 px-3 py-2 text-sm text-gray-700 transition hover:border-ocean-200 hover:text-ocean-700"
                               >
                                 Cancel
                               </button>
                               <button
                                 type="submit"
                                 disabled={savingReply || !editingReplyBody.trim()}
-                                className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-sky-500 disabled:opacity-50"
+                                className="rounded-xl bg-ocean-500 px-4 py-2 text-sm font-medium text-gray-800 transition hover:bg-ocean-600 disabled:opacity-50"
                               >
                                 Save reply
                               </button>
@@ -787,21 +787,21 @@ export default function Notes() {
                     ))
                   )}
 
-                  <form onSubmit={handleCreateReply} className="rounded-2xl border border-gray-800 bg-black/20 p-4">
-                    <label className="text-xs text-gray-400">Add reply in markdown</label>
+                  <form onSubmit={handleCreateReply} className="rounded-2xl border border-ocean-100 bg-sky-100/60 p-4">
+                    <label className="text-xs text-gray-600">Add reply in markdown</label>
                     <textarea
                       value={replyDraft}
                       onChange={(event) => setReplyDraft(event.target.value)}
                       rows={7}
                       placeholder={markdownPlaceholder('Add supporting context, next steps, or snippets')}
-                      className="mt-2 w-full rounded-xl border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none"
+                      className="mt-2 w-full rounded-xl border border-ocean-200 bg-white px-3 py-2 text-sm text-gray-800 focus:border-sky-500 focus:outline-none"
                     />
                     <div className="mt-3 flex items-center justify-between gap-3">
                       <p className="text-xs text-gray-500">GitHub-flavored markdown is enabled.</p>
                       <button
                         type="submit"
                         disabled={savingReply || !noteDetail || !replyDraft.trim()}
-                        className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-sky-500 disabled:opacity-50"
+                        className="inline-flex items-center gap-2 rounded-xl bg-ocean-500 px-4 py-2 text-sm font-medium text-gray-800 transition hover:bg-ocean-600 disabled:opacity-50"
                       >
                         <Send className="h-4 w-4" />
                         {savingReply ? 'Saving...' : 'Save reply'}

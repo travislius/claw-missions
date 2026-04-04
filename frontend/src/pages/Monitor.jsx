@@ -21,21 +21,21 @@ function formatTimestamp(timestamp) {
 
 function latencyColor(ms) {
   if (ms == null) return 'text-gray-500';
-  if (ms < 500) return 'text-green-400';
-  if (ms <= 1000) return 'text-yellow-400';
-  return 'text-red-400';
+  if (ms < 500) return 'text-seafoam-500';
+  if (ms <= 1000) return 'text-sand-500';
+  return 'text-coral-500';
 }
 
 function StatusDot({ ok }) {
   return ok ? (
     <span className="flex items-center gap-1.5">
       <span className="w-2 h-2 rounded-full bg-green-400" />
-      <span className="text-green-400 text-sm font-medium">Up</span>
+      <span className="text-seafoam-500 text-sm font-medium">Up</span>
     </span>
   ) : (
     <span className="flex items-center gap-1.5">
       <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
-      <span className="text-red-400 text-sm font-medium">Down</span>
+      <span className="text-coral-500 text-sm font-medium">Down</span>
     </span>
   );
 }
@@ -87,11 +87,11 @@ export default function Monitor() {
       {/* Header */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${allOk ? 'bg-green-500/15' : 'bg-red-500/15'}`}>
-            {allOk ? <ShieldCheck className="w-5 h-5 text-green-400" /> : <ShieldAlert className="w-5 h-5 text-red-400" />}
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${allOk ? 'bg-seafoam-100' : 'bg-coral-500/15'}`}>
+            {allOk ? <ShieldCheck className="w-5 h-5 text-seafoam-500" /> : <ShieldAlert className="w-5 h-5 text-coral-500" />}
           </div>
           <div>
-            <h1 className="text-xl font-bold text-white">
+            <h1 className="text-xl font-bold text-gray-800">
               {allOk ? 'All Systems Operational' : `${degradedCount} site${degradedCount === 1 ? '' : 's'} degraded`}
             </h1>
             <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-2">
@@ -106,23 +106,23 @@ export default function Monitor() {
         <button
           onClick={() => fetchHealth({ silent: true })}
           disabled={refreshing}
-          className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition disabled:opacity-40"
+          className="p-2 text-gray-500 hover:text-ocean-700 hover:bg-sky-50 rounded-lg transition disabled:opacity-40"
         >
           <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
         </button>
       </div>
 
       {error && (
-        <div className="mb-4 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+        <div className="mb-4 rounded-xl border border-coral-200 bg-coral-500/10 px-4 py-3 text-sm text-coral-600">
           {error}
         </div>
       )}
 
       {/* Table */}
-      <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+      <div className="bg-white border border-ocean-100 rounded-xl overflow-hidden">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-gray-800">
+            <tr className="border-b border-ocean-100">
               <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-5 py-3">Site</th>
               <th className="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">Status</th>
               <th className="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">HTTP</th>
@@ -131,17 +131,17 @@ export default function Monitor() {
           </thead>
           <tbody>
             {sites.map((site, i) => (
-              <tr key={site.id || site.url} className={`${i < sites.length - 1 ? 'border-b border-gray-800/50' : ''} hover:bg-gray-800/30 transition`}>
+              <tr key={site.id || site.url} className={`${i < sites.length - 1 ? 'border-b border-ocean-100' : ''} hover:bg-sky-50/60 transition`}>
                 <td className="px-5 py-4">
                   <div className="flex items-center gap-3">
                     <Globe className="w-4 h-4 text-gray-600 shrink-0" />
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-white truncate">{site.name}</p>
+                      <p className="text-sm font-medium text-gray-800 truncate">{site.name}</p>
                       <a
                         href={site.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-xs text-gray-500 hover:text-gray-300 transition flex items-center gap-1"
+                        className="text-xs text-gray-500 hover:text-gray-700 transition flex items-center gap-1"
                       >
                         {site.url.replace('https://', '')}
                         <ExternalLink className="w-2.5 h-2.5" />
@@ -149,7 +149,7 @@ export default function Monitor() {
                     </div>
                   </div>
                   {site.error && (
-                    <p className="mt-1 ml-7 text-xs text-red-400 truncate max-w-xs" title={site.error}>
+                    <p className="mt-1 ml-7 text-xs text-coral-500 truncate max-w-xs" title={site.error}>
                       ⚠ {site.error}
                     </p>
                   )}
@@ -158,7 +158,7 @@ export default function Monitor() {
                   <StatusDot ok={site.ok} />
                 </td>
                 <td className="px-4 py-4 text-center">
-                  <span className={`text-sm font-mono ${site.ok ? 'text-gray-300' : 'text-red-400 font-semibold'}`}>
+                  <span className={`text-sm font-mono ${site.ok ? 'text-gray-700' : 'text-coral-500 font-semibold'}`}>
                     {site.status || '—'}
                   </span>
                 </td>

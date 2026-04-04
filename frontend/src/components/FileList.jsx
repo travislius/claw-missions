@@ -50,27 +50,27 @@ function FileRow({ file, onPreview, onRefresh, selected, onToggleSelect }) {
   return (
     <tr
       onClick={() => onPreview(file)}
-      className={`group border-b border-gray-800/50 hover:bg-gray-800/40 cursor-pointer transition ${selected ? 'bg-ocean-600/10' : ''}`}
+      className={`group border-b border-ocean-100 hover:bg-sky-50/70 cursor-pointer transition ${selected ? 'bg-ocean-600/10' : ''}`}
     >
       <td className="py-3 px-4 w-10">
         <div
           onClick={(e) => { e.stopPropagation(); onToggleSelect?.(file.id); }}
           className={`w-5 h-5 rounded border-2 flex items-center justify-center cursor-pointer transition ${
-            selected ? 'bg-ocean-500 border-ocean-500' : 'border-gray-600 hover:border-gray-400'
+            selected ? 'bg-ocean-500 border-ocean-500' : 'border-ocean-200 hover:border-ocean-400'
           }`}
         >
-          {selected && <Check className="w-3 h-3 text-white" />}
+          {selected && <Check className="w-3 h-3 text-gray-800" />}
         </div>
       </td>
       <td className="py-3 px-4 flex items-center gap-3">
-        <div className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center shrink-0 overflow-hidden">
+        <div className="w-8 h-8 rounded-lg bg-sky-50 flex items-center justify-center shrink-0 overflow-hidden">
           {hasThumb && !imgErr ? (
             <img src={getThumb(file.id)} className="w-full h-full object-cover" onError={() => setImgErr(true)} loading="lazy" />
           ) : (
             <span className="text-gray-500"><SmallIcon mime={file.mime_type} /></span>
           )}
         </div>
-        <span className="text-sm text-white truncate max-w-xs">{file.name}</span>
+        <span className="text-sm text-gray-800 truncate max-w-xs">{file.name}</span>
         {file.tags?.length > 0 && (
           <div className="hidden lg:flex gap-1 ml-2">
             {file.tags.slice(0, 2).map((t) => (
@@ -81,14 +81,14 @@ function FileRow({ file, onPreview, onRefresh, selected, onToggleSelect }) {
           </div>
         )}
       </td>
-      <td className="py-3 px-4 text-sm text-gray-400 hidden sm:table-cell">{formatBytes(file.size)}</td>
+      <td className="py-3 px-4 text-sm text-gray-600 hidden sm:table-cell">{formatBytes(file.size)}</td>
       <td className="py-3 px-4 text-sm text-gray-500 hidden md:table-cell">{formatDate(file.created_at)}</td>
       <td className="py-3 px-4">
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
-          <button onClick={handleDownload} className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-gray-700 transition">
+          <button onClick={handleDownload} className="p-1.5 rounded-lg text-gray-500 hover:text-ocean-700 hover:bg-sky-50 transition">
             <Download className="w-4 h-4" />
           </button>
-          <button onClick={handleDelete} className="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-gray-700 transition">
+          <button onClick={handleDelete} className="p-1.5 rounded-lg text-gray-500 hover:text-coral-500 hover:bg-sky-50 transition">
             <Trash2 className="w-4 h-4" />
           </button>
         </div>
@@ -104,7 +104,7 @@ export default function FileList({ files, onPreview, onRefresh }) {
     <div className="overflow-x-auto">
       <table className="w-full">
         <thead>
-          <tr className="text-left text-xs text-gray-500 uppercase tracking-wider border-b border-gray-800">
+          <tr className="text-left text-xs text-gray-500 uppercase tracking-wider border-b border-ocean-100">
             <th className="py-2 px-4 w-10"></th>
             <th className="py-2 px-4">Name</th>
             <th className="py-2 px-4 hidden sm:table-cell">Size</th>

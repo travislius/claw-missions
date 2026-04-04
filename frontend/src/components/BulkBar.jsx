@@ -37,12 +37,12 @@ export default function BulkBar({ onRefresh }) {
 
   return (
     <div className="sticky top-0 z-40 bg-ocean-600/95 backdrop-blur border border-ocean-500 rounded-xl px-4 py-3 flex items-center gap-4 shadow-lg">
-      <span className="text-sm text-white font-medium">{count} selected</span>
+      <span className="text-sm text-gray-800 font-medium">{count} selected</span>
 
       <div className="flex items-center gap-2 flex-1">
         <button
           onClick={() => selectAllFiles()}
-          className="inline-flex items-center gap-1 text-xs text-ocean-200 hover:text-white transition"
+          className="inline-flex items-center gap-1 text-xs text-ocean-200 hover:text-ocean-700 transition"
         >
           <CheckSquare className="w-3.5 h-3.5" /> Select all
         </button>
@@ -53,23 +53,23 @@ export default function BulkBar({ onRefresh }) {
         <button
           onClick={() => setShowTagPicker(!showTagPicker)}
           disabled={busy}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-white/10 hover:bg-white/20 text-white rounded-lg transition disabled:opacity-40"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-white/10 hover:bg-white/20 text-gray-800 rounded-lg transition disabled:opacity-40"
         >
           <Tag className="w-3.5 h-3.5" /> Tag
         </button>
 
         {showTagPicker && (
-          <div className="absolute bottom-full right-12 mb-2 bg-gray-800 border border-gray-700 rounded-lg shadow-xl p-3 min-w-[180px]">
+          <div className="absolute bottom-full right-12 mb-2 bg-sky-50 border border-ocean-200 rounded-lg shadow-xl p-3 min-w-[180px]">
             <p className="text-xs text-gray-500 mb-2">Apply tag to selected files:</p>
             <div className="space-y-1 max-h-40 overflow-y-auto">
               {tags.map((tag) => (
                 <button
                   key={tag.id}
                   onClick={() => handleBulkTag([tag.id])}
-                  className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-700 transition text-left"
+                  className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-sky-50 transition text-left"
                 >
                   <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: tag.color }} />
-                  <span className="text-sm text-gray-300">{tag.name}</span>
+                  <span className="text-sm text-gray-700">{tag.name}</span>
                 </button>
               ))}
               {tags.length === 0 && <p className="text-xs text-gray-600">No tags — create one first</p>}
@@ -81,7 +81,7 @@ export default function BulkBar({ onRefresh }) {
         <button
           onClick={handleBulkDelete}
           disabled={busy}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg transition disabled:opacity-40"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-coral-500/15 hover:bg-coral-600/30 text-coral-600 rounded-lg transition disabled:opacity-40"
         >
           <Trash2 className="w-3.5 h-3.5" /> Delete
         </button>
@@ -89,7 +89,7 @@ export default function BulkBar({ onRefresh }) {
         {/* Clear */}
         <button
           onClick={clearSelection}
-          className="p-1.5 text-ocean-200 hover:text-white transition"
+          className="p-1.5 text-ocean-200 hover:text-ocean-700 transition"
           title="Clear selection"
         >
           <X className="w-4 h-4" />

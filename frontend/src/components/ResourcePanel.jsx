@@ -24,7 +24,7 @@ function Bar({ value, color = 'ocean' }) {
     green: 'bg-green-500',
     yellow: 'bg-yellow-500',
     amber: 'bg-amber-500',
-    red: 'bg-red-500',
+    red: 'bg-coral-500',
     purple: 'bg-purple-500',
     blue: 'bg-blue-500',
     zinc: 'bg-zinc-400',
@@ -32,7 +32,7 @@ function Bar({ value, color = 'ocean' }) {
   const barColor = value > 85 ? colorMap.red : value > 60 ? colorMap.yellow : (colorMap[color] || colorMap.ocean);
 
   return (
-    <div className="w-full bg-gray-700 rounded-full h-2">
+    <div className="w-full bg-ocean-100 rounded-full h-2">
       <div
         className={`${barColor} h-2 rounded-full transition-all duration-500`}
         style={{ width: `${pct(value)}%` }}
@@ -44,20 +44,20 @@ function Bar({ value, color = 'ocean' }) {
 function Card({ icon: Icon, title, children, accent = 'ocean' }) {
   const accentMap = {
     ocean: 'text-ocean-400 border-ocean-500/30',
-    green: 'text-green-400 border-green-500/30',
+    green: 'text-seafoam-500 border-green-500/30',
     purple: 'text-purple-400 border-purple-500/30',
     blue: 'text-blue-400 border-blue-500/30',
-    yellow: 'text-yellow-400 border-yellow-500/30',
+    yellow: 'text-sand-500 border-yellow-500/30',
     amber: 'text-amber-400 border-amber-500/30',
     zinc: 'text-zinc-300 border-zinc-500/30',
   };
   const accentClasses = accentMap[accent] || accentMap.ocean;
 
   return (
-    <div className={`bg-gray-900 border ${accentClasses} rounded-xl p-5`}>
+    <div className={`bg-white border ${accentClasses} rounded-xl p-5`}>
       <div className="flex items-center gap-2 mb-4">
         <Icon className={`w-5 h-5 ${accentClasses.split(' ')[0]}`} />
-        <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider">{title}</h3>
+        <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">{title}</h3>
       </div>
       {children}
     </div>
@@ -68,7 +68,7 @@ function StatRow({ label, value, sub }) {
   return (
     <div className="flex items-baseline justify-between mb-1">
       <span className="text-xs text-gray-500">{label}</span>
-      <span className="text-sm font-mono text-white">
+      <span className="text-sm font-mono text-gray-800">
         {value}
         {sub && <span className="text-xs text-gray-500 ml-1">{sub}</span>}
       </span>
@@ -123,7 +123,7 @@ export default function ResourcePanel({ endpoint, accent = 'ocean' }) {
 
   if (error && !data) {
     return (
-      <div className="flex items-center justify-center h-64 text-red-400">
+      <div className="flex items-center justify-center h-64 text-coral-500">
         <Activity className="w-5 h-5 mr-2" />
         {error}
       </div>
@@ -144,7 +144,7 @@ export default function ResourcePanel({ endpoint, accent = 'ocean' }) {
         </div>
         <button
           onClick={() => fetchData(false)}
-          className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition"
+          className="p-2 text-gray-500 hover:text-ocean-700 hover:bg-sky-50 rounded-lg transition"
           aria-label="Refresh device stats"
         >
           <RefreshCw className={`w-4 h-4 ${refreshing ? `animate-spin ${CardAccentIconClass(accent)}` : ''}`} />
@@ -172,7 +172,7 @@ export default function ResourcePanel({ endpoint, accent = 'ocean' }) {
           <div className="mb-4">
             <div className="flex justify-between mb-1">
               <span className="text-xs text-gray-500">Overall usage</span>
-              <span className="text-2xl font-bold text-white">{cpu.percent.toFixed(1)}%</span>
+              <span className="text-2xl font-bold text-gray-800">{cpu.percent.toFixed(1)}%</span>
             </div>
             <Bar value={cpu.percent} color={accent} />
           </div>
@@ -196,7 +196,7 @@ export default function ResourcePanel({ endpoint, accent = 'ocean' }) {
                     <div className="flex-1">
                       <Bar value={v} color={accent} />
                     </div>
-                    <span className="text-xs font-mono text-gray-400 w-8 text-right">{v.toFixed(0)}%</span>
+                    <span className="text-xs font-mono text-gray-600 w-8 text-right">{v.toFixed(0)}%</span>
                   </div>
                 ))}
               </div>
@@ -208,7 +208,7 @@ export default function ResourcePanel({ endpoint, accent = 'ocean' }) {
           <div className="mb-4">
             <div className="flex justify-between mb-1">
               <span className="text-xs text-gray-500">RAM usage</span>
-              <span className="text-2xl font-bold text-white">{memory.percent.toFixed(1)}%</span>
+              <span className="text-2xl font-bold text-gray-800">{memory.percent.toFixed(1)}%</span>
             </div>
             <Bar value={memory.percent} color="purple" />
           </div>
@@ -219,7 +219,7 @@ export default function ResourcePanel({ endpoint, accent = 'ocean' }) {
 
           {memory.swap_total?.bytes > 0 && (
             <>
-              <div className="border-t border-gray-800 my-3" />
+              <div className="border-t border-ocean-100 my-3" />
               <p className="text-xs text-gray-500 mb-2">Swap</p>
               <div className="mb-2">
                 <Bar value={memory.swap_percent} color="purple" />
@@ -237,10 +237,10 @@ export default function ResourcePanel({ endpoint, accent = 'ocean' }) {
             <div key={i}>
               <div className="flex items-center justify-between mb-1">
                 <div>
-                  <span className="text-sm text-white font-mono">{disk.mountpoint}</span>
+                  <span className="text-sm text-gray-800 font-mono">{disk.mountpoint}</span>
                   <span className="text-xs text-gray-600 ml-2">({disk.fstype}) {disk.device}</span>
                 </div>
-                <span className="text-sm font-bold text-white">{disk.percent.toFixed(1)}%</span>
+                <span className="text-sm font-bold text-gray-800">{disk.percent.toFixed(1)}%</span>
               </div>
               <Bar value={disk.percent} color="green" />
               <div className="flex justify-between mt-1 text-xs text-gray-500">
@@ -254,40 +254,40 @@ export default function ResourcePanel({ endpoint, accent = 'ocean' }) {
 
       <Card icon={Wifi} title="Network" accent="blue">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
-          <div className="bg-gray-800/60 rounded-lg px-4 py-3">
+          <div className="bg-sky-50/90 rounded-lg px-4 py-3">
             <p className="text-xs text-gray-500 mb-1">↓ Download</p>
             <p className="text-2xl font-bold text-blue-400 font-mono">
               {network.download_speed?.human ?? '—'}
               <span className="text-sm font-normal text-gray-500">/s</span>
             </p>
           </div>
-          <div className="bg-gray-800/60 rounded-lg px-4 py-3">
+          <div className="bg-sky-50/90 rounded-lg px-4 py-3">
             <p className="text-xs text-gray-500 mb-1">↑ Upload</p>
-            <p className="text-2xl font-bold text-green-400 font-mono">
+            <p className="text-2xl font-bold text-seafoam-500 font-mono">
               {network.upload_speed?.human ?? '—'}
               <span className="text-sm font-normal text-gray-500">/s</span>
             </p>
           </div>
         </div>
 
-        <div className="border-t border-gray-800 pt-3">
+        <div className="border-t border-ocean-100 pt-3">
           <p className="text-xs text-gray-600 uppercase tracking-wider mb-2">Since boot</p>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-xs text-gray-500">Total received</p>
-              <p className="text-sm font-mono text-gray-300">{network.bytes_recv.human}</p>
+              <p className="text-sm font-mono text-gray-700">{network.bytes_recv.human}</p>
               <p className="text-xs text-gray-600">{network.packets_recv.toLocaleString()} packets</p>
             </div>
             <div>
               <p className="text-xs text-gray-500">Total sent</p>
-              <p className="text-sm font-mono text-gray-300">{network.bytes_sent.human}</p>
+              <p className="text-sm font-mono text-gray-700">{network.bytes_sent.human}</p>
               <p className="text-xs text-gray-600">{network.packets_sent.toLocaleString()} packets</p>
             </div>
           </div>
         </div>
 
         {network.active_interfaces?.length > 0 && (
-          <div className="mt-3 pt-3 border-t border-gray-800">
+          <div className="mt-3 pt-3 border-t border-ocean-100">
             <p className="text-xs text-gray-500">Interfaces: {network.active_interfaces.join(', ')}</p>
           </div>
         )}
@@ -297,15 +297,15 @@ export default function ResourcePanel({ endpoint, accent = 'ocean' }) {
         <Card icon={Zap} title="GPU" accent="yellow">
           <div className="flex items-start justify-between mb-4 gap-3">
             <div>
-              <p className="text-sm font-semibold text-white">{gpu.name}</p>
+              <p className="text-sm font-semibold text-gray-800">{gpu.name}</p>
               <p className="text-xs text-gray-500 mt-0.5">
                 {gpu.vram_gb ? `${gpu.vram_gb} GB unified VRAM` : 'GPU detected'}
               </p>
             </div>
             {gpu.usage_pct != null ? (
-              <span className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded-full">Vulkan active</span>
+              <span className="text-xs bg-seafoam-100 text-seafoam-700 px-2 py-1 rounded-full">Vulkan active</span>
             ) : (
-              <span className="text-xs bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded-full">Idle</span>
+              <span className="text-xs bg-sand-100 text-sand-500 px-2 py-1 rounded-full">Idle</span>
             )}
           </div>
 
@@ -313,7 +313,7 @@ export default function ResourcePanel({ endpoint, accent = 'ocean' }) {
             <div className="mb-4">
               <div className="flex justify-between mb-1">
                 <span className="text-xs text-gray-500">GPU usage</span>
-                <span className="text-xl font-bold text-white">{gpu.usage_pct.toFixed(1)}%</span>
+                <span className="text-xl font-bold text-gray-800">{gpu.usage_pct.toFixed(1)}%</span>
               </div>
               <Bar value={gpu.usage_pct} color="yellow" />
             </div>
@@ -323,7 +323,7 @@ export default function ResourcePanel({ endpoint, accent = 'ocean' }) {
             <div className="mb-4">
               <div className="flex justify-between mb-1">
                 <span className="text-xs text-gray-500">VRAM used</span>
-                <span className="text-sm font-bold text-white">{gpu.vram_used_gb} / {gpu.vram_gb} GB</span>
+                <span className="text-sm font-bold text-gray-800">{gpu.vram_used_gb} / {gpu.vram_gb} GB</span>
               </div>
               <Bar value={(gpu.vram_used_gb / gpu.vram_gb) * 100} color="yellow" />
             </div>
@@ -333,15 +333,15 @@ export default function ResourcePanel({ endpoint, accent = 'ocean' }) {
           {gpu.power_w != null && <StatRow label="Power draw" value={`${gpu.power_w} W`} />}
 
           {gpu.driver_note && (
-            <p className="text-xs text-gray-600 mt-3 pt-3 border-t border-gray-800 italic">{gpu.driver_note}</p>
+            <p className="text-xs text-gray-600 mt-3 pt-3 border-t border-ocean-100 italic">{gpu.driver_note}</p>
           )}
 
           {gpu.ollama_models?.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-gray-800">
+            <div className="mt-3 pt-3 border-t border-ocean-100">
               <p className="text-xs text-gray-500 mb-2">Model loaded</p>
               {gpu.ollama_models.map((m, i) => (
                 <div key={i} className="flex justify-between text-xs">
-                  <span className="text-gray-300 font-mono">{m.name}</span>
+                  <span className="text-gray-700 font-mono">{m.name}</span>
                   <span className="text-gray-500">{m.size_gb} GB</span>
                 </div>
               ))}
@@ -360,10 +360,10 @@ export default function ResourcePanel({ endpoint, accent = 'ocean' }) {
 function CardAccentIconClass(accent) {
   const iconMap = {
     ocean: 'text-ocean-400',
-    green: 'text-green-400',
+    green: 'text-seafoam-500',
     purple: 'text-purple-400',
     blue: 'text-blue-400',
-    yellow: 'text-yellow-400',
+    yellow: 'text-sand-500',
     amber: 'text-amber-400',
     zinc: 'text-zinc-300',
   };

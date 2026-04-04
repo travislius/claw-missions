@@ -13,7 +13,7 @@
     <title>Claw Missions</title>
   </head>
   <body>
-    <script>document.documentElement.classList.toggle('dark',(localStorage.getItem('clawmissions_theme')||'dark')==='dark')</script>
+    <script>document.documentElement.classList.remove('dark');localStorage.setItem('clawmissions_theme','light')</script>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

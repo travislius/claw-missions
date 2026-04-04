@@ -49,41 +49,41 @@ export default function Header() {
 
   return (
     <header
-      className="bg-gray-900 border-b border-gray-800 flex items-center px-3 sm:px-4 gap-2 sm:gap-4 shrink-0"
+      className="bg-gradient-to-r from-sky-100 via-sky-50 to-sand-50 border-b border-ocean-200 flex items-center px-3 sm:px-4 gap-2 sm:gap-4 shrink-0"
       style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))', paddingBottom: '0.75rem', minHeight: '3.5rem' }}
     >
       {/* Hamburger (mobile) */}
-      <button onClick={toggleSidebar} className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition md:hidden">
+      <button onClick={toggleSidebar} className="p-2 rounded-lg text-gray-600 hover:text-ocean-700 hover:bg-white/70 transition md:hidden">
         <Menu className="w-5 h-5" />
       </button>
 
       {/* Logo */}
       <div className="flex items-center gap-2 shrink-0 cursor-pointer" onClick={() => { setSearchQuery(''); setLocalQuery(''); navigate('/'); }}>
-        <Crosshair className="w-6 h-6 text-red-500" />
-        <span className="text-lg font-bold text-white hidden sm:block">Claw Missions</span>
+        <Crosshair className="w-6 h-6 text-ocean-500" />
+        <span className="text-lg font-bold text-gray-800 hidden sm:block">Claw Missions</span>
       </div>
 
       {/* Search */}
       <form onSubmit={handleSubmit} className="flex-1 max-w-xl relative" ref={dropdownRef}>
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ocean-400" />
         <input
           type="text"
           placeholder="Search files..."
           value={localQuery}
           onChange={(e) => setLocalQuery(e.target.value)}
           onFocus={() => suggestions.length > 0 && setShowDropdown(true)}
-          className="w-full bg-gray-800 border border-gray-700 rounded-lg pl-10 pr-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-ocean-500 transition"
+          className="w-full bg-white/70 border border-ocean-200 rounded-lg pl-10 pr-4 py-2 text-sm text-gray-800 placeholder-ocean-400 focus:outline-none focus:border-ocean-400 transition"
         />
         {showDropdown && suggestions.length > 0 && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-xl overflow-hidden z-50">
+          <div className="absolute top-full left-0 right-0 mt-1 bg-white/95 border border-ocean-200 rounded-lg shadow-xl overflow-hidden z-50 backdrop-blur">
             {suggestions.map((file) => (
               <button key={file.id} type="button" onClick={() => { setShowDropdown(false); setLocalQuery(''); setSearchQuery(''); navigate('/'); }}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-gray-700 transition">
-                <span className="text-sm text-white truncate flex-1">{file.name}</span>
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-sky-50 transition">
+                <span className="text-sm text-gray-800 truncate flex-1">{file.name}</span>
                 <span className="text-xs text-gray-500 shrink-0">{file.mime_type?.split('/')[1] || ''}</span>
               </button>
             ))}
-            <button type="submit" className="w-full px-4 py-2 text-xs text-ocean-400 hover:bg-gray-700 transition border-t border-gray-700">
+            <button type="submit" className="w-full px-4 py-2 text-xs text-ocean-600 hover:bg-sky-50 transition border-t border-ocean-100">
               View all results for "{localQuery}"
             </button>
           </div>
@@ -91,7 +91,7 @@ export default function Header() {
       </form>
 
       {/* Logout only */}
-      <button onClick={logout} className="p-2 rounded-lg text-gray-400 hover:text-red-400 hover:bg-gray-800 transition" title="Logout">
+      <button onClick={logout} className="p-2 rounded-lg text-gray-600 hover:text-coral-500 hover:bg-white/70 transition" title="Logout">
         <LogOut className="w-5 h-5" />
       </button>
     </header>

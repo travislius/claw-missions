@@ -14,19 +14,22 @@
 
 ## 📸 Screenshots
 
-### Mission Control — Home Dashboard
-![Home](docs/screenshots/home.jpg)
+### 🏠 Mission Control — Home Dashboard
+![Home](docs/screenshots/home-ocean.jpg)
 
-### Team — Multi-Machine Overview
+### 🔐 Login — Ocean Theme
+![Login](docs/screenshots/login-ocean.jpg)
+
+### 🌐 Monitor — Uptime & Latency
+![Monitor](docs/screenshots/monitor-ocean.jpg)
+
+### 👥 Team — Multi-Machine Overview
 ![Team](docs/screenshots/team.jpg)
 
-### Monitor — Uptime & Latency
-![Monitor](docs/screenshots/monitor.jpg)
-
-### Sessions — AI Session History
+### 📡 Sessions — AI Session History
 ![Sessions](docs/screenshots/sessions.jpg)
 
-### Skills — Agent Skills Browser
+### 🧠 Skills — Agent Skills Browser
 ![Skills](docs/screenshots/skills.jpg)
 
 ---

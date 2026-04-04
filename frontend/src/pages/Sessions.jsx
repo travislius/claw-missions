@@ -29,7 +29,7 @@ function shortModel(model) {
 
 const KIND_STYLES = {
   main: 'bg-blue-500/20 text-blue-300',
-  cron: 'bg-yellow-500/20 text-yellow-300',
+  cron: 'bg-sand-100 text-sand-500',
   subagent: 'bg-purple-500/20 text-purple-300',
 };
 
@@ -70,14 +70,14 @@ export default function Sessions() {
   if (initialLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-ocean-500" />
       </div>
     );
   }
 
   if (error && !data) {
     return (
-      <div className="text-red-400 text-center py-12">
+      <div className="text-coral-500 text-center py-12">
         <p className="text-lg font-medium">Failed to load sessions</p>
         <p className="text-sm text-gray-500 mt-1">{error}</p>
       </div>
@@ -94,30 +94,30 @@ export default function Sessions() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-        <Radio className="w-6 h-6 text-red-400" />
+      <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+        <Radio className="w-6 h-6 text-coral-500" />
         Sessions
       </h1>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard icon={<Radio className="w-5 h-5" />} label="Total Sessions" value={data?.total || 0} color="text-blue-400" />
-        <StatCard icon={<Zap className="w-5 h-5" />} label="Total Tokens" value={fmtTokens(stats.total_tokens)} color="text-green-400" />
-        <StatCard icon={<Cpu className="w-5 h-5" />} label="Input Tokens" value={fmtTokens(stats.total_input_tokens)} color="text-yellow-400" />
+        <StatCard icon={<Zap className="w-5 h-5" />} label="Total Tokens" value={fmtTokens(stats.total_tokens)} color="text-seafoam-500" />
+        <StatCard icon={<Cpu className="w-5 h-5" />} label="Input Tokens" value={fmtTokens(stats.total_input_tokens)} color="text-sand-500" />
         <StatCard icon={<Database className="w-5 h-5" />} label="Cache Read" value={fmtTokens(stats.total_cache_read)} color="text-purple-400" />
       </div>
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
-        <div className="flex gap-1 bg-gray-800/50 rounded-lg p-1">
+        <div className="flex gap-1 bg-sky-50/80 rounded-lg p-1">
           {FILTERS.map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
               className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${
                 filter === f
-                  ? 'bg-gray-700 text-white'
-                  : 'text-gray-400 hover:text-white'
+                  ? 'bg-ocean-500 text-white'
+                  : 'text-gray-600 hover:text-ocean-700'
               }`}
             >
               {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -131,7 +131,7 @@ export default function Sessions() {
             placeholder="Search sessions..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-gray-600"
+            className="w-full pl-9 pr-3 py-2 bg-sky-50/80 border border-ocean-200 rounded-lg text-sm text-gray-800 placeholder-ocean-400 focus:outline-none focus:border-ocean-200"
           />
         </div>
         <span className="text-gray-500 text-sm self-center">{sessions.length} sessions</span>
@@ -142,17 +142,17 @@ export default function Sessions() {
         {sessions.map((s) => (
           <div
             key={s.key}
-            className="bg-gray-800/40 border border-gray-700/50 rounded-lg p-4 hover:bg-gray-800/60 transition cursor-pointer"
+            className="bg-sky-50/70 border border-ocean-100 rounded-lg p-4 hover:bg-sky-50/90 transition cursor-pointer"
             onClick={() => setExpandedId(expandedId === s.key ? null : s.key)}
           >
             <div className="flex items-center gap-3 flex-wrap">
               {/* Kind badge */}
-              <span className={`px-2 py-0.5 rounded-full text-xs font-semibold uppercase ${KIND_STYLES[s.kind] || 'bg-gray-500/20 text-gray-400'}`}>
+              <span className={`px-2 py-0.5 rounded-full text-xs font-semibold uppercase ${KIND_STYLES[s.kind] || 'bg-ocean-100 text-ocean-700'}`}>
                 {s.kind}
               </span>
 
               {/* Label */}
-              <span className="text-white text-sm font-medium truncate max-w-[280px]" title={s.label}>
+              <span className="text-gray-800 text-sm font-medium truncate max-w-[280px]" title={s.label}>
                 {s.label.length > 40 ? s.label.slice(0, 40) + '…' : s.label}
               </span>
 
@@ -165,13 +165,13 @@ export default function Sessions() {
               </span>
 
               {/* Messages */}
-              <span className="flex items-center gap-1 text-gray-400 text-xs" title="Messages">
+              <span className="flex items-center gap-1 text-gray-600 text-xs" title="Messages">
                 <MessageSquare className="w-3.5 h-3.5" />
                 {s.message_count}
               </span>
 
               {/* Tokens */}
-              <span className="flex items-center gap-1 text-gray-400 text-xs" title="Total tokens">
+              <span className="flex items-center gap-1 text-gray-600 text-xs" title="Total tokens">
                 <Zap className="w-3.5 h-3.5" />
                 {fmtTokens(s.total_tokens)}
               </span>
@@ -184,11 +184,11 @@ export default function Sessions() {
 
             {/* Expanded: last message preview */}
             {expandedId === s.key && s.last_message && (
-              <div className="mt-3 pt-3 border-t border-gray-700/50">
+              <div className="mt-3 pt-3 border-t border-ocean-100">
                 <p className="text-xs text-gray-500 mb-1">
                   Last {s.last_message.role === 'user' ? 'user' : 'assistant'} message:
                 </p>
-                <p className="text-sm text-gray-300 italic line-clamp-2">
+                <p className="text-sm text-gray-700 italic line-clamp-2">
                   "{s.last_message.text}"
                 </p>
                 <div className="flex gap-4 mt-2 text-xs text-gray-600">
@@ -214,9 +214,9 @@ export default function Sessions() {
 
 function StatCard({ icon, label, value, color }) {
   return (
-    <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-4">
+    <div className="bg-sky-50/70 border border-ocean-100 rounded-xl p-4">
       <div className={`${color} mb-2`}>{icon}</div>
-      <p className="text-2xl font-bold text-white">{value}</p>
+      <p className="text-2xl font-bold text-gray-800">{value}</p>
       <p className="text-xs text-gray-500 mt-1">{label}</p>
     </div>
   );

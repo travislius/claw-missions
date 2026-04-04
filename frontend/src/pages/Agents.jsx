@@ -24,7 +24,7 @@ const AGENT_STYLES = {
     dot: 'bg-orange-400',
     icon: '⚡',
     provider: 'OpenAI',
-    providerColor: 'text-green-400',
+    providerColor: 'text-seafoam-500',
   },
   claude: {
     label: 'Claude Code',
@@ -41,7 +41,7 @@ const AGENT_STYLES = {
 const STATUS_DOT = {
   running: 'bg-green-400 animate-pulse',
   sleeping: 'bg-yellow-400',
-  default: 'bg-gray-400',
+  default: 'bg-ocean-300',
 };
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -65,12 +65,12 @@ function RunningCard({ agent }) {
       </div>
 
       {/* Command */}
-      <p className="text-gray-300 text-xs font-mono bg-gray-900/50 rounded px-2 py-1.5 truncate mb-3" title={agent.cmd}>
+      <p className="text-gray-700 text-xs font-mono bg-sky-50/80 rounded px-2 py-1.5 truncate mb-3" title={agent.cmd}>
         {agent.cmd_short || agent.cmd}
       </p>
 
       {/* Stats row */}
-      <div className="flex gap-4 text-xs text-gray-400">
+      <div className="flex gap-4 text-xs text-gray-600">
         <span className="flex items-center gap-1">
           <Cpu className="w-3 h-3" />
           {agent.cpu_percent}%
@@ -102,11 +102,11 @@ function ConfigCard({ type, config }) {
         </div>
         <div className="ml-auto">
           {config.installed ? (
-            <span className="flex items-center gap-1 text-green-400 text-xs font-medium">
+            <span className="flex items-center gap-1 text-seafoam-500 text-xs font-medium">
               <CheckCircle className="w-4 h-4" /> Installed
             </span>
           ) : (
-            <span className="flex items-center gap-1 text-red-400 text-xs font-medium">
+            <span className="flex items-center gap-1 text-coral-500 text-xs font-medium">
               <XCircle className="w-4 h-4" /> Not found
             </span>
           )}
@@ -115,7 +115,7 @@ function ConfigCard({ type, config }) {
 
       {/* Version + path */}
       {config.version && (
-        <div className="text-xs text-gray-400 font-mono bg-gray-900/40 rounded px-3 py-2">
+        <div className="text-xs text-gray-600 font-mono bg-sky-50/70 rounded px-3 py-2">
           {config.version}
         </div>
       )}
@@ -161,8 +161,8 @@ function ConfigCard({ type, config }) {
           <div className="space-y-1 max-h-32 overflow-y-auto">
             {config.trusted_paths.map((tp, i) => (
               <div key={i} className="flex items-center gap-2 text-xs">
-                <span className="text-green-400 shrink-0">✓</span>
-                <span className="text-gray-400 font-mono truncate" title={tp.path}>
+                <span className="text-seafoam-500 shrink-0">✓</span>
+                <span className="text-gray-600 font-mono truncate" title={tp.path}>
                   {tp.path.replace('/Users/tiali', '~')}
                 </span>
                 <span className="text-gray-600 shrink-0 ml-auto">{tp.trust_level}</span>
@@ -180,7 +180,7 @@ function ConfigRow({ icon, label, value, mono = false }) {
     <div className="flex items-start gap-2 text-xs">
       <span className="text-gray-500 shrink-0 mt-0.5">{icon}</span>
       <span className="text-gray-500 w-16 shrink-0">{label}</span>
-      <span className={`text-gray-200 break-all ${mono ? 'font-mono' : ''}`}>{value}</span>
+      <span className={`text-gray-700 break-all ${mono ? 'font-mono' : ''}`}>{value}</span>
     </div>
   );
 }
@@ -221,14 +221,14 @@ export default function Agents() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-ocean-500" />
       </div>
     );
   }
 
   if (error && !data) {
     return (
-      <div className="text-red-400 text-center py-12">
+      <div className="text-coral-500 text-center py-12">
         <p className="text-lg font-medium">Failed to load agents</p>
         <p className="text-sm text-gray-500 mt-1">{error}</p>
       </div>
@@ -242,8 +242,8 @@ export default function Agents() {
     <div className="max-w-5xl mx-auto space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-          <Bot className="w-6 h-6 text-red-400" />
+        <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+          <Bot className="w-6 h-6 text-coral-500" />
           Coding Agents
         </h1>
         <div className="flex items-center gap-3">
@@ -254,7 +254,7 @@ export default function Agents() {
           )}
           <button
             onClick={() => fetchAgents(false)}
-            className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-gray-800 transition"
+            className="p-1.5 rounded-lg text-gray-500 hover:text-ocean-700 hover:bg-sky-50 transition"
             title="Refresh"
           >
             <RefreshCw className="w-4 h-4" />
@@ -265,16 +265,16 @@ export default function Agents() {
       {/* ── Running Instances ── */}
       <section>
         <div className="flex items-center gap-2 mb-4">
-          <h2 className="text-base font-semibold text-gray-200">Running Instances</h2>
+          <h2 className="text-base font-semibold text-gray-700">Running Instances</h2>
           <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-            running.length > 0 ? 'bg-green-500/20 text-green-400' : 'bg-gray-700 text-gray-500'
+            running.length > 0 ? 'bg-seafoam-100 text-seafoam-500' : 'bg-gray-700 text-gray-500'
           }`}>
             {running.length} active
           </span>
         </div>
 
         {running.length === 0 ? (
-          <div className="rounded-xl border border-gray-700/50 bg-gray-800/20 p-8 text-center">
+          <div className="rounded-xl border border-ocean-100 bg-sky-50/50 p-8 text-center">
             <Bot className="w-10 h-10 text-gray-600 mx-auto mb-3" />
             <p className="text-gray-500 text-sm">No coding agents currently running</p>
             <p className="text-gray-600 text-xs mt-1">
@@ -292,7 +292,7 @@ export default function Agents() {
 
       {/* ── Configured Agents ── */}
       <section>
-        <h2 className="text-base font-semibold text-gray-200 mb-4">Agent Configuration</h2>
+        <h2 className="text-base font-semibold text-gray-700 mb-4">Agent Configuration</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {Object.entries(configs).map(([type, config]) => (
             <ConfigCard key={type} type={type} config={config} />

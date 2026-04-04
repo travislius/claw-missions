@@ -54,12 +54,12 @@ export default function Upload({ onClose, onComplete }) {
   const hasFiles = files.length > 0;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-lg shadow-2xl">
+    <div className="fixed inset-0 bg-ocean-900/20 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="bg-white border border-ocean-200 rounded-2xl w-full max-w-lg shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-800">
-          <h3 className="text-lg font-semibold text-white">Upload Files</h3>
-          <button onClick={onClose} className="p-1 text-gray-500 hover:text-white transition">
+        <div className="flex items-center justify-between p-4 border-b border-ocean-100">
+          <h3 className="text-lg font-semibold text-gray-800">Upload Files</h3>
+          <button onClick={onClose} className="p-1 text-gray-500 hover:text-ocean-700 transition">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -74,11 +74,11 @@ export default function Upload({ onClose, onComplete }) {
             className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
               dragging
                 ? 'border-ocean-400 bg-ocean-400/10'
-                : 'border-gray-700 hover:border-gray-500'
+                : 'border-ocean-200 hover:border-ocean-400'
             }`}
           >
             <UploadIcon className={`w-10 h-10 mx-auto mb-3 ${dragging ? 'text-ocean-400' : 'text-gray-600'}`} />
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-gray-600">
               Drag & drop files here, or <span className="text-ocean-400">browse</span>
             </p>
             <input
@@ -94,11 +94,11 @@ export default function Upload({ onClose, onComplete }) {
           {hasFiles && (
             <div className="max-h-60 overflow-y-auto space-y-2">
               {files.map((entry, i) => (
-                <div key={i} className="flex items-center gap-3 bg-gray-800/50 rounded-lg px-3 py-2">
+                <div key={i} className="flex items-center gap-3 bg-sky-50/80 rounded-lg px-3 py-2">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-white truncate">{entry.file.name}</p>
+                    <p className="text-sm text-gray-800 truncate">{entry.file.name}</p>
                     {entry.status === 'uploading' && (
-                      <div className="mt-1 h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                      <div className="mt-1 h-1.5 bg-ocean-100 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-ocean-500 rounded-full transition-all duration-300"
                           style={{ width: `${entry.progress}%` }}
@@ -106,12 +106,12 @@ export default function Upload({ onClose, onComplete }) {
                       </div>
                     )}
                     {entry.status === 'error' && (
-                      <p className="text-xs text-red-400 mt-0.5">{entry.error}</p>
+                      <p className="text-xs text-coral-500 mt-0.5">{entry.error}</p>
                     )}
                   </div>
                   <div className="shrink-0">
-                    {entry.status === 'done' && <CheckCircle className="w-5 h-5 text-green-400" />}
-                    {entry.status === 'error' && <AlertCircle className="w-5 h-5 text-red-400" />}
+                    {entry.status === 'done' && <CheckCircle className="w-5 h-5 text-seafoam-500" />}
+                    {entry.status === 'error' && <AlertCircle className="w-5 h-5 text-coral-500" />}
                     {entry.status === 'uploading' && (
                       <span className="text-xs text-ocean-400">{entry.progress}%</span>
                     )}
@@ -123,8 +123,8 @@ export default function Upload({ onClose, onComplete }) {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 p-4 border-t border-gray-800">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-400 hover:text-white transition">
+        <div className="flex items-center justify-end gap-3 p-4 border-t border-ocean-100">
+          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-ocean-700 transition">
             {allDone ? 'Close' : 'Cancel'}
           </button>
           {!allDone && (

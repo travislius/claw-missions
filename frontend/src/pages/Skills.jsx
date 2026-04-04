@@ -16,7 +16,7 @@ function timeAgo(ms) {
 
 const SOURCE_STYLES = {
   user:    { label: 'Custom',   className: 'bg-ocean-500/20 text-ocean-300 border-ocean-500/30' },
-  builtin: { label: 'Built-in', className: 'bg-gray-700/50 text-gray-400 border-gray-600/30' },
+  builtin: { label: 'Built-in', className: 'bg-ocean-100 text-ocean-700 border-ocean-200/30' },
 };
 
 // ── Skill Viewer Modal ────────────────────────────────────────────────────────
@@ -37,17 +37,17 @@ function SkillViewer({ skillId, onClose }) {
     : '';
 
   return (
-    <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
+    <div className="fixed inset-0 bg-ocean-900/20 z-50 flex items-center justify-center p-4"
       onClick={onClose}>
       <div onClick={e => e.stopPropagation()}
-        className="bg-gray-950 border border-gray-700 rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col shadow-2xl">
+        className="bg-white border border-ocean-200 rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-800 shrink-0">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-ocean-100 shrink-0">
           <div className="flex items-center gap-2 min-w-0">
             <Puzzle className="w-4 h-4 text-purple-400 shrink-0" />
-            <code className="text-xs text-gray-400 truncate">{content?.path || skillId}</code>
+            <code className="text-xs text-gray-600 truncate">{content?.path || skillId}</code>
           </div>
-          <button onClick={onClose} className="text-gray-600 hover:text-white transition ml-3 shrink-0">
+          <button onClick={onClose} className="text-gray-600 hover:text-ocean-700 transition ml-3 shrink-0">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -58,7 +58,7 @@ function SkillViewer({ skillId, onClose }) {
               <RefreshCw className="w-4 h-4 animate-spin mr-2" /> Loading…
             </div>
           ) : (
-            <pre className="text-xs text-gray-300 font-mono leading-relaxed whitespace-pre-wrap break-words">
+            <pre className="text-xs text-gray-700 font-mono leading-relaxed whitespace-pre-wrap break-words">
               {body}
             </pre>
           )}
@@ -119,14 +119,14 @@ export default function Skills() {
             <Puzzle className="w-5 h-5 text-purple-400" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-white">Skills</h1>
+            <h1 className="text-xl font-bold text-gray-800">Skills</h1>
             <p className="text-xs text-gray-500">
               {userCount} custom · {builtinCount} built-in · {skills.length} total
             </p>
           </div>
         </div>
         <button onClick={() => fetchData(true)}
-          className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition">
+          className="p-2 text-gray-500 hover:text-ocean-700 hover:bg-sky-50 rounded-lg transition">
           <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
         </button>
       </div>
@@ -139,14 +139,14 @@ export default function Skills() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search skills…"
-            className="w-full pl-9 pr-4 py-2 bg-gray-900 border border-gray-800 rounded-xl text-sm text-white placeholder-gray-600 focus:outline-none focus:border-gray-600"
+            className="w-full pl-9 pr-4 py-2 bg-white border border-ocean-100 rounded-xl text-sm text-gray-800 placeholder-ocean-300 focus:outline-none focus:border-ocean-200"
           />
         </div>
-        <div className="flex items-center gap-1 bg-gray-900 border border-gray-800 rounded-xl p-1">
+        <div className="flex items-center gap-1 bg-white border border-ocean-100 rounded-xl p-1">
           {[['all', 'All'], ['user', 'Custom'], ['builtin', 'Built-in']].map(([val, lbl]) => (
             <button key={val} onClick={() => setFilter(val)}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
-                filter === val ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'
+                filter === val ? 'bg-ocean-500 text-white' : 'text-gray-600 hover:text-ocean-700'
               }`}>
               {lbl}
             </button>
@@ -182,8 +182,8 @@ export default function Skills() {
         <div>
           {filter === 'all' && (
             <div className="flex items-center gap-2 mb-3">
-              <Package className="w-4 h-4 text-gray-400" />
-              <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Built-in Skills</h2>
+              <Package className="w-4 h-4 text-gray-600" />
+              <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wider">Built-in Skills</h2>
               <span className="text-xs text-gray-600">{builtinCount} available</span>
             </div>
           )}
@@ -215,31 +215,31 @@ function SkillCard({ skill, expanded, onToggle, onView }) {
   return (
     <div
       onClick={onToggle}
-      className={`bg-gray-900 border rounded-xl p-4 cursor-pointer transition-all
-        ${expanded ? 'border-gray-600' : 'border-gray-800 hover:border-gray-700'}`}
+      className={`bg-white border rounded-xl p-4 cursor-pointer transition-all
+        ${expanded ? 'border-ocean-200' : 'border-ocean-100 hover:border-ocean-200'}`}
     >
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2 min-w-0">
           {skill.emoji ? (
             <span className="text-xl shrink-0">{skill.emoji}</span>
           ) : (
-            <div className="w-7 h-7 rounded-lg bg-gray-800 flex items-center justify-center shrink-0">
+            <div className="w-7 h-7 rounded-lg bg-sky-50 flex items-center justify-center shrink-0">
               <Puzzle className="w-3.5 h-3.5 text-gray-500" />
             </div>
           )}
-          <span className="text-sm font-semibold text-white truncate">{skill.name}</span>
+          <span className="text-sm font-semibold text-gray-800 truncate">{skill.name}</span>
         </div>
         <span className={`text-xs px-2 py-0.5 rounded-full border shrink-0 ${src.className}`}>
           {src.label}
         </span>
       </div>
 
-      <p className={`text-xs text-gray-400 leading-relaxed ${expanded ? '' : 'line-clamp-2'}`}>
+      <p className={`text-xs text-gray-600 leading-relaxed ${expanded ? '' : 'line-clamp-2'}`}>
         {skill.description || <span className="text-gray-600 italic">No description</span>}
       </p>
 
       {expanded && (
-        <div className="mt-3 pt-3 border-t border-gray-800 flex items-center justify-between gap-2">
+        <div className="mt-3 pt-3 border-t border-ocean-100 flex items-center justify-between gap-2">
           <button
             onClick={e => { e.stopPropagation(); onView(); }}
             className="flex items-center gap-1.5 min-w-0 text-left group/path"

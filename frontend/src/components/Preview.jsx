@@ -66,7 +66,7 @@ function TagPicker({ file, onUpdate }) {
           {tag.name}
         </button>
       ))}
-      <button onClick={() => setOpen(false)} className="text-xs text-gray-600 hover:text-gray-400 ml-1">Done</button>
+      <button onClick={() => setOpen(false)} className="text-xs text-gray-600 hover:text-gray-600 ml-1">Done</button>
     </div>
   );
 }
@@ -102,29 +102,29 @@ export default function Preview({ file, onClose, onRefresh }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
+    <div className="fixed inset-0 bg-ocean-900/20 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden"
+        className="bg-white border border-ocean-200 rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-800 shrink-0">
-          <h3 className="text-lg font-semibold text-white truncate pr-4">{currentFile.name}</h3>
+        <div className="flex items-center justify-between p-4 border-b border-ocean-100 shrink-0">
+          <h3 className="text-lg font-semibold text-gray-800 truncate pr-4">{currentFile.name}</h3>
           <div className="flex items-center gap-2 shrink-0">
-            <button onClick={handleDownload} className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition" title="Download">
+            <button onClick={handleDownload} className="p-2 rounded-lg text-gray-600 hover:text-ocean-700 hover:bg-sky-50 transition" title="Download">
               <Download className="w-5 h-5" />
             </button>
-            <button onClick={handleDelete} className="p-2 rounded-lg text-gray-400 hover:text-red-400 hover:bg-gray-800 transition" title="Delete">
+            <button onClick={handleDelete} className="p-2 rounded-lg text-gray-600 hover:text-coral-500 hover:bg-sky-50 transition" title="Delete">
               <Trash2 className="w-5 h-5" />
             </button>
-            <button onClick={onClose} className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition">
+            <button onClick={onClose} className="p-2 rounded-lg text-gray-600 hover:text-ocean-700 hover:bg-sky-50 transition">
               <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
         {/* Preview content */}
-        <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-gray-950/50 min-h-[200px]">
+        <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-sky-50/70 min-h-[200px]">
           {isImage && !imgErr ? (
             <img src={`/api/files/${currentFile.id}/download?token=${localStorage.getItem('clawmissions_token')}`} alt={currentFile.name} className="max-w-full max-h-[60vh] object-contain rounded-lg" onError={() => setImgErr(true)} />
           ) : isPdf ? (
@@ -142,11 +142,11 @@ export default function Preview({ file, onClose, onRefresh }) {
         </div>
 
         {/* File info + tags */}
-        <div className="p-4 border-t border-gray-800 shrink-0 space-y-3">
-          <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-gray-400">
-            <span>Size: <span className="text-gray-300">{formatBytes(currentFile.size)}</span></span>
-            <span>Type: <span className="text-gray-300">{currentFile.mime_type || 'Unknown'}</span></span>
-            <span>Uploaded: <span className="text-gray-300">{formatDate(currentFile.created_at)}</span></span>
+        <div className="p-4 border-t border-ocean-100 shrink-0 space-y-3">
+          <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-gray-600">
+            <span>Size: <span className="text-gray-700">{formatBytes(currentFile.size)}</span></span>
+            <span>Type: <span className="text-gray-700">{currentFile.mime_type || 'Unknown'}</span></span>
+            <span>Uploaded: <span className="text-gray-700">{formatDate(currentFile.created_at)}</span></span>
           </div>
 
           {/* Tags section */}

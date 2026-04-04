@@ -24,12 +24,12 @@ const WIDGET_DEFS = [
 ];
 
 const COLORS = {
-  red:    { bg: 'bg-red-500/10',    border: 'border-red-500/20',    icon: 'text-red-400',    bar: 'bg-red-500' },
-  ocean:  { bg: 'bg-ocean-500/10',  border: 'border-ocean-500/20',  icon: 'text-ocean-400',  bar: 'bg-ocean-500' },
-  amber:  { bg: 'bg-amber-500/10',  border: 'border-amber-500/20',  icon: 'text-amber-400',  bar: 'bg-amber-500' },
-  green:  { bg: 'bg-green-500/10',  border: 'border-green-500/20',  icon: 'text-green-400',  bar: 'bg-green-500' },
-  purple: { bg: 'bg-purple-500/10', border: 'border-purple-500/20', icon: 'text-purple-400', bar: 'bg-purple-500' },
-  blue:   { bg: 'bg-blue-500/10',   border: 'border-blue-500/20',   icon: 'text-blue-400',   bar: 'bg-blue-500' },
+  red:    { soft: 'bg-coral-500/10',   accent: 'bg-coral-500',   border: 'border-coral-200',   icon: 'text-coral-500',   bar: 'bg-coral-500' },
+  ocean:  { soft: 'bg-ocean-500/10',   accent: 'bg-ocean-500',   border: 'border-ocean-200',   icon: 'text-ocean-500',   bar: 'bg-ocean-500' },
+  amber:  { soft: 'bg-sand-200/60',    accent: 'bg-sand-500',    border: 'border-sand-200',    icon: 'text-sand-500',    bar: 'bg-sand-400' },
+  green:  { soft: 'bg-seafoam-100',    accent: 'bg-seafoam-500', border: 'border-seafoam-200', icon: 'text-seafoam-500', bar: 'bg-seafoam-500' },
+  purple: { soft: 'bg-sky-100',        accent: 'bg-sky-400',     border: 'border-sky-200',     icon: 'text-sky-500',     bar: 'bg-sky-400' },
+  blue:   { soft: 'bg-sky-100',        accent: 'bg-sky-500',     border: 'border-sky-200',     icon: 'text-sky-500',     bar: 'bg-sky-500' },
 };
 
 const STORAGE_KEY = 'clawmissions_widgets';
@@ -65,9 +65,9 @@ function timeAgo(date) {
 
 function MiniBar({ value, color }) {
   const pct = Math.min(100, Math.max(0, value || 0));
-  const barColor = pct > 85 ? 'bg-red-500' : pct > 60 ? 'bg-yellow-500' : color;
+  const barColor = pct > 85 ? 'bg-coral-500' : pct > 60 ? 'bg-sand-400' : color;
   return (
-    <div className="w-full bg-gray-700 rounded-full h-1 mt-0.5">
+    <div className="w-full bg-ocean-100 rounded-full h-1 mt-0.5">
       <div className={`${barColor} h-1 rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
     </div>
   );
@@ -91,7 +91,7 @@ function WidgetCard({ def, data, onUnpin, dragHandlers }) {
           <>
             <div className="text-xs text-gray-400">CPU {cpu.toFixed(0)}%<MiniBar value={cpu} color={c.bar} /></div>
             <div className="text-xs text-gray-400 mt-1">RAM {ram?.toFixed(0)}%<MiniBar value={ram} color={c.bar} /></div>
-            {up && <div className="text-[10px] text-gray-600 mt-1">⏱ {up}</div>}
+            {up && <div className="text-[10px] text-gray-500 mt-1">⏱ {up}</div>}
           </>
         ) : <Shimmer />;
       }
@@ -100,7 +100,7 @@ function WidgetCard({ def, data, onUnpin, dragHandlers }) {
         const size = data?.total_size;
         return files != null ? (
           <>
-            <div className="text-lg font-bold text-white">{files}</div>
+            <div className="text-lg font-bold text-gray-800">{files}</div>
             <div className="text-[10px] text-gray-500">files · {formatBytes(size)}</div>
           </>
         ) : <Shimmer />;
@@ -112,8 +112,8 @@ function WidgetCard({ def, data, onUnpin, dragHandlers }) {
         return total != null ? (
           <>
             <div className="flex items-center gap-2">
-              <span className="text-lg font-bold text-white">{total}</span>
-              {errors > 0 && <span className="text-[10px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded-full">{errors} err</span>}
+              <span className="text-lg font-bold text-gray-800">{total}</span>
+              {errors > 0 && <span className="text-[10px] bg-coral-500/15 text-coral-600 px-1.5 py-0.5 rounded-full">{errors} err</span>}
             </div>
             {next && <div className="text-[10px] text-gray-500 truncate">Next: {next.name}</div>}
           </>
@@ -125,10 +125,10 @@ function WidgetCard({ def, data, onUnpin, dragHandlers }) {
         const online = members.filter(m => m.status === 'online');
         return (
           <>
-            <div className="text-lg font-bold text-white">{online.length}/{members.length} online</div>
+            <div className="text-lg font-bold text-gray-800">{online.length}/{members.length} online</div>
             <div className="flex gap-1 mt-1">
               {members.map(m => (
-                <span key={m.name} className={`w-2 h-2 rounded-full ${m.status === 'online' ? 'bg-green-400' : 'bg-gray-600'}`} title={m.name} />
+                <span key={m.name} className={`w-2 h-2 rounded-full ${m.status === 'online' ? 'bg-seafoam-500' : 'bg-ocean-200'}`} title={m.name} />
               ))}
             </div>
           </>
@@ -142,7 +142,7 @@ function WidgetCard({ def, data, onUnpin, dragHandlers }) {
         const active = sessions.filter(s => new Date(s.updatedAt || s.updated_at || 0).getTime() > dayAgo).length;
         return (
           <>
-            <div className="text-lg font-bold text-white">{total}</div>
+            <div className="text-lg font-bold text-gray-800">{total}</div>
             <div className="text-[10px] text-gray-500">{active} active today</div>
           </>
         );
@@ -160,7 +160,7 @@ function WidgetCard({ def, data, onUnpin, dragHandlers }) {
         const done = tasks.filter(t => t.status === 'done').length;
         return (
           <>
-            <div className="text-lg font-bold text-white">{open}</div>
+            <div className="text-lg font-bold text-gray-800">{open}</div>
             <div className="text-[10px] text-gray-500">open · {done} done</div>
           </>
         );
@@ -170,7 +170,7 @@ function WidgetCard({ def, data, onUnpin, dragHandlers }) {
         const sections = (data.content.match(/^## /gm) || []).length;
         return (
           <>
-            <div className="text-lg font-bold text-white">{sections}</div>
+            <div className="text-lg font-bold text-gray-800">{sections}</div>
             <div className="text-[10px] text-gray-500">active projects</div>
           </>
         );
@@ -179,7 +179,7 @@ function WidgetCard({ def, data, onUnpin, dragHandlers }) {
         if (data?.total_topics == null) return <Shimmer />;
         return (
           <>
-            <div className="text-lg font-bold text-white">{data.total_topics}</div>
+            <div className="text-lg font-bold text-gray-800">{data.total_topics}</div>
             <div className="text-[10px] text-gray-500">{data.total_channels} categories · {data.total_replies} replies</div>
           </>
         );
@@ -190,7 +190,7 @@ function WidgetCard({ def, data, onUnpin, dragHandlers }) {
         const down = data.sites.filter(s => !s.ok).length;
         return (
           <>
-            <div className={`text-lg font-bold ${allUp ? 'text-green-400' : 'text-red-400'}`}>
+            <div className={`text-lg font-bold ${allUp ? 'text-seafoam-500' : 'text-coral-500'}`}>
               {allUp ? '✓ All Up' : `${down} Down`}
             </div>
             <div className="text-[10px] text-gray-500">{data.sites.length} sites monitored</div>
@@ -201,7 +201,7 @@ function WidgetCard({ def, data, onUnpin, dragHandlers }) {
         if (!data?.agents) return <Shimmer />;
         return (
           <>
-            <div className="text-lg font-bold text-white">{data.agents.length}</div>
+            <div className="text-lg font-bold text-gray-800">{data.agents.length}</div>
             <div className="text-[10px] text-gray-500">registered agents</div>
           </>
         );
@@ -212,7 +212,7 @@ function WidgetCard({ def, data, onUnpin, dragHandlers }) {
         const builtin = data.skills.filter(s => s.source === 'builtin').length;
         return (
           <>
-            <div className="text-lg font-bold text-white">{data.total}</div>
+            <div className="text-lg font-bold text-gray-800">{data.total}</div>
             <div className="text-[10px] text-gray-500">{user} custom · {builtin} builtin</div>
           </>
         );
@@ -225,13 +225,13 @@ function WidgetCard({ def, data, onUnpin, dragHandlers }) {
     <div
       {...dragHandlers}
       onClick={() => navigate(routes[def.id] || '/')}
-      className={`relative group flex flex-col p-4 rounded-xl border cursor-pointer transition-all hover:scale-[1.02]
-        ${c.bg} ${c.border} min-w-[160px]`}
+      className="relative group flex flex-col min-w-[160px] rounded-2xl border border-ocean-100 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-ocean-200 hover:shadow-md"
     >
+      <div className={`absolute inset-x-0 top-0 h-1 rounded-t-2xl ${c.accent}`} />
       {/* Pin toggle on hover */}
       <button
         onClick={(e) => { e.stopPropagation(); onUnpin(def.id); }}
-        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition p-1 rounded hover:bg-gray-700/50"
+        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition p-1 rounded hover:bg-sky-50"
         title="Unpin widget"
       >
         <PinOff className="w-3 h-3 text-gray-500" />
@@ -239,9 +239,11 @@ function WidgetCard({ def, data, onUnpin, dragHandlers }) {
 
       {/* Header */}
       <div className="flex items-center gap-2 mb-2">
-        <Icon className={`w-4 h-4 ${c.icon}`} />
-        <span className="text-xs font-medium text-gray-300">{def.label}</span>
-        <ChevronRight className="w-3 h-3 text-gray-600 ml-auto" />
+        <div className={`flex h-8 w-8 items-center justify-center rounded-xl ${c.soft}`}>
+          <Icon className={`w-4 h-4 ${c.icon}`} />
+        </div>
+        <span className="text-xs font-medium text-gray-700">{def.label}</span>
+        <ChevronRight className="w-3 h-3 text-ocean-300 ml-auto" />
       </div>
 
       {/* Content */}
@@ -251,19 +253,19 @@ function WidgetCard({ def, data, onUnpin, dragHandlers }) {
 }
 
 function Shimmer() {
-  return <div className="h-4 w-20 bg-gray-700/50 rounded animate-pulse" />;
+  return <div className="h-4 w-20 bg-ocean-100 rounded animate-pulse" />;
 }
 
 // ── Feed Item ───────────────────────────────────────────────────────
-function FeedItem({ icon, text, sub, time, color = 'bg-gray-500' }) {
+function FeedItem({ icon, text, sub, time, color = 'bg-ocean-300' }) {
   return (
-    <div className="flex items-start gap-3 py-2.5 px-1 border-b border-gray-800/50 last:border-0">
+    <div className="flex items-start gap-3 py-2.5 px-1 border-b border-ocean-100 last:border-0">
       <span className="text-base mt-0.5 shrink-0">{icon}</span>
       <div className="flex-1 min-w-0">
-        <div className="text-sm text-gray-200">{text}</div>
+        <div className="text-sm text-gray-700">{text}</div>
         {sub && <div className="text-xs text-gray-500 truncate">{sub}</div>}
       </div>
-      <span className="text-[10px] text-gray-600 whitespace-nowrap mt-0.5">{time}</span>
+      <span className="text-[10px] text-gray-400 whitespace-nowrap mt-0.5">{time}</span>
     </div>
   );
 }
@@ -276,13 +278,13 @@ function AddWidgetButton({ unpinned, onPin }) {
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="flex flex-col items-center justify-center p-4 rounded-xl border border-dashed border-gray-700 text-gray-500 hover:text-gray-300 hover:border-gray-500 transition min-h-[100px] w-full"
+        className="flex flex-col items-center justify-center min-h-[100px] w-full rounded-2xl border border-dashed border-ocean-200 bg-white/70 p-4 text-gray-500 transition hover:border-ocean-300 hover:text-ocean-600"
       >
         <Plus className="w-5 h-5 mb-1" />
         <span className="text-xs">Add Widget</span>
       </button>
       {open && (
-        <div className="absolute top-full mt-1 left-0 z-50 bg-gray-800 border border-gray-700 rounded-lg shadow-xl py-1 min-w-[180px]">
+        <div className="absolute top-full left-0 z-50 mt-1 min-w-[180px] rounded-lg border border-ocean-200 bg-white py-1 shadow-xl">
           {unpinned.map(def => {
             const Icon = def.icon;
             const c = COLORS[def.color];
@@ -290,11 +292,11 @@ function AddWidgetButton({ unpinned, onPin }) {
               <button
                 key={def.id}
                 onClick={() => { onPin(def.id); setOpen(false); }}
-                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 transition"
+                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 transition hover:bg-sky-50"
               >
                 <Icon className={`w-4 h-4 ${c.icon}`} />
                 <span>{def.label}</span>
-                <Pin className="w-3 h-3 ml-auto text-gray-600" />
+                <Pin className="w-3 h-3 ml-auto text-gray-400" />
               </button>
             );
           })}
@@ -460,12 +462,12 @@ export default function Home() {
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
-      <div className="mb-8 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
-          <Crosshair className="w-5 h-5 text-red-400" />
+      <div className="mb-8 flex items-center gap-3 rounded-3xl border border-ocean-100 bg-gradient-to-r from-sky-100 via-white to-sand-50 px-5 py-4 shadow-sm">
+        <div className="w-10 h-10 rounded-xl bg-ocean-100 flex items-center justify-center">
+          <Crosshair className="w-5 h-5 text-ocean-500" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-white">Mission Control</h1>
+          <h1 className="text-2xl font-bold text-gray-800">Mission Control</h1>
           <p className="text-sm text-gray-500">
             Tia's personal dashboard · {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
           </p>
@@ -475,14 +477,14 @@ export default function Home() {
       {/* ── Pinned Widgets ── */}
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-sm font-semibold text-gray-300">📌 Pinned Widgets</span>
+          <span className="text-sm font-semibold text-gray-700">📌 Pinned Widgets</span>
         </div>
         <div className="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-3">
           {pinnedDefs.map((def, idx) => (
             <div
               key={def.id}
               className={`transition-all ${dragIdx === idx ? 'opacity-40 scale-95' : ''} ${
-                overIdx === idx && dragIdx !== idx ? 'ring-2 ring-red-500/50 rounded-xl' : ''
+                overIdx === idx && dragIdx !== idx ? 'ring-2 ring-ocean-300 rounded-2xl' : ''
               }`}
             >
               <WidgetCard
@@ -507,22 +509,22 @@ export default function Home() {
       {/* ── Live Feed ── */}
       <div>
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-sm font-semibold text-gray-300">📡 Live Feed</span>
-          <button onClick={fetchFeed} className="ml-auto p-1 rounded hover:bg-gray-800 transition" title="Refresh">
-            <RefreshCw className="w-3.5 h-3.5 text-gray-500" />
+          <span className="text-sm font-semibold text-gray-700">📡 Live Feed</span>
+          <button onClick={fetchFeed} className="ml-auto rounded p-1 transition hover:bg-sky-100" title="Refresh">
+            <RefreshCw className="w-3.5 h-3.5 text-ocean-500" />
           </button>
-          {feedUpdated && <span className="text-[10px] text-gray-600">{timeAgo(feedUpdated)}</span>}
+          {feedUpdated && <span className="text-[10px] text-gray-500">{timeAgo(feedUpdated)}</span>}
         </div>
-        <div className="bg-gray-900/50 border border-gray-800 rounded-xl px-3 py-1">
+        <div className="rounded-2xl border border-ocean-100 bg-sky-50/50 px-3 py-1 shadow-sm">
           {visibleFeed.length === 0 ? (
-            <div className="py-6 text-center text-sm text-gray-600">No recent activity</div>
+            <div className="py-6 text-center text-sm text-gray-500">No recent activity</div>
           ) : (
             visibleFeed.map((item, i) => (
               <FeedItem key={i} icon={item.icon} text={item.text} sub={item.sub} time={timeAgo(item.time)} color={item.color} />
             ))
           )}
           {!showAll && feedItems.length > 15 && (
-            <button onClick={() => setShowAll(true)} className="w-full py-2 text-xs text-gray-500 hover:text-gray-300 transition">
+            <button onClick={() => setShowAll(true)} className="w-full py-2 text-xs text-gray-500 transition hover:text-ocean-600">
               Load more ({feedItems.length - 15} remaining)
             </button>
           )}

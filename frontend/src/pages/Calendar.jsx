@@ -21,11 +21,11 @@ const CAT = {
   email:    { label: 'Email',    bg: 'bg-blue-500/20',    border: 'border-blue-500/50',   text: 'text-blue-300',   dot: 'bg-blue-400',   badge: 'bg-blue-500/30 text-blue-300' },
   content:  { label: 'Content',  bg: 'bg-emerald-500/20', border: 'border-emerald-500/50',text: 'text-emerald-300',dot: 'bg-emerald-400',badge: 'bg-emerald-500/30 text-emerald-300' },
   projects: { label: 'Projects', bg: 'bg-ocean-500/20',   border: 'border-ocean-500/50',  text: 'text-ocean-300',  dot: 'bg-ocean-400',  badge: 'bg-ocean-500/30 text-ocean-300' },
-  system:   { label: 'System',   bg: 'bg-gray-500/20',    border: 'border-gray-500/50',   text: 'text-gray-400',   dot: 'bg-gray-500',   badge: 'bg-gray-500/30 text-gray-400' },
+  system:   { label: 'System',   bg: 'bg-ocean-300/20',    border: 'border-ocean-200',   text: 'text-gray-600',   dot: 'bg-ocean-300',   badge: 'bg-ocean-300/30 text-gray-600' },
 };
 
 const KIND_BADGE = {
-  cron: 'bg-gray-700 text-gray-300',
+  cron: 'bg-gray-700 text-gray-700',
   every: 'bg-indigo-900/50 text-indigo-300',
   at: 'bg-rose-900/50 text-rose-300',
 };
@@ -38,8 +38,8 @@ const TZ_OPTS = [
 ];
 
 function StatusIcon({ status, size = 'w-3 h-3' }) {
-  if (status === 'ok') return <CheckCircle className={`${size} text-green-400 shrink-0`} />;
-  if (status === 'error') return <AlertTriangle className={`${size} text-red-400 shrink-0`} />;
+  if (status === 'ok') return <CheckCircle className={`${size} text-seafoam-500 shrink-0`} />;
+  if (status === 'error') return <AlertTriangle className={`${size} text-coral-500 shrink-0`} />;
   return <HelpCircle className={`${size} text-gray-500 shrink-0`} />;
 }
 
@@ -236,8 +236,8 @@ function NowLine() {
   const topPx = (now.getHours() * 60 + now.getMinutes()) / 60 * HOUR_PX;
   return (
     <div className="absolute left-0 right-0 z-20 pointer-events-none" style={{ top: `${topPx}px` }}>
-      <div className="h-0.5 bg-red-500 opacity-70 relative">
-        <div className="absolute -left-1 -top-1 w-2.5 h-2.5 rounded-full bg-red-500" />
+      <div className="h-0.5 bg-coral-500 opacity-70 relative">
+        <div className="absolute -left-1 -top-1 w-2.5 h-2.5 rounded-full bg-coral-500" />
       </div>
     </div>
   );
@@ -293,13 +293,13 @@ function EditModal({ job, onClose, onSaved }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-800 flex items-center justify-between">
-          <h2 className="text-base font-bold text-white flex items-center gap-2">
+      <div className="absolute inset-0 bg-ocean-900/20 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white border border-ocean-200 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-ocean-100 flex items-center justify-between">
+          <h2 className="text-base font-bold text-gray-800 flex items-center gap-2">
             <Edit2 className="w-4 h-4 text-ocean-400" /> Edit Schedule
           </h2>
-          <button onClick={onClose} className="p-1.5 text-gray-500 hover:text-white hover:bg-gray-700 rounded-lg transition">
+          <button onClick={onClose} className="p-1.5 text-gray-500 hover:text-ocean-700 hover:bg-sky-50 rounded-lg transition">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -310,7 +310,7 @@ function EditModal({ job, onClose, onSaved }) {
             <input
               value={form.name}
               onChange={(e) => set('name', e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-ocean-500"
+              className="w-full bg-sky-50 border border-ocean-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-ocean-500"
             />
           </div>
 
@@ -321,14 +321,14 @@ function EditModal({ job, onClose, onSaved }) {
                 <input
                   value={form.cron}
                   onChange={(e) => set('cron', e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-ocean-500"
+                  className="w-full bg-sky-50 border border-ocean-200 rounded-lg px-3 py-2 text-sm font-mono text-gray-800 focus:outline-none focus:border-ocean-500"
                   placeholder="0 3 * * *"
                 />
                 <div className="flex gap-1.5 mt-1.5">
                   {cronLabels.map((label, i) => (
-                    <div key={label} className="flex-1 bg-gray-800/60 rounded px-1.5 py-1 text-center">
+                    <div key={label} className="flex-1 bg-sky-50/90 rounded px-1.5 py-1 text-center">
                       <p className="text-xs text-gray-600">{label}</p>
-                      <p className="text-xs font-mono text-gray-300">{parts[i] ?? '?'}</p>
+                      <p className="text-xs font-mono text-gray-700">{parts[i] ?? '?'}</p>
                     </div>
                   ))}
                 </div>
@@ -339,7 +339,7 @@ function EditModal({ job, onClose, onSaved }) {
                 <select
                   value={form.tz}
                   onChange={(e) => set('tz', e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-ocean-500"
+                  className="w-full bg-sky-50 border border-ocean-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-ocean-500"
                 >
                   {TZ_OPTS.map((tz) => <option key={tz} value={tz}>{tz}</option>)}
                 </select>
@@ -354,14 +354,14 @@ function EditModal({ job, onClose, onSaved }) {
                 type="datetime-local"
                 value={form.at}
                 onChange={(e) => set('at', e.target.value)}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-ocean-500"
+                className="w-full bg-sky-50 border border-ocean-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-ocean-500"
               />
               <p className="mt-1 text-xs text-gray-500">Shown in your browser timezone and saved as an absolute timestamp.</p>
             </div>
           )}
 
           {job.kind === 'every' && (
-            <div className="bg-gray-800/60 border border-gray-700 rounded-lg px-3 py-3 text-sm text-gray-300">
+            <div className="bg-sky-50/90 border border-ocean-200 rounded-lg px-3 py-3 text-sm text-gray-700">
               Interval jobs are shown on the calendar for visibility, but drag rescheduling is disabled for this schedule type.
             </div>
           )}
@@ -372,7 +372,7 @@ function EditModal({ job, onClose, onSaved }) {
               <select
                 value={form.session}
                 onChange={(e) => set('session', e.target.value)}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-ocean-500"
+                className="w-full bg-sky-50 border border-ocean-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-ocean-500"
               >
                 {SESSION_OPTS.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
@@ -382,7 +382,7 @@ function EditModal({ job, onClose, onSaved }) {
               <select
                 value={form.wake}
                 onChange={(e) => set('wake', e.target.value)}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-ocean-500"
+                className="w-full bg-sky-50 border border-ocean-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-ocean-500"
               >
                 {WAKE_OPTS.map((w) => <option key={w} value={w}>{w}</option>)}
               </select>
@@ -396,7 +396,7 @@ function EditModal({ job, onClose, onSaved }) {
                 type="number"
                 value={form.timeout_seconds}
                 onChange={(e) => set('timeout_seconds', e.target.value)}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-ocean-500"
+                className="w-full bg-sky-50 border border-ocean-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-ocean-500"
                 placeholder="120"
               />
             </div>
@@ -405,7 +405,7 @@ function EditModal({ job, onClose, onSaved }) {
               <button
                 onClick={() => set('enabled', !form.enabled)}
                 className={`w-full rounded-lg px-3 py-2 text-sm font-medium transition ${
-                  form.enabled ? 'bg-green-600/30 text-green-400 border border-green-600/50' : 'bg-red-600/20 text-red-400 border border-red-600/50'
+                  form.enabled ? 'bg-seafoam-100 text-seafoam-500 border border-seafoam-200' : 'bg-coral-500/20 text-coral-500 border border-coral-200'
                 }`}
               >
                 {form.enabled ? 'Enabled' : 'Disabled'}
@@ -414,12 +414,12 @@ function EditModal({ job, onClose, onSaved }) {
           </div>
 
           {error && (
-            <div className="bg-red-900/20 border border-red-500/30 rounded-lg px-3 py-2 text-xs text-red-300">{error}</div>
+            <div className="bg-red-900/20 border border-coral-200 rounded-lg px-3 py-2 text-xs text-coral-600">{error}</div>
           )}
         </div>
 
-        <div className="px-5 py-4 border-t border-gray-800 flex justify-end gap-2">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-400 hover:text-white transition">Cancel</button>
+        <div className="px-5 py-4 border-t border-ocean-100 flex justify-end gap-2">
+          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-ocean-700 transition">Cancel</button>
           <button
             onClick={save}
             disabled={saving}
@@ -440,37 +440,37 @@ function DetailModal({ job, onClose, onEdit }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-800">
+      <div className="absolute inset-0 bg-ocean-900/20 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white border border-ocean-200 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-ocean-100">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${c.dot}`} />
-                <span className="text-xs font-semibold text-gray-400 bg-gray-800 px-2 py-0.5 rounded-full">{c.label}</span>
+                <span className="text-xs font-semibold text-gray-600 bg-sky-50 px-2 py-0.5 rounded-full">{c.label}</span>
                 {job.kind && (
                   <span className={`text-xs px-2 py-0.5 rounded-full font-mono ${KIND_BADGE[job.kind] || KIND_BADGE.cron}`}>
                     {job.kind}
                   </span>
                 )}
                 <StatusIcon status={job.status} />
-                <span className={`text-xs ${job.status === 'ok' ? 'text-green-400' : job.status === 'error' ? 'text-red-400' : 'text-gray-500'}`}>
+                <span className={`text-xs ${job.status === 'ok' ? 'text-seafoam-500' : job.status === 'error' ? 'text-coral-500' : 'text-gray-500'}`}>
                   {job.status}
                 </span>
               </div>
-              <h2 className="text-lg font-bold text-white leading-tight">{job.name}</h2>
+              <h2 className="text-lg font-bold text-gray-800 leading-tight">{job.name}</h2>
             </div>
             <div className="flex gap-1 shrink-0">
               {job.source === 'openclaw' && (
                 <button
                   onClick={() => { onClose(); onEdit(job); }}
-                  className="p-1.5 text-gray-500 hover:text-ocean-400 hover:bg-gray-700 rounded-lg transition"
+                  className="p-1.5 text-gray-500 hover:text-ocean-400 hover:bg-sky-50 rounded-lg transition"
                   title="Edit"
                 >
                   <Edit2 className="w-4 h-4" />
                 </button>
               )}
-              <button onClick={onClose} className="p-1.5 text-gray-500 hover:text-white hover:bg-gray-700 rounded-lg transition">
+              <button onClick={onClose} className="p-1.5 text-gray-500 hover:text-ocean-700 hover:bg-sky-50 rounded-lg transition">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -481,47 +481,47 @@ function DetailModal({ job, onClose, onEdit }) {
           <div>
             <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Schedule</p>
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-gray-800/60 rounded-lg px-3 py-2">
+              <div className="bg-sky-50/90 rounded-lg px-3 py-2">
                 <p className="text-xs text-gray-500 mb-0.5">Time</p>
-                <p className="text-sm font-mono text-white">{fmtTime(job.hour, job.minute)}</p>
+                <p className="text-sm font-mono text-gray-800">{fmtTime(job.hour, job.minute)}</p>
               </div>
-              <div className="bg-gray-800/60 rounded-lg px-3 py-2">
+              <div className="bg-sky-50/90 rounded-lg px-3 py-2">
                 <p className="text-xs text-gray-500 mb-0.5">Pattern</p>
-                <p className="text-sm text-white">{scheduleSummary(job)}</p>
+                <p className="text-sm text-gray-800">{scheduleSummary(job)}</p>
               </div>
-              <div className="bg-gray-800/60 rounded-lg px-3 py-2">
+              <div className="bg-sky-50/90 rounded-lg px-3 py-2">
                 <p className="text-xs text-gray-500 mb-0.5">Next run</p>
-                <p className="text-sm text-white">{job.next_run ?? '—'}</p>
+                <p className="text-sm text-gray-800">{job.next_run ?? '—'}</p>
               </div>
-              <div className="bg-gray-800/60 rounded-lg px-3 py-2">
+              <div className="bg-sky-50/90 rounded-lg px-3 py-2">
                 <p className="text-xs text-gray-500 mb-0.5">Last run</p>
-                <p className="text-sm text-white">{job.last_run ?? '—'}</p>
+                <p className="text-sm text-gray-800">{job.last_run ?? '—'}</p>
               </div>
               {job.duration_ms && (
-                <div className="bg-gray-800/60 rounded-lg px-3 py-2">
+                <div className="bg-sky-50/90 rounded-lg px-3 py-2">
                   <p className="text-xs text-gray-500 mb-0.5">Duration</p>
-                  <p className="text-sm text-white">{fmtDuration(job.duration_ms)}</p>
+                  <p className="text-sm text-gray-800">{fmtDuration(job.duration_ms)}</p>
                 </div>
               )}
               {job.timeout_s && (
-                <div className="bg-gray-800/60 rounded-lg px-3 py-2">
+                <div className="bg-sky-50/90 rounded-lg px-3 py-2">
                   <p className="text-xs text-gray-500 mb-0.5">Timeout</p>
-                  <p className="text-sm text-white">{job.timeout_s}s</p>
+                  <p className="text-sm text-gray-800">{job.timeout_s}s</p>
                 </div>
               )}
             </div>
             <div className="mt-2 flex items-center gap-2 flex-wrap">
-              {job.kind === 'cron' && <code className="text-xs text-gray-400 bg-gray-800 px-2 py-1 rounded font-mono">{job.expr}</code>}
+              {job.kind === 'cron' && <code className="text-xs text-gray-600 bg-sky-50 px-2 py-1 rounded font-mono">{job.expr}</code>}
               {job.kind === 'cron' && job.tz !== 'system' && <span className="text-xs text-gray-600">{job.tz}</span>}
               {job.isDraggable && <span className="text-xs text-rose-300 bg-rose-500/10 px-2 py-1 rounded">Drag enabled</span>}
-              {!job.isDraggable && job.source === 'openclaw' && <span className="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded">Drag disabled for this schedule type</span>}
+              {!job.isDraggable && job.source === 'openclaw' && <span className="text-xs text-gray-500 bg-sky-50 px-2 py-1 rounded">Drag disabled for this schedule type</span>}
             </div>
           </div>
 
           {job.status === 'error' && job.last_error && (
-            <div className="bg-red-900/20 border border-red-500/30 rounded-lg px-3 py-2">
-              <p className="text-xs text-red-400 font-semibold mb-1">Last error ({job.consecutive_errors} consecutive)</p>
-              <p className="text-xs text-red-300 font-mono break-words">{job.last_error}</p>
+            <div className="bg-red-900/20 border border-coral-200 rounded-lg px-3 py-2">
+              <p className="text-xs text-coral-500 font-semibold mb-1">Last error ({job.consecutive_errors} consecutive)</p>
+              <p className="text-xs text-coral-600 font-mono break-words">{job.last_error}</p>
             </div>
           )}
 
@@ -529,14 +529,14 @@ function DetailModal({ job, onClose, onEdit }) {
             <div>
               <button
                 onClick={() => setExpanded(!expanded)}
-                className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-300 transition mb-2"
+                className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition mb-2"
               >
                 {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                 Task description
               </button>
               {expanded && (
-                <div className="bg-gray-800/50 rounded-lg p-3">
-                  <p className="text-xs text-gray-300 whitespace-pre-wrap leading-relaxed">{job.task_preview}</p>
+                <div className="bg-sky-50/80 rounded-lg p-3">
+                  <p className="text-xs text-gray-700 whitespace-pre-wrap leading-relaxed">{job.task_preview}</p>
                 </div>
               )}
             </div>
@@ -573,16 +573,16 @@ function CronTile({ job, layout, onClick, onDragStart, onDragEnd, saving }) {
       className={`absolute border rounded-lg px-1.5 py-1 text-left transition overflow-hidden ${
         job.isDraggable
           ? 'bg-rose-900/35 border-rose-500/40 hover:border-rose-400 cursor-grab active:cursor-grabbing'
-          : 'bg-gray-800/90 border-gray-700/80 hover:bg-gray-750 hover:border-gray-600 cursor-pointer'
+          : 'bg-sky-50/90 border-ocean-200/80 hover:bg-sky-100 hover:border-ocean-200 cursor-pointer'
       } ${saving ? 'opacity-60' : ''}`}
       style={{ top: `${topPx}px`, left: `calc(${left} + 2px)`, width: `calc(${width} - ${4 + gap}px)`, minHeight: '34px', zIndex: 1 }}
     >
       <div className="flex items-center gap-1.5">
         {job.isDraggable ? <GripVertical className="w-3 h-3 text-rose-300 shrink-0" /> : <span className={`w-2 h-2 rounded-full shrink-0 ${c.dot}`} />}
         <StatusIcon status={job.status} size="w-2.5 h-2.5" />
-        <span className="text-xs font-medium text-gray-100 truncate leading-tight">{job.name}</span>
+        <span className="text-xs font-medium text-gray-800 truncate leading-tight">{job.name}</span>
       </div>
-      <p className="text-xs text-gray-400 leading-none mt-0.5 pl-4">{fmtTime(job.hour, job.minute)}</p>
+      <p className="text-xs text-gray-600 leading-none mt-0.5 pl-4">{fmtTime(job.hour, job.minute)}</p>
     </button>
   );
 }
@@ -596,15 +596,15 @@ function Legend({ summary }) {
         return (
           <div key={key} className="flex items-center gap-1.5">
             <span className={`w-2.5 h-2.5 rounded-full ${c.dot}`} />
-            <span className="text-xs text-gray-400">{c.label}</span>
+            <span className="text-xs text-gray-600">{c.label}</span>
             <span className="text-xs text-gray-600">{count}</span>
           </div>
         );
       })}
       <div className="flex items-center gap-3 ml-auto">
-        <div className="flex items-center gap-1.5"><GripVertical className="w-3 h-3 text-rose-300" /><span className="text-xs text-gray-400">one-time draggable</span></div>
-        <div className="flex items-center gap-1.5"><CheckCircle className="w-3 h-3 text-green-400" /><span className="text-xs text-gray-400">{summary.by_status?.ok ?? 0} ok</span></div>
-        <div className="flex items-center gap-1.5"><AlertTriangle className="w-3 h-3 text-red-400" /><span className="text-xs text-gray-400">{summary.by_status?.error ?? 0} errors</span></div>
+        <div className="flex items-center gap-1.5"><GripVertical className="w-3 h-3 text-rose-300" /><span className="text-xs text-gray-600">one-time draggable</span></div>
+        <div className="flex items-center gap-1.5"><CheckCircle className="w-3 h-3 text-seafoam-500" /><span className="text-xs text-gray-600">{summary.by_status?.ok ?? 0} ok</span></div>
+        <div className="flex items-center gap-1.5"><AlertTriangle className="w-3 h-3 text-coral-500" /><span className="text-xs text-gray-600">{summary.by_status?.error ?? 0} errors</span></div>
       </div>
     </div>
   );
@@ -617,8 +617,8 @@ function CategoryFilter({ active, counts, onChange }) {
         onClick={() => onChange(null)}
         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition border ${
           active === null
-            ? 'bg-gray-700 border-gray-600 text-white'
-            : 'bg-gray-800/50 border-gray-700/50 text-gray-400 hover:text-white hover:border-gray-600'
+            ? 'bg-gray-700 border-ocean-200 text-gray-800'
+            : 'bg-sky-50/80 border-ocean-100 text-gray-600 hover:text-ocean-700 hover:border-ocean-200'
         }`}
       >
         All
@@ -634,7 +634,7 @@ function CategoryFilter({ active, counts, onChange }) {
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition border ${
               active === key
                 ? `${c.badge} border-transparent`
-                : 'bg-gray-800/50 border-gray-700/50 text-gray-400 hover:text-white hover:border-gray-600'
+                : 'bg-sky-50/80 border-ocean-100 text-gray-600 hover:text-ocean-700 hover:border-ocean-200'
             }`}
           >
             <span className={`w-2 h-2 rounded-full ${c.dot}`} />
@@ -652,7 +652,7 @@ function DropPreview({ preview }) {
   return (
     <div className="absolute inset-x-0 z-30 pointer-events-none" style={{ top: `${preview.top}px` }}>
       <div className="h-0.5 bg-rose-400/80" />
-      <div className="absolute right-2 -top-3 px-2 py-0.5 rounded-full bg-rose-500 text-[11px] font-medium text-white shadow-lg">
+      <div className="absolute right-2 -top-3 px-2 py-0.5 rounded-full bg-rose-500 text-[11px] font-medium text-gray-800 shadow-lg">
         {preview.label}
       </div>
     </div>
@@ -809,8 +809,8 @@ export default function CalendarPage() {
       <div className="mb-4 flex flex-col gap-3">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-xl font-bold text-white flex items-center gap-2">
-              <CalIcon className="w-5 h-5 text-red-400" />
+            <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+              <CalIcon className="w-5 h-5 text-coral-500" />
               {AGENTS.find((a) => a.id === activeAgent)?.label ?? 'Schedule'}
             </h1>
             <p className="text-xs text-gray-500 mt-0.5">
@@ -818,21 +818,21 @@ export default function CalendarPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 bg-gray-800 rounded-lg p-1">
+            <div className="flex items-center gap-1 bg-sky-50 rounded-lg p-1">
               <button
                 onClick={() => setCalView('week')}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition ${calView === 'week' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'}`}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition ${calView === 'week' ? 'bg-ocean-500 text-white' : 'text-gray-600 hover:text-ocean-700'}`}
               >
                 Week
               </button>
               <button
                 onClick={() => setCalView('day')}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition ${calView === 'day' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'}`}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition ${calView === 'day' ? 'bg-ocean-500 text-white' : 'text-gray-600 hover:text-ocean-700'}`}
               >
                 Day
               </button>
             </div>
-            <button onClick={() => fetchData()} className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition" title="Refresh">
+            <button onClick={() => fetchData()} className="p-2 text-gray-500 hover:text-ocean-700 hover:bg-sky-50 rounded-lg transition" title="Refresh">
               <RefreshCw className="w-4 h-4" />
             </button>
           </div>
@@ -841,7 +841,7 @@ export default function CalendarPage() {
         {notice && (
           <div className={`rounded-xl border px-4 py-3 text-sm ${
             notice.type === 'error'
-              ? 'bg-red-950/40 border-red-500/30 text-red-200'
+              ? 'bg-coral-500/10 border-coral-200 text-coral-600'
               : 'bg-emerald-950/30 border-emerald-500/30 text-emerald-200'
           }`}>
             {notice.text}
@@ -853,21 +853,21 @@ export default function CalendarPage() {
       </div>
 
       {calView === 'week' && (
-        <div className="mb-3 flex items-center justify-between bg-gray-900 border border-gray-800 rounded-xl px-4 py-2">
-          <button onClick={() => setDayDate((d) => addDays(d, -7))} className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">
+        <div className="mb-3 flex items-center justify-between bg-white border border-ocean-100 rounded-xl px-4 py-2">
+          <button onClick={() => setDayDate((d) => addDays(d, -7))} className="p-1.5 text-gray-600 hover:text-ocean-700 hover:bg-sky-50 rounded-lg transition">
             <ChevronLeft className="w-4 h-4" />
           </button>
           <div className="text-center">
-            <span className="text-white font-semibold">{weekLabel}</span>
-            {weekDates.some((date) => sameLocalDate(date, new Date())) && <span className="ml-2 text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full">This week</span>}
+            <span className="text-gray-800 font-semibold">{weekLabel}</span>
+            {weekDates.some((date) => sameLocalDate(date, new Date())) && <span className="ml-2 text-xs bg-coral-500/15 text-coral-500 px-2 py-0.5 rounded-full">This week</span>}
           </div>
           <div className="flex items-center gap-1">
             {dayDiff(new Date(), weekStart) < 0 || dayDiff(new Date(), weekStart) > 6 ? (
-              <button onClick={() => setDayDate(new Date())} className="text-xs text-ocean-400 hover:text-ocean-300 px-2 py-1 rounded-lg hover:bg-gray-800 transition mr-1">
+              <button onClick={() => setDayDate(new Date())} className="text-xs text-ocean-400 hover:text-ocean-300 px-2 py-1 rounded-lg hover:bg-sky-50 transition mr-1">
                 Today
               </button>
             ) : null}
-            <button onClick={() => setDayDate((d) => addDays(d, 7))} className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">
+            <button onClick={() => setDayDate((d) => addDays(d, 7))} className="p-1.5 text-gray-600 hover:text-ocean-700 hover:bg-sky-50 rounded-lg transition">
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
@@ -875,23 +875,23 @@ export default function CalendarPage() {
       )}
 
       {calView === 'day' && (
-        <div className="mb-3 flex items-center justify-between bg-gray-900 border border-gray-800 rounded-xl px-4 py-2">
-          <button onClick={() => setDayDate((d) => addDays(d, -1))} className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">
+        <div className="mb-3 flex items-center justify-between bg-white border border-ocean-100 rounded-xl px-4 py-2">
+          <button onClick={() => setDayDate((d) => addDays(d, -1))} className="p-1.5 text-gray-600 hover:text-ocean-700 hover:bg-sky-50 rounded-lg transition">
             <ChevronLeft className="w-4 h-4" />
           </button>
           <div className="text-center">
-            <span className="text-white font-semibold">
+            <span className="text-gray-800 font-semibold">
               {dayDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
             </span>
-            {isToday(dayDate) && <span className="ml-2 text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full">Today</span>}
+            {isToday(dayDate) && <span className="ml-2 text-xs bg-coral-500/15 text-coral-500 px-2 py-0.5 rounded-full">Today</span>}
           </div>
           <div className="flex items-center gap-1">
             {!isToday(dayDate) && (
-              <button onClick={() => setDayDate(new Date())} className="text-xs text-ocean-400 hover:text-ocean-300 px-2 py-1 rounded-lg hover:bg-gray-800 transition mr-1">
+              <button onClick={() => setDayDate(new Date())} className="text-xs text-ocean-400 hover:text-ocean-300 px-2 py-1 rounded-lg hover:bg-sky-50 transition mr-1">
                 Today
               </button>
             )}
-            <button onClick={() => setDayDate((d) => addDays(d, 1))} className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">
+            <button onClick={() => setDayDate((d) => addDays(d, 1))} className="p-1.5 text-gray-600 hover:text-ocean-700 hover:bg-sky-50 rounded-lg transition">
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
@@ -899,20 +899,20 @@ export default function CalendarPage() {
       )}
 
       {calView === 'week' && (
-        <div className="flex flex-col flex-1 bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-          <div className="flex shrink-0 border-b border-gray-800 bg-gray-900 sticky top-0 z-10">
-            <div className="w-12 shrink-0 border-r border-gray-800" />
+        <div className="flex flex-col flex-1 bg-white border border-ocean-100 rounded-xl overflow-hidden">
+          <div className="flex shrink-0 border-b border-ocean-100 bg-white sticky top-0 z-10">
+            <div className="w-12 shrink-0 border-r border-ocean-100" />
             {weekDates.map((date, i) => (
-              <div key={dateKey(date)} className={`flex-1 min-w-0 py-2 text-center border-r border-gray-800 last:border-0 ${dateKey(date) === todayKey ? 'bg-ocean-900/30' : ''}`}>
+              <div key={dateKey(date)} className={`flex-1 min-w-0 py-2 text-center border-r border-ocean-100 last:border-0 ${dateKey(date) === todayKey ? 'bg-ocean-900/30' : ''}`}>
                 <p className={`text-xs font-semibold uppercase tracking-wider ${dateKey(date) === todayKey ? 'text-ocean-400' : 'text-gray-500'}`}>{DAYS[i]}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+                <p className="text-xs text-gray-600 mt-0.5">{date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
                 <p className="text-xs text-gray-600 mt-0.5">{byDay[i].length}</p>
               </div>
             ))}
           </div>
 
           <div className="flex flex-1 overflow-y-auto" ref={gridRef}>
-            <div className="w-12 shrink-0 border-r border-gray-800 relative" style={{ minHeight: `${TOTAL_H}px` }}>
+            <div className="w-12 shrink-0 border-r border-ocean-100 relative" style={{ minHeight: `${TOTAL_H}px` }}>
               {Array.from({ length: 24 }, (_, h) => (
                 <div key={h} className="absolute w-full flex items-start justify-end pr-2 pt-1" style={{ top: `${h * HOUR_PX}px`, height: `${HOUR_PX}px` }}>
                   <span className="text-xs text-gray-600 font-mono leading-none">
@@ -928,11 +928,11 @@ export default function CalendarPage() {
                 onDragOver={(event) => handleDragOver(event, date)}
                 onDrop={(event) => handleDrop(event, date)}
                 onDragLeave={() => setDropPreview((current) => current?.dayKey === dateKey(date) ? null : current)}
-                className={`flex-1 min-w-0 relative border-r border-gray-800 last:border-0 ${dateKey(date) === todayKey ? 'bg-ocean-900/10' : ''} ${draggingId ? 'bg-white/[0.01]' : ''}`}
+                className={`flex-1 min-w-0 relative border-r border-ocean-100 last:border-0 ${dateKey(date) === todayKey ? 'bg-ocean-900/10' : ''} ${draggingId ? 'bg-white/[0.01]' : ''}`}
                 style={{ height: `${TOTAL_H}px` }}
               >
                 {Array.from({ length: 24 }, (_, h) => (
-                  <div key={h} className="absolute w-full border-t border-gray-800/50" style={{ top: `${h * HOUR_PX}px` }} />
+                  <div key={h} className="absolute w-full border-t border-ocean-100" style={{ top: `${h * HOUR_PX}px` }} />
                 ))}
                 {dateKey(date) === todayKey && <NowLine />}
                 {dropPreview?.dayKey === dateKey(date) && <DropPreview preview={dropPreview} />}
@@ -954,9 +954,9 @@ export default function CalendarPage() {
       )}
 
       {calView === 'day' && (
-        <div className="flex flex-col flex-1 bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-          <div className="flex shrink-0 border-b border-gray-800 bg-gray-900 sticky top-0 z-10">
-            <div className="w-14 shrink-0 border-r border-gray-800" />
+        <div className="flex flex-col flex-1 bg-white border border-ocean-100 rounded-xl overflow-hidden">
+          <div className="flex shrink-0 border-b border-ocean-100 bg-white sticky top-0 z-10">
+            <div className="w-14 shrink-0 border-r border-ocean-100" />
             <div className={`flex-1 py-2 text-center ${isToday(dayDate) ? 'bg-ocean-900/30' : ''}`}>
               <p className={`text-xs font-semibold uppercase tracking-wider ${isToday(dayDate) ? 'text-ocean-400' : 'text-gray-500'}`}>
                 {dayDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
@@ -966,7 +966,7 @@ export default function CalendarPage() {
           </div>
 
           <div className="flex flex-1 overflow-y-auto" ref={gridRef}>
-            <div className="w-14 shrink-0 border-r border-gray-800 relative" style={{ minHeight: `${TOTAL_H}px` }}>
+            <div className="w-14 shrink-0 border-r border-ocean-100 relative" style={{ minHeight: `${TOTAL_H}px` }}>
               {Array.from({ length: 24 }, (_, h) => (
                 <div key={h} className="absolute w-full flex items-start justify-end pr-2 pt-1" style={{ top: `${h * HOUR_PX}px`, height: `${HOUR_PX}px` }}>
                   <span className="text-xs text-gray-600 font-mono leading-none">
@@ -984,7 +984,7 @@ export default function CalendarPage() {
               style={{ height: `${TOTAL_H}px` }}
             >
               {Array.from({ length: 24 }, (_, h) => (
-                <div key={h} className="absolute w-full border-t border-gray-800/50" style={{ top: `${h * HOUR_PX}px` }} />
+                <div key={h} className="absolute w-full border-t border-ocean-100" style={{ top: `${h * HOUR_PX}px` }} />
               ))}
               {isToday(dayDate) && <NowLine />}
               {dropPreview?.dayKey === dateKey(dayDate) && <DropPreview preview={dropPreview} />}

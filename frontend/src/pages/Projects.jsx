@@ -16,23 +16,23 @@ function timeAgo(ms) {
 // ── Status config ────────────────────────────────────────────────────────────
 
 const STATUS_BADGE = {
-  '🟢': { color: 'bg-green-500/20 text-green-400 border-green-500/40', label: 'ACTIVE' },
-  '🟡': { color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/40', label: 'WIP' },
-  '⏸️': { color: 'bg-gray-500/20 text-gray-400 border-gray-500/40', label: 'PAUSED' },
-  '🔴': { color: 'bg-red-500/20 text-red-400 border-red-500/40', label: 'BLOCKED' },
-  '⛔': { color: 'bg-red-800/30 text-red-500 border-red-800/40', label: 'STOPPED' },
+  '🟢': { color: 'bg-seafoam-100 text-seafoam-500 border-green-500/40', label: 'ACTIVE' },
+  '🟡': { color: 'bg-sand-100 text-sand-500 border-yellow-500/40', label: 'WIP' },
+  '⏸️': { color: 'bg-ocean-100 text-ocean-700 border-ocean-200', label: 'PAUSED' },
+  '🔴': { color: 'bg-coral-500/15 text-coral-500 border-coral-200', label: 'BLOCKED' },
+  '⛔': { color: 'bg-coral-500/15 text-red-500 border-coral-200', label: 'STOPPED' },
   '🔵': { color: 'bg-blue-500/20 text-blue-400 border-blue-500/40', label: 'PLANNED' },
   '⏳': { color: 'bg-amber-500/20 text-amber-400 border-amber-500/40', label: 'WAITING' },
 };
 
 const STATUS_COLORS = {
-  '🟢': 'text-green-400 bg-green-500/10 border-green-500/20',
-  '🟡': 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20',
-  '🔴': 'text-red-400 bg-red-500/10 border-red-500/20',
+  '🟢': 'text-seafoam-500 bg-green-500/10 border-green-500/20',
+  '🟡': 'text-sand-500 bg-yellow-500/10 border-yellow-500/20',
+  '🔴': 'text-coral-500 bg-coral-500/10 border-coral-200',
   '🔵': 'text-blue-400 bg-blue-500/10 border-blue-500/20',
-  '⏸️': 'text-gray-400 bg-gray-500/10 border-gray-500/20',
+  '⏸️': 'text-gray-600 bg-ocean-300/10 border-ocean-200',
   '⏳': 'text-amber-400 bg-amber-500/10 border-amber-500/20',
-  '⛔': 'text-red-400 bg-red-500/10 border-red-500/20',
+  '⛔': 'text-coral-500 bg-coral-500/10 border-coral-200',
 };
 
 const META_KEYWORDS = ['key dates', 'cron', 'health', 'schedule', 'overview', 'summary', 'changelog', 'notes'];
@@ -112,28 +112,28 @@ function renderMarkdown(text) {
     const line = lines[i];
     if (line.startsWith('## ')) {
       elements.push(
-        <div key={key++} className="mt-6 mb-3 border-b border-gray-800 pb-2">
-          <h2 className="text-lg font-bold text-white">{line.slice(3)}</h2>
+        <div key={key++} className="mt-6 mb-3 border-b border-ocean-100 pb-2">
+          <h2 className="text-lg font-bold text-gray-800">{line.slice(3)}</h2>
         </div>
       );
     } else if (line.startsWith('### ')) {
-      elements.push(<h3 key={key++} className="text-sm font-semibold text-gray-300 mt-4 mb-2 uppercase tracking-wider">{line.slice(4)}</h3>);
+      elements.push(<h3 key={key++} className="text-sm font-semibold text-gray-700 mt-4 mb-2 uppercase tracking-wider">{line.slice(4)}</h3>);
     } else if (line.startsWith('# ')) {
-      elements.push(<h1 key={key++} className="text-xl font-bold text-white mb-1">{line.slice(2)}</h1>);
+      elements.push(<h1 key={key++} className="text-xl font-bold text-gray-800 mb-1">{line.slice(2)}</h1>);
     } else if (line.match(/^- \[[ x]\]/)) {
       const checked = line.includes('- [x]');
       const t = line.replace(/^- \[[ x]\]\s*/, '');
       elements.push(
-        <div key={key++} className={`flex items-start gap-2 py-1 text-sm ${checked ? 'text-gray-600 line-through' : 'text-gray-300'}`}>
+        <div key={key++} className={`flex items-start gap-2 py-1 text-sm ${checked ? 'text-gray-600 line-through' : 'text-gray-700'}`}>
           <span className="shrink-0 mt-0.5">{checked ? '☑' : '☐'}</span>
-          <span dangerouslySetInnerHTML={{ __html: t.replace(/`([^`]+)`/g, '<code class="bg-gray-800 text-sky-400 px-1 rounded text-xs">$1</code>').replace(/\*\*(.*?)\*\*/g, '<strong class="text-white">$1</strong>') }} />
+          <span dangerouslySetInnerHTML={{ __html: t.replace(/`([^`]+)`/g, '<code class="bg-sky-50 text-sky-400 px-1 rounded text-xs">$1</code>').replace(/\*\*(.*?)\*\*/g, '<strong class="text-gray-800">$1</strong>') }} />
         </div>
       );
     } else if (line.startsWith('- ')) {
       elements.push(
-        <div key={key++} className="flex items-start gap-2 py-0.5 text-sm text-gray-400">
+        <div key={key++} className="flex items-start gap-2 py-0.5 text-sm text-gray-600">
           <span className="text-gray-600 mt-1 shrink-0">•</span>
-          <span dangerouslySetInnerHTML={{ __html: line.slice(2).replace(/`([^`]+)`/g, '<code class="bg-gray-800 text-sky-400 px-1 rounded text-xs">$1</code>').replace(/\*\*(.*?)\*\*/g, '<strong class="text-gray-300">$1</strong>') }} />
+          <span dangerouslySetInnerHTML={{ __html: line.slice(2).replace(/`([^`]+)`/g, '<code class="bg-sky-50 text-sky-400 px-1 rounded text-xs">$1</code>').replace(/\*\*(.*?)\*\*/g, '<strong class="text-gray-700">$1</strong>') }} />
         </div>
       );
     } else if (line.startsWith('|')) {
@@ -141,16 +141,16 @@ function renderMarkdown(text) {
       if (cells.every(c => c.match(/^[-:]+$/))) continue;
       if (cells.length >= 2) {
         elements.push(
-          <div key={key++} className="flex items-center gap-3 py-1 text-sm border-b border-gray-800/50 last:border-0">
+          <div key={key++} className="flex items-center gap-3 py-1 text-sm border-b border-ocean-100 last:border-0">
             <span className="text-gray-500 w-32 shrink-0 truncate">{cells[0]}</span>
-            <span className="text-gray-300 flex-1" dangerouslySetInnerHTML={{ __html: (cells[1] || '').replace(/`([^`]+)`/g, '<code class="bg-gray-800 text-sky-400 px-1 rounded text-xs">$1</code>').replace(/\*\*(.*?)\*\*/g, '<strong class="text-white">$1</strong>') }} />
+            <span className="text-gray-700 flex-1" dangerouslySetInnerHTML={{ __html: (cells[1] || '').replace(/`([^`]+)`/g, '<code class="bg-sky-50 text-sky-400 px-1 rounded text-xs">$1</code>').replace(/\*\*(.*?)\*\*/g, '<strong class="text-gray-800">$1</strong>') }} />
           </div>
         );
       }
     } else if (line.includes('**Status:**')) {
       const sm = line.match(/(🟢|🟡|🔴|🔵|⏸️|⏳|⛔)\s*(\w+)/);
       if (sm) {
-        const cc = STATUS_COLORS[sm[1]] || 'text-gray-400 bg-gray-500/10 border-gray-500/20';
+        const cc = STATUS_COLORS[sm[1]] || 'text-gray-600 bg-ocean-300/10 border-ocean-200';
         elements.push(
           <div key={key++} className="flex flex-wrap items-center gap-2 mb-3">
             <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${cc}`}>{sm[1]} {sm[2]}</span>
@@ -158,11 +158,11 @@ function renderMarkdown(text) {
         );
       }
     } else if (line.startsWith('---')) {
-      elements.push(<hr key={key++} className="border-gray-800 my-4" />);
+      elements.push(<hr key={key++} className="border-ocean-100 my-4" />);
     } else if (line.trim()) {
       elements.push(
-        <p key={key++} className="text-sm text-gray-400 py-0.5"
-          dangerouslySetInnerHTML={{ __html: line.replace(/`([^`]+)`/g, '<code class="bg-gray-800 text-sky-400 px-1 rounded text-xs">$1</code>').replace(/\*\*(.*?)\*\*/g, '<strong class="text-gray-300">$1</strong>').replace(/\*(.*?)\*/g, '<em class="text-gray-500">$1</em>') }} />
+        <p key={key++} className="text-sm text-gray-600 py-0.5"
+          dangerouslySetInnerHTML={{ __html: line.replace(/`([^`]+)`/g, '<code class="bg-sky-50 text-sky-400 px-1 rounded text-xs">$1</code>').replace(/\*\*(.*?)\*\*/g, '<strong class="text-gray-700">$1</strong>').replace(/\*(.*?)\*/g, '<em class="text-gray-500">$1</em>') }} />
       );
     } else {
       elements.push(<div key={key++} className="h-1" />);
@@ -223,18 +223,18 @@ function ProjectEditDialog({ project, onSave, onDelete, onClose, saving, deletin
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-ocean-900/20 backdrop-blur-sm" onClick={onClose} />
 
       {/* Dialog */}
-      <div className="relative w-full max-w-6xl bg-gray-950 border border-gray-700 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+      <div className="relative w-full max-w-6xl bg-white border border-ocean-200 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
         style={{ height: 'min(90vh, 800px)' }}>
 
         {/* Header */}
-        <div className="flex items-center gap-4 px-6 py-4 border-b border-gray-800 shrink-0">
+        <div className="flex items-center gap-4 px-6 py-4 border-b border-ocean-100 shrink-0">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             {project.emoji && <span className="text-2xl">{project.emoji}</span>}
             <div className="min-w-0">
-              <h2 className="text-lg font-bold text-white truncate">{project.name}</h2>
+              <h2 className="text-lg font-bold text-gray-800 truncate">{project.name}</h2>
               <p className="text-xs text-gray-600 font-mono truncate">{project.headingText}</p>
             </div>
           </div>
@@ -243,7 +243,7 @@ function ProjectEditDialog({ project, onSave, onDelete, onClose, saving, deletin
               {project.statusEmoji} {project.statusLabel}
             </span>
           )}
-          <button onClick={onClose} className="shrink-0 p-2 rounded-lg text-gray-500 hover:text-white hover:bg-gray-800 transition">
+          <button onClick={onClose} className="shrink-0 p-2 rounded-lg text-gray-500 hover:text-ocean-700 hover:bg-sky-50 transition">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -251,20 +251,20 @@ function ProjectEditDialog({ project, onSave, onDelete, onClose, saving, deletin
         {/* Body — split pane */}
         <div className="flex-1 flex overflow-hidden min-h-0">
           {/* Left: Editor */}
-          <div className="flex-1 flex flex-col border-r border-gray-800 min-w-0">
-            <div className="px-4 py-2 border-b border-gray-800/60 shrink-0">
+          <div className="flex-1 flex flex-col border-r border-ocean-100 min-w-0">
+            <div className="px-4 py-2 border-b border-ocean-100 shrink-0">
               <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Markdown</span>
             </div>
             <textarea
               ref={textareaRef}
               value={draft}
               onChange={e => setDraft(e.target.value)}
-              className="flex-1 w-full bg-transparent px-5 py-3 text-sm text-gray-200 font-mono leading-relaxed focus:outline-none resize-none overflow-y-auto"
+              className="flex-1 w-full bg-transparent px-5 py-3 text-sm text-gray-700 font-mono leading-relaxed focus:outline-none resize-none overflow-y-auto"
               placeholder="Markdown content..."
               spellCheck={false}
               style={{ minHeight: 0 }}
             />
-            <div className="px-5 py-1.5 text-xs text-gray-700 border-t border-gray-800/50 flex items-center gap-3 shrink-0">
+            <div className="px-5 py-1.5 text-xs text-gray-700 border-t border-ocean-100 flex items-center gap-3 shrink-0">
               <span>{draft.split('\n').length} lines</span>
               <span>{draft.length} chars</span>
               {hasChanges && <span className="text-amber-500/70">● unsaved</span>}
@@ -273,7 +273,7 @@ function ProjectEditDialog({ project, onSave, onDelete, onClose, saving, deletin
 
           {/* Right: Preview */}
           <div className="flex-1 flex flex-col min-w-0">
-            <div className="px-4 py-2 border-b border-gray-800/60 shrink-0">
+            <div className="px-4 py-2 border-b border-ocean-100 shrink-0">
               <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Preview</span>
             </div>
             <div className="flex-1 overflow-y-auto px-5 py-3">
@@ -283,29 +283,29 @@ function ProjectEditDialog({ project, onSave, onDelete, onClose, saving, deletin
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-800 shrink-0 bg-gray-950">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-ocean-100 shrink-0 bg-white">
           {/* Delete zone */}
           {!confirmDelete ? (
             <button
               onClick={() => setConfirmDelete(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-gray-600 hover:text-red-400 hover:bg-red-500/10 transition"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-gray-600 hover:text-coral-500 hover:bg-coral-600/10 transition"
             >
               <Trash2 className="w-3.5 h-3.5" /> Delete project
             </button>
           ) : (
             <div className="flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
-              <span className="text-xs text-red-300">Delete "{project.name}"?</span>
+              <AlertTriangle className="w-4 h-4 text-coral-500 shrink-0" />
+              <span className="text-xs text-coral-600">Delete "{project.name}"?</span>
               <button
                 onClick={() => onDelete(project, onClose)}
                 disabled={deleting}
-                className="px-3 py-1 rounded-lg text-xs bg-red-600 hover:bg-red-500 text-white font-medium transition disabled:opacity-50"
+                className="px-3 py-1 rounded-lg text-xs bg-coral-500 hover:bg-coral-600 text-white font-medium transition disabled:opacity-50"
               >
                 {deleting ? 'Deleting…' : 'Yes, delete'}
               </button>
               <button
                 onClick={() => setConfirmDelete(false)}
-                className="px-3 py-1 rounded-lg text-xs text-gray-500 hover:text-white hover:bg-gray-800 transition"
+                className="px-3 py-1 rounded-lg text-xs text-gray-500 hover:text-ocean-700 hover:bg-sky-50 transition"
               >
                 Cancel
               </button>
@@ -318,21 +318,21 @@ function ProjectEditDialog({ project, onSave, onDelete, onClose, saving, deletin
             {hasChanges && (
               <button
                 onClick={() => setDraft(project.rawSection)}
-                className="px-3 py-1.5 rounded-lg text-xs text-gray-500 hover:text-white hover:bg-gray-800 transition"
+                className="px-3 py-1.5 rounded-lg text-xs text-gray-500 hover:text-ocean-700 hover:bg-sky-50 transition"
               >
                 Reset
               </button>
             )}
             <button
               onClick={onClose}
-              className="px-4 py-1.5 rounded-lg text-xs text-gray-400 hover:text-white hover:bg-gray-800 transition"
+              className="px-4 py-1.5 rounded-lg text-xs text-gray-600 hover:text-ocean-700 hover:bg-sky-50 transition"
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
               disabled={saving || !hasChanges}
-              className="flex items-center gap-2 px-5 py-1.5 rounded-lg text-xs bg-sky-600 hover:bg-sky-500 text-white font-medium transition disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-5 py-1.5 rounded-lg text-xs bg-ocean-500 hover:bg-ocean-600 text-white font-medium transition disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Save className="w-3.5 h-3.5" />
               {saving ? 'Saving…' : 'Save changes'}
@@ -352,13 +352,13 @@ function ProjectCard({ project, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="w-full text-left bg-gray-900/70 border border-gray-800 rounded-2xl p-5 flex flex-col gap-3
-        hover:border-sky-500/40 hover:bg-gray-900 hover:shadow-lg hover:shadow-sky-500/5
+      className="w-full text-left bg-white/70 border border-ocean-100 rounded-2xl p-5 flex flex-col gap-3
+        hover:border-sky-500/40 hover:bg-white hover:shadow-lg hover:shadow-sky-500/5
         active:scale-[0.99] transition-all group cursor-pointer min-h-[180px]"
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
-        <h3 className="text-base font-bold text-white flex items-center gap-2 leading-tight">
+        <h3 className="text-base font-bold text-gray-800 flex items-center gap-2 leading-tight">
           {project.emoji && <span className="text-xl">{project.emoji}</span>}
           {project.name}
         </h3>
@@ -374,21 +374,21 @@ function ProjectCard({ project, onClick }) {
 
       {/* Description */}
       {project.description && (
-        <p className="text-sm text-gray-400 leading-relaxed line-clamp-2">{project.description}</p>
+        <p className="text-sm text-gray-600 leading-relaxed line-clamp-2">{project.description}</p>
       )}
 
       {/* Tags */}
       {project.tags.length > 0 && (
         <div className="flex gap-1.5 flex-wrap">
           {project.tags.map(tag => (
-            <span key={tag} className="text-xs bg-gray-800 text-gray-500 px-2 py-0.5 rounded-full">{tag}</span>
+            <span key={tag} className="text-xs bg-sky-50 text-gray-500 px-2 py-0.5 rounded-full">{tag}</span>
           ))}
         </div>
       )}
 
       {/* Next action */}
       {project.nextAction && (
-        <div className="mt-auto pt-2 border-t border-gray-800">
+        <div className="mt-auto pt-2 border-t border-ocean-100">
           <p className="text-xs text-gray-600">
             <span className="text-gray-700 font-medium">Next → </span>
             <span className="text-gray-500">{project.nextAction}</span>
@@ -406,11 +406,11 @@ function MetaCard({ item, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="w-full text-left bg-gray-900/40 border border-gray-800/60 rounded-lg p-3
-        hover:border-gray-700 hover:bg-gray-900/60 transition group"
+      className="w-full text-left bg-sky-50/70 border border-ocean-100 rounded-lg p-3
+        hover:border-ocean-200 hover:bg-white/80 transition group"
     >
       <div className="flex items-center justify-between mb-1.5">
-        <h4 className="text-xs font-semibold text-gray-400">{item.emoji || ''} {item.name}</h4>
+        <h4 className="text-xs font-semibold text-gray-600">{item.emoji || ''} {item.name}</h4>
         <Pencil className="w-3 h-3 text-gray-700 group-hover:text-sky-400 transition" />
       </div>
       <div className="text-xs text-gray-600 line-clamp-3 font-mono">
@@ -493,7 +493,7 @@ export default function Projects() {
   );
 
   if (error) return (
-    <div className="flex items-center justify-center h-64 text-red-400">{error}</div>
+    <div className="flex items-center justify-center h-64 text-coral-500">{error}</div>
   );
 
   return (
@@ -506,22 +506,22 @@ export default function Projects() {
               <FolderKanban className="w-5 h-5 text-sky-400" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white">Projects</h1>
+              <h1 className="text-xl font-bold text-gray-800">Projects</h1>
               <p className="text-xs text-gray-500">
                 ~/clawd/PROJECTS.md · updated {timeAgo(data?.updated_at)}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex bg-gray-800 rounded-lg p-0.5">
-              <button onClick={() => setView('grid')} className={`p-1.5 rounded-md transition ${view === 'grid' ? 'bg-gray-700 text-white' : 'text-gray-500 hover:text-white'}`}>
+            <div className="flex bg-sky-50 rounded-lg p-0.5">
+              <button onClick={() => setView('grid')} className={`p-1.5 rounded-md transition ${view === 'grid' ? 'bg-ocean-500 text-white' : 'text-gray-500 hover:text-ocean-700'}`}>
                 <LayoutGrid className="w-4 h-4" />
               </button>
-              <button onClick={() => setView('raw')} className={`p-1.5 rounded-md transition ${view === 'raw' ? 'bg-gray-700 text-white' : 'text-gray-500 hover:text-white'}`}>
+              <button onClick={() => setView('raw')} className={`p-1.5 rounded-md transition ${view === 'raw' ? 'bg-ocean-500 text-white' : 'text-gray-500 hover:text-ocean-700'}`}>
                 <FileText className="w-4 h-4" />
               </button>
             </div>
-            <button onClick={() => fetchData(true)} className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition">
+            <button onClick={() => fetchData(true)} className="p-2 text-gray-500 hover:text-ocean-700 hover:bg-sky-50 rounded-lg transition">
               <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
             </button>
           </div>
@@ -548,7 +548,7 @@ export default function Projects() {
             )}
           </div>
         ) : (
-          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+          <div className="bg-white border border-ocean-100 rounded-2xl p-6">
             {renderMarkdown(data?.content)}
           </div>
         )}

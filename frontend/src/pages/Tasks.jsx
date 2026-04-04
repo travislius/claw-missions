@@ -18,18 +18,18 @@ function timeAgo(isoStr) {
 }
 
 const PRIORITY_DOT = {
-  urgent: 'bg-red-500',
+  urgent: 'bg-coral-500',
   high: 'bg-orange-500',
   medium: 'bg-yellow-500',
-  low: 'bg-gray-500',
+  low: 'bg-ocean-300',
 };
 
 const STATUS_BADGE = {
   backlog:      'bg-slate-600/30 text-slate-400 border-slate-600/60',
-  todo:         'bg-gray-600/30 text-gray-300 border-gray-600',
+  todo:         'bg-ocean-100 text-gray-700 border-ocean-200',
   'in-progress':'bg-sky-500/20 text-sky-400 border-sky-500/40',
-  done:         'bg-green-500/20 text-green-400 border-green-500/40',
-  blocked:      'bg-red-500/20 text-red-400 border-red-500/40',
+  done:         'bg-seafoam-100 text-seafoam-500 border-green-500/40',
+  blocked:      'bg-coral-500/15 text-coral-500 border-coral-200',
 };
 
 const STATUS_LABELS = {
@@ -59,15 +59,15 @@ function TaskForm({ task, defaultStatus, onSave, onCancel }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onCancel}>
+    <div className="fixed inset-0 bg-ocean-900/20 z-50 flex items-center justify-center p-4" onClick={onCancel}>
       <form
         onClick={e => e.stopPropagation()}
         onSubmit={handleSubmit}
-        className="bg-gray-900 border border-gray-700 rounded-xl w-full max-w-lg p-6 space-y-4 shadow-2xl"
+        className="bg-white border border-ocean-200 rounded-xl w-full max-w-lg p-6 space-y-4 shadow-2xl"
       >
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-lg font-bold text-white">{task ? 'Edit Task' : 'New Task'}</h2>
-          <button type="button" onClick={onCancel} className="text-gray-500 hover:text-white"><X className="w-5 h-5" /></button>
+          <h2 className="text-lg font-bold text-gray-800">{task ? 'Edit Task' : 'New Task'}</h2>
+          <button type="button" onClick={onCancel} className="text-gray-500 hover:text-ocean-700"><X className="w-5 h-5" /></button>
         </div>
 
         <input
@@ -75,7 +75,7 @@ function TaskForm({ task, defaultStatus, onSave, onCancel }) {
           placeholder="Task title *"
           value={form.title}
           onChange={e => set('title', e.target.value)}
-          className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-sky-500"
+          className="w-full bg-sky-50 border border-ocean-200 rounded-lg px-3 py-2 text-gray-800 placeholder-ocean-400 focus:outline-none focus:border-sky-500"
         />
 
         <textarea
@@ -83,35 +83,35 @@ function TaskForm({ task, defaultStatus, onSave, onCancel }) {
           rows={3}
           value={form.description}
           onChange={e => set('description', e.target.value)}
-          className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-sky-500 resize-none"
+          className="w-full bg-sky-50 border border-ocean-200 rounded-lg px-3 py-2 text-gray-800 placeholder-ocean-400 focus:outline-none focus:border-sky-500 resize-none"
         />
 
         <div className="grid grid-cols-2 gap-3">
           <label className="space-y-1">
-            <span className="text-xs text-gray-400">Status</span>
+            <span className="text-xs text-gray-600">Status</span>
             <select value={form.status} onChange={e => set('status', e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sky-500">
+              className="w-full bg-sky-50 border border-ocean-200 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-sky-500">
               {STATUS_OPTIONS.map(s => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
             </select>
           </label>
           <label className="space-y-1">
-            <span className="text-xs text-gray-400">Priority</span>
+            <span className="text-xs text-gray-600">Priority</span>
             <select value={form.priority} onChange={e => set('priority', e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sky-500">
+              className="w-full bg-sky-50 border border-ocean-200 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-sky-500">
               {PRIORITY_OPTIONS.map(p => <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
             </select>
           </label>
           <label className="space-y-1">
-            <span className="text-xs text-gray-400">Created by</span>
+            <span className="text-xs text-gray-600">Created by</span>
             <select value={form.created_by} onChange={e => set('created_by', e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sky-500">
+              className="w-full bg-sky-50 border border-ocean-200 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-sky-500">
               {CREATOR_OPTIONS.map(c => <option key={c} value={c}>{c === 'tia' ? 'Tia 🌿' : 'Travis'}</option>)}
             </select>
           </label>
           <label className="space-y-1">
-            <span className="text-xs text-gray-400">Due date</span>
+            <span className="text-xs text-gray-600">Due date</span>
             <input type="date" value={form.due_date || ''} onChange={e => set('due_date', e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sky-500" />
+              className="w-full bg-sky-50 border border-ocean-200 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:border-sky-500" />
           </label>
         </div>
 
@@ -119,7 +119,7 @@ function TaskForm({ task, defaultStatus, onSave, onCancel }) {
           placeholder="Tags (comma-separated)"
           value={form.tags}
           onChange={e => set('tags', e.target.value)}
-          className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-sky-500"
+          className="w-full bg-sky-50 border border-ocean-200 rounded-lg px-3 py-2 text-gray-800 placeholder-ocean-400 focus:outline-none focus:border-sky-500"
         />
 
         <textarea
@@ -127,12 +127,12 @@ function TaskForm({ task, defaultStatus, onSave, onCancel }) {
           rows={2}
           value={form.notes}
           onChange={e => set('notes', e.target.value)}
-          className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-sky-500 resize-none"
+          className="w-full bg-sky-50 border border-ocean-200 rounded-lg px-3 py-2 text-gray-800 placeholder-ocean-400 focus:outline-none focus:border-sky-500 resize-none"
         />
 
         <div className="flex justify-end gap-3 pt-2">
-          <button type="button" onClick={onCancel} className="px-4 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-gray-800 transition">Cancel</button>
-          <button type="submit" className="px-4 py-2 rounded-lg text-sm bg-sky-600 hover:bg-sky-500 text-white font-medium transition">
+          <button type="button" onClick={onCancel} className="px-4 py-2 rounded-lg text-sm text-gray-600 hover:text-ocean-700 hover:bg-sky-50 transition">Cancel</button>
+          <button type="submit" className="px-4 py-2 rounded-lg text-sm bg-ocean-500 hover:bg-ocean-600 text-white font-medium transition">
             {task ? 'Save Changes' : 'Create Task'}
           </button>
         </div>
@@ -147,17 +147,17 @@ function TaskRow({ task, onEdit, onDelete, expanded, onToggle }) {
   const tagList = task.tags ? task.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
 
   return (
-    <div className="border-b border-gray-800/60 hover:bg-gray-800/30 transition">
+    <div className="border-b border-ocean-100 hover:bg-sky-50/60 transition">
       <div className="flex items-center gap-3 px-4 py-3 cursor-pointer" onClick={onToggle}>
-        <button className="text-gray-500 hover:text-white shrink-0">
+        <button className="text-gray-500 hover:text-ocean-700 shrink-0">
           {expanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
         </button>
         <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${PRIORITY_DOT[task.priority] || PRIORITY_DOT.medium}`} title={task.priority} />
-        <span className="flex-1 text-sm text-white font-medium truncate">{task.title}</span>
+        <span className="flex-1 text-sm text-gray-800 font-medium truncate">{task.title}</span>
         <span className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_BADGE[task.status] || STATUS_BADGE.todo}`}>
           {STATUS_LABELS[task.status] || task.status}
         </span>
-        <span className={`text-xs px-2 py-0.5 rounded-full ${task.created_by === 'tia' ? 'bg-green-500/15 text-green-400' : 'bg-blue-500/15 text-blue-400'}`}>
+        <span className={`text-xs px-2 py-0.5 rounded-full ${task.created_by === 'tia' ? 'bg-seafoam-100 text-seafoam-500' : 'bg-blue-500/15 text-blue-400'}`}>
           {task.created_by === 'tia' ? 'Tia 🌿' : 'Travis'}
         </span>
         {task.due_date && (
@@ -166,17 +166,17 @@ function TaskRow({ task, onEdit, onDelete, expanded, onToggle }) {
         <span className="text-xs text-gray-600 hidden sm:inline w-16 text-right">{timeAgo(task.updated_at)}</span>
         <div className="flex items-center gap-1 shrink-0">
           <button onClick={e => { e.stopPropagation(); onEdit(task); }} className="p-1 text-gray-600 hover:text-sky-400 transition"><Pencil className="w-3.5 h-3.5" /></button>
-          <button onClick={e => { e.stopPropagation(); onDelete(task.id); }} className="p-1 text-gray-600 hover:text-red-400 transition"><Trash2 className="w-3.5 h-3.5" /></button>
+          <button onClick={e => { e.stopPropagation(); onDelete(task.id); }} className="p-1 text-gray-600 hover:text-coral-500 transition"><Trash2 className="w-3.5 h-3.5" /></button>
         </div>
       </div>
       {expanded && (
         <div className="px-12 pb-4 space-y-2 text-sm">
-          {task.description && <p className="text-gray-300">{task.description}</p>}
+          {task.description && <p className="text-gray-700">{task.description}</p>}
           {task.notes && <p className="text-gray-500 italic">Notes: {task.notes}</p>}
           {tagList.length > 0 && (
             <div className="flex gap-1.5 flex-wrap">
               {tagList.map(tag => (
-                <span key={tag} className="text-xs bg-gray-700/50 text-gray-400 px-2 py-0.5 rounded-full">{tag}</span>
+                <span key={tag} className="text-xs bg-ocean-100 text-ocean-700 px-2 py-0.5 rounded-full">{tag}</span>
               ))}
             </div>
           )}
@@ -201,23 +201,23 @@ function TaskCard({ task, onEdit, onDelete, onDragStart }) {
     <div
       draggable={true}
       onDragStart={handleDragStart}
-      className="bg-gray-800/60 border border-gray-700/50 rounded-lg p-3 space-y-2 hover:border-gray-600 transition cursor-grab active:cursor-grabbing"
+      className="bg-sky-50/90 border border-ocean-100 rounded-lg p-3 space-y-2 hover:border-ocean-200 transition cursor-grab active:cursor-grabbing"
     >
       <div className="flex items-start gap-2">
         <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${PRIORITY_DOT[task.priority] || PRIORITY_DOT.medium}`} />
-        <span className="flex-1 text-sm text-white font-medium">{task.title}</span>
+        <span className="flex-1 text-sm text-gray-800 font-medium">{task.title}</span>
         <div className="flex gap-0.5 shrink-0">
           <button onClick={() => onEdit(task)} className="p-0.5 text-gray-600 hover:text-sky-400 transition"><Pencil className="w-3 h-3" /></button>
-          <button onClick={() => onDelete(task.id)} className="p-0.5 text-gray-600 hover:text-red-400 transition"><Trash2 className="w-3 h-3" /></button>
+          <button onClick={() => onDelete(task.id)} className="p-0.5 text-gray-600 hover:text-coral-500 transition"><Trash2 className="w-3 h-3" /></button>
         </div>
       </div>
       {task.description && <p className="text-xs text-gray-500 line-clamp-2">{task.description}</p>}
       <div className="flex items-center gap-2 flex-wrap">
-        <span className={`text-xs px-1.5 py-0.5 rounded ${task.created_by === 'tia' ? 'bg-green-500/15 text-green-400' : 'bg-blue-500/15 text-blue-400'}`}>
+        <span className={`text-xs px-1.5 py-0.5 rounded ${task.created_by === 'tia' ? 'bg-seafoam-100 text-seafoam-500' : 'bg-blue-500/15 text-blue-400'}`}>
           {task.created_by === 'tia' ? 'Tia 🌿' : 'Travis'}
         </span>
         {tagList.map(tag => (
-          <span key={tag} className="text-xs bg-gray-700/50 text-gray-400 px-1.5 py-0.5 rounded">{tag}</span>
+          <span key={tag} className="text-xs bg-ocean-100 text-ocean-700 px-1.5 py-0.5 rounded">{tag}</span>
         ))}
       </div>
       <div className="flex items-center gap-2 text-xs text-gray-600">
@@ -327,7 +327,7 @@ export default function Tasks() {
     <button
       onClick={onClick}
       className={`text-xs px-3 py-1.5 rounded-full transition font-medium ${
-        active ? 'bg-sky-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white'
+        active ? 'bg-ocean-500 text-white' : 'bg-sky-50 text-gray-600 hover:bg-sky-50 hover:text-ocean-700'
       }`}
     >
       {label}
@@ -343,20 +343,20 @@ export default function Tasks() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <ListTodo className="w-6 h-6 text-sky-400" />
-          <h1 className="text-xl font-bold text-white">Tasks</h1>
-          <span className="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded-full">{tasks.length}</span>
+          <h1 className="text-xl font-bold text-gray-800">Tasks</h1>
+          <span className="text-xs bg-sky-50 text-gray-600 px-2 py-0.5 rounded-full">{tasks.length}</span>
         </div>
         <div className="flex items-center gap-2">
           {/* View toggle */}
-          <div className="flex bg-gray-800 rounded-lg p-0.5">
-            <button onClick={() => setView('list')} className={`p-1.5 rounded-md transition ${view === 'list' ? 'bg-gray-700 text-white' : 'text-gray-500 hover:text-white'}`}>
+          <div className="flex bg-sky-50 rounded-lg p-0.5">
+            <button onClick={() => setView('list')} className={`p-1.5 rounded-md transition ${view === 'list' ? 'bg-ocean-500 text-white' : 'text-gray-500 hover:text-ocean-700'}`}>
               <LayoutList className="w-4 h-4" />
             </button>
-            <button onClick={() => setView('board')} className={`p-1.5 rounded-md transition ${view === 'board' ? 'bg-gray-700 text-white' : 'text-gray-500 hover:text-white'}`}>
+            <button onClick={() => setView('board')} className={`p-1.5 rounded-md transition ${view === 'board' ? 'bg-ocean-500 text-white' : 'text-gray-500 hover:text-ocean-700'}`}>
               <Columns3 className="w-4 h-4" />
             </button>
           </div>
-          <button onClick={() => setEditing('new')} className="flex items-center gap-1.5 bg-sky-600 hover:bg-sky-500 text-white text-sm px-3 py-2 rounded-lg transition font-medium">
+          <button onClick={() => setEditing('new')} className="flex items-center gap-1.5 bg-ocean-500 hover:bg-ocean-600 text-white text-sm px-3 py-2 rounded-lg transition font-medium">
             <Plus className="w-4 h-4" /> Add Task
           </button>
         </div>
@@ -389,7 +389,7 @@ export default function Tasks() {
           onChange={e => setQuickAdd(e.target.value)}
           onKeyDown={handleQuickAdd}
           placeholder="New task... (press Enter)"
-          className="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-sky-500/50 transition"
+          className="w-full bg-white border border-ocean-100 rounded-lg px-4 py-2.5 text-sm text-gray-800 placeholder-ocean-300 focus:outline-none focus:border-sky-500/50 transition"
         />
       )}
 
@@ -403,7 +403,7 @@ export default function Tasks() {
         </div>
       ) : view === 'list' ? (
         /* ── List View ── */
-        <div className="bg-gray-900/50 border border-gray-800 rounded-xl overflow-hidden">
+        <div className="bg-sky-50/80 border border-ocean-100 rounded-xl overflow-hidden">
           {filteredTasks.map(task => (
             <TaskRow
               key={task.id}
@@ -442,14 +442,14 @@ export default function Tasks() {
                     <TaskCard key={task.id} task={task} onEdit={t => setEditing(t)} onDelete={handleDelete} />
                   ))}
                   {colTasks.length === 0 && (
-                    <div className="text-xs text-gray-700 text-center py-8 border border-dashed border-gray-800 rounded-lg">
+                    <div className="text-xs text-gray-700 text-center py-8 border border-dashed border-ocean-100 rounded-lg">
                       Drop here
                     </div>
                   )}
                 </div>
                 <button
                   onClick={() => setEditing({ status: colStatus })}
-                  className="w-full flex items-center gap-1.5 px-2 py-1.5 mt-1 rounded-lg text-xs text-gray-600 hover:text-gray-300 hover:bg-gray-800/60 transition"
+                  className="w-full flex items-center gap-1.5 px-2 py-1.5 mt-1 rounded-lg text-xs text-gray-600 hover:text-gray-700 hover:bg-sky-50/90 transition"
                 >
                   <Plus className="w-3.5 h-3.5" /> Add task
                 </button>

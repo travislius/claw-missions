@@ -99,14 +99,14 @@ export default function Browse() {
     <div className="space-y-4">
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
-        <h2 className="text-xl font-semibold text-white">
+        <h2 className="text-xl font-semibold text-gray-800">
           {searchQuery ? `Search: "${searchQuery}"` : selectedTag ? `Tag filter` : 'Documents'}
         </h2>
         <div className="flex items-center gap-2">
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value)}
-            className="bg-gray-800 border border-gray-700 text-sm text-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:border-ocean-500"
+            className="bg-sky-50 border border-ocean-200 text-sm text-gray-700 rounded-lg px-3 py-1.5 focus:outline-none focus:border-ocean-500"
           >
             {SORT_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>{o.label}</option>
@@ -114,7 +114,7 @@ export default function Browse() {
           </select>
           <button
             onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-            className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition"
+            className="p-2 rounded-lg text-gray-600 hover:text-ocean-700 hover:bg-sky-50 transition"
             title={viewMode === 'grid' ? 'List view' : 'Grid view'}
           >
             {viewMode === 'grid' ? <List className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
@@ -167,7 +167,7 @@ export default function Browse() {
           <button
             disabled={page <= 1}
             onClick={() => setPage((p) => p - 1)}
-            className="px-3 py-1.5 text-sm rounded-lg bg-gray-800 text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition"
+            className="px-3 py-1.5 text-sm rounded-lg bg-sky-50 text-gray-600 hover:text-ocean-700 disabled:opacity-30 disabled:cursor-not-allowed transition"
           >
             ← Prev
           </button>
@@ -177,7 +177,7 @@ export default function Browse() {
           <button
             disabled={page >= totalPages}
             onClick={() => setPage((p) => p + 1)}
-            className="px-3 py-1.5 text-sm rounded-lg bg-gray-800 text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition"
+            className="px-3 py-1.5 text-sm rounded-lg bg-sky-50 text-gray-600 hover:text-ocean-700 disabled:opacity-30 disabled:cursor-not-allowed transition"
           >
             Next →
           </button>

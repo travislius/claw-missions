@@ -62,25 +62,25 @@ function FileCard({ file, onPreview, onRefresh, selected, onToggleSelect }) {
   return (
     <div
       onClick={() => onPreview(file)}
-      className="group relative bg-gray-900 border border-gray-800 rounded-xl overflow-hidden cursor-pointer hover:border-gray-600 hover:shadow-lg hover:shadow-ocean-500/5 transition-all duration-200"
+      className="group relative bg-white border border-ocean-100 rounded-xl overflow-hidden cursor-pointer hover:border-ocean-200 hover:shadow-lg hover:shadow-ocean-500/5 transition-all duration-200"
     >
       {/* Selection checkbox */}
       <div
         onClick={(e) => { e.stopPropagation(); onToggleSelect?.(file.id); }}
         className={`absolute top-2 left-2 z-10 w-6 h-6 rounded-md border-2 flex items-center justify-center transition cursor-pointer ${
-          selected ? 'bg-ocean-500 border-ocean-500' : 'border-gray-600 bg-gray-900/60 opacity-0 group-hover:opacity-100'
+          selected ? 'bg-ocean-500 border-ocean-500' : 'border-ocean-200 bg-white/80 opacity-0 group-hover:opacity-100'
         }`}
       >
-        {selected && <Check className="w-3.5 h-3.5 text-white" />}
+        {selected && <Check className="w-3.5 h-3.5 text-gray-800" />}
       </div>
 
       {/* Thumbnail area */}
-      <div className="aspect-square bg-gray-850 flex items-center justify-center overflow-hidden bg-gray-800/50">
+      <div className="aspect-square bg-sky-50 flex items-center justify-center overflow-hidden bg-sky-50/80">
         {hasThumb && !imgError ? (
           <img
             src={getThumb(file.id)}
             alt={file.name}
-            className="w-full h-full object-contain bg-gray-900"
+            className="w-full h-full object-contain bg-white"
             onError={() => setImgError(true)}
             loading="lazy"
           />
@@ -91,7 +91,7 @@ function FileCard({ file, onPreview, onRefresh, selected, onToggleSelect }) {
 
       {/* Info */}
       <div className="p-3">
-        <p className="text-sm text-white font-medium truncate" title={file.name}>
+        <p className="text-sm text-gray-800 font-medium truncate" title={file.name}>
           {file.name}
         </p>
         <div className="flex items-center justify-between mt-1">
@@ -121,21 +121,21 @@ function FileCard({ file, onPreview, onRefresh, selected, onToggleSelect }) {
       <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition">
         <button
           onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen); }}
-          className="p-1.5 rounded-lg bg-gray-900/80 backdrop-blur text-gray-400 hover:text-white transition"
+          className="p-1.5 rounded-lg bg-white/90 backdrop-blur text-gray-600 hover:text-ocean-700 transition"
         >
           <MoreVertical className="w-4 h-4" />
         </button>
         {menuOpen && (
-          <div className="absolute right-0 mt-1 w-36 bg-gray-800 border border-gray-700 rounded-lg shadow-xl py-1 z-10">
+          <div className="absolute right-0 mt-1 w-36 bg-sky-50 border border-ocean-200 rounded-lg shadow-xl py-1 z-10">
             <button
               onClick={handleDownload}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 transition"
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-sky-50 transition"
             >
               <Download className="w-3.5 h-3.5" /> Download
             </button>
             <button
               onClick={handleDelete}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-gray-700 transition"
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-coral-500 hover:bg-sky-50 transition"
             >
               <Trash2 className="w-3.5 h-3.5" /> Delete
             </button>

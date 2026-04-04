@@ -114,12 +114,12 @@ export default function Sidebar({ onRefreshTags }) {
   };
 
   return (
-    <aside className={`w-64 bg-gray-900 border-r border-gray-800 flex flex-col shrink-0 overflow-y-auto
+    <aside className={`w-64 bg-gradient-to-b from-sky-100 to-ocean-50 border-r border-ocean-200 flex flex-col shrink-0 overflow-y-auto
       fixed md:relative inset-y-0 left-0 z-40 transform transition-transform duration-200 ease-in-out
       ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
 
       {/* Nav Items */}
-      <div className="p-4 space-y-1">
+      <div className="p-4 space-y-1 flex-1">
         {navItems.map((item, idx) => {
           const IconComp = ICON_MAP[item.icon] || FolderOpen;
           const isActive = item.path === '/'
@@ -136,18 +136,18 @@ export default function Sidebar({ onRefreshTags }) {
               onDrop={(e) => handleDrop(e, idx)}
               onDragEnd={handleDragEnd}
               className={`group transition-all ${dragIdx === idx ? 'opacity-40' : ''} ${
-                overIdx === idx && dragIdx !== idx ? 'border-t-2 border-red-500' : 'border-t-2 border-transparent'
+                overIdx === idx && dragIdx !== idx ? 'border-t-2 border-ocean-500' : 'border-t-2 border-transparent'
               }`}
             >
               <button
                 onClick={() => goTo(item.path)}
-                className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition ${
+                className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-r-xl text-sm transition ${
                   isActive
-                    ? 'bg-red-500/20 text-red-400'
-                    : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                    ? 'bg-ocean-100 text-ocean-800 border-l-4 border-ocean-500'
+                    : 'text-gray-700 hover:bg-ocean-50 hover:text-ocean-700 border-l-4 border-transparent'
                 }`}
               >
-                <GripVertical className="w-3 h-3 text-gray-600 opacity-0 group-hover:opacity-100 transition cursor-grab shrink-0" />
+                <GripVertical className="w-3 h-3 text-ocean-300 opacity-0 group-hover:opacity-100 transition cursor-grab shrink-0" />
                 <IconComp className="w-4 h-4 shrink-0" />
                 <span className="flex-1 text-left">{item.label}</span>
               </button>
@@ -155,8 +155,16 @@ export default function Sidebar({ onRefreshTags }) {
           );
         })}
       </div>
-
-
+      <div className="mx-4 mb-4 rounded-2xl border border-ocean-200 bg-white/70 px-4 py-3 shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ocean-500">Reef Edge</p>
+        <p className="mt-1 text-xs text-gray-600">Soft currents, clear water, steady missions.</p>
+        <div className="mt-3 flex items-center justify-between text-xl">
+          <span>🪸</span>
+          <span>🐠</span>
+          <span>🦀</span>
+          <span>🐙</span>
+        </div>
+      </div>
     </aside>
   );
 }

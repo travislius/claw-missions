@@ -27,26 +27,25 @@ function ProtectedRoute() {
 
 function AppLayout() {
   const setTags = useStore((s) => s.setTags);
-  const { theme, sidebarOpen, setSidebarOpen } = useStore();
+  const { sidebarOpen, setSidebarOpen } = useStore();
   const refreshTags = useCallback(() => {
     getTags().then((r) => setTags(r.data?.tags || r.data || [])).catch(() => {});
   }, [setTags]);
 
   useEffect(() => { refreshTags(); }, [refreshTags]);
 
-  // Initialize theme class on mount
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark');
-  }, [theme]);
+    document.documentElement.classList.remove('dark');
+  }, []);
 
   return (
-    <div className="h-screen flex flex-col bg-gray-950 dark:bg-gray-950 bg-white text-gray-900 dark:text-white transition-colors">
+    <div className="h-screen flex flex-col bg-transparent text-gray-800 ocean-bubbles">
       <Header />
       <div className="flex flex-1 overflow-hidden relative">
         {/* Mobile sidebar overlay */}
         {sidebarOpen && (
           <div
-            className="fixed inset-0 bg-black/50 z-30 md:hidden"
+            className="fixed inset-0 bg-ocean-900/20 backdrop-blur-sm z-30 md:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
