@@ -158,11 +158,11 @@ export default function Sidebar({ onRefreshTags }) {
       <div className="mx-4 mb-4 rounded-2xl border border-ocean-200 bg-white/70 px-4 py-3 shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ocean-500">Reef Edge</p>
         <p className="mt-1 text-xs text-gray-600">Soft currents, clear water, steady missions.</p>
-        <div className="mt-3 flex items-center justify-between text-xl">
-          <span>🪸</span>
-          <span>🐠</span>
-          <span>🦀</span>
-          <span>🐙</span>
+        <div className="mt-3 flex items-center justify-between">
+          <img src="/icons/sea/octopus.png" alt="Octopus" className="w-8 h-8 object-contain" />
+          <img src="/icons/sea/fish.png" alt="Fish" className="w-8 h-8 object-contain" />
+          <img src="/icons/sea/crab.png" alt="Crab" className="w-8 h-8 object-contain" />
+          <img src="/icons/sea/turtle.png" alt="Turtle" className="w-8 h-8 object-contain" />
         </div>
       </div>
     </aside>
