@@ -1,10 +1,13 @@
 import json
+import logging
 import mimetypes
 import os
 import re
 from datetime import datetime
 
 import httpx
+
+logger = logging.getLogger(__name__)
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
@@ -24,9 +27,11 @@ THINK_TAG_RE = re.compile(r"<think>.*?</think>", re.IGNORECASE | re.DOTALL)
 ZED_MODEL = "qwen3.5-35b-a3b-q4kxl.gguf"
 SMART_SEARCH_SYSTEM_PROMPT = (
     'You are a file search assistant. Given a user query and a list of available tags and file types, '
-    'return a JSON object with: {"tags": [list of tag names that match the intent], '
-    '"keywords": [list of filename keywords/patterns to search], "mime_types": [list of mime type prefixes '
-    'to filter]}. Be generous - include anything plausible. Respond ONLY with valid JSON, no markdown.'
+    'return a JSON object with: {"tags": [list of tag names that DIRECTLY match the intent], '
+    '"keywords": [list of specific filename keywords to search], "mime_types": [list of mime type prefixes '
+    'to filter]}. Only include tags and keywords that are clearly relevant — do NOT include broad/generic '
+    'tags like "documents" or "finance" unless the user specifically asked for them. '
+    'Respond ONLY with valid JSON, no markdown.'
 )
 
 
@@ -81,13 +86,21 @@ class PaginatedFiles(BaseModel):
 
 
 def _regular_search_results(db: Session, q: str, page: int = 1, per_page: int = 20) -> list[File]:
-    pattern = f"%{q}%"
     offset = (page - 1) * per_page
+    words = [w.strip() for w in q.split() if w.strip()]
+    if not words:
+        return []
+    # Match ANY word against filename or tag name
+    conditions = []
+    for word in words:
+        pattern = f"%{word}%"
+        conditions.append(File.name.ilike(pattern))
+        conditions.append(Tag.name.ilike(pattern))
     return (
         db.query(File)
         .outerjoin(file_tags, File.id == file_tags.c.file_id)
         .outerjoin(Tag, Tag.id == file_tags.c.tag_id)
-        .filter(or_(File.name.ilike(pattern), Tag.name.ilike(pattern)))
+        .filter(or_(*conditions))
         .distinct()
         .order_by(File.created_at.desc())
         .offset(offset)
@@ -120,16 +133,35 @@ def _strip_model_wrappers(text: str) -> str:
     return cleaned.strip()
 
 
-async def _call_smart_search_llm(query: str, tag_summary: list[str], file_types: list[str], total_files: int) -> dict:
+def _prefilter_tags(query: str, tag_names: list[str], max_tags: int = 20) -> list[str]:
+    """Narrow tags down before sending to LLM: keep any tag that shares a word with the query,
+    plus all tags if the overlap is tiny (ensures LLM always has useful context)."""
+    words = {w.strip().lower() for w in query.replace("-", " ").split() if len(w.strip()) > 1}
+    scored: list[tuple[int, str]] = []
+    for name in tag_names:
+        tag_words = set(name.replace("-", " ").lower().split())
+        overlap = len(words & tag_words)
+        # also partial: any query word is substring of tag or vice versa
+        partial = sum(1 for qw in words for tw in tag_words if qw in tw or tw in qw)
+        score = overlap * 2 + partial
+        scored.append((score, name))
+    scored.sort(key=lambda x: -x[0])
+    # Always include top scorers; if nothing scored, return all (up to max_tags)
+    top = [name for score, name in scored if score > 0][:max_tags]
+    return top if top else tag_names[:max_tags]
+
+
+async def _call_smart_search_llm(query: str, tag_names: list[str], file_types: list[str]) -> dict:
+    # Pre-filter to keep prompt short — only send relevant candidate tags
+    candidate_tags = _prefilter_tags(query, tag_names, max_tags=20)
     user_prompt = (
         "/no_thinking\n"
         f"User query: {query}\n"
-        f"Total files: {total_files}\n"
-        f"Available tags: {', '.join(tag_summary) or 'None'}\n"
+        f"Available tags: {', '.join(candidate_tags) or 'None'}\n"
         f"Available file types: {', '.join(file_types) or 'None'}\n"
-        'Return JSON with keys "tags", "keywords", and "mime_types".'
+        'Return JSON with keys "tags" (matching tag names), "keywords" (specific filename words), "mime_types".'
     )
-    async with httpx.AsyncClient(timeout=5.0) as client:
+    async with httpx.AsyncClient(timeout=httpx.Timeout(15.0, connect=5.0)) as client:
         response = await client.post(
             f"{settings.LLM_URL.rstrip('/')}/v1/chat/completions",
             json={
@@ -210,9 +242,8 @@ async def smart_search_files(
         .all()
     )
     file_rows = db.query(File.name, File.mime_type).all()
-    total_files = db.query(func.count(File.id)).scalar() or 0
 
-    tag_summary = [f"{tag.name} ({file_count})" for tag, file_count in tag_rows]
+    tag_names = [tag.name for tag, _ in tag_rows]
     tag_lookup = {tag.name.strip().lower(): tag.name for tag, _ in tag_rows}
 
     file_types = sorted({
@@ -222,8 +253,32 @@ async def smart_search_files(
         if ext
     })
 
+    # Fast-path: if query words directly match tag names, skip LLM entirely
+    query_words = [w.strip().lower() for w in query.replace("-", " ").split() if len(w.strip()) > 1]
+    fast_path_tags: list[str] = []
+    for word in query_words:
+        for tag_key, tag_actual in tag_lookup.items():
+            if word == tag_key or word in tag_key or tag_key in word:
+                fast_path_tags.append(tag_actual)
+    fast_path_tags = sorted(set(fast_path_tags), key=str.lower)
+    # Use fast path if we matched at least one tag per query word
+    if len(fast_path_tags) >= max(1, len(query_words)):
+        lowered = [t.lower() for t in fast_path_tags]
+        fast_results = (
+            db.query(File)
+            .filter(File.tags.any(func.lower(Tag.name).in_(lowered)))
+            .distinct()
+            .order_by(File.created_at.desc())
+            .limit(100)
+            .all()
+        )
+        if fast_results:
+            response.headers["X-Smart-Search-Used"] = "true"
+            return fast_results
+
     try:
-        semantic_filters = await _call_smart_search_llm(query, tag_summary, file_types, total_files)
+        semantic_filters = await _call_smart_search_llm(query, tag_names, file_types)
+        print(f"[SMART-SEARCH] LLM returned: {semantic_filters}")
         matched_tags = []
         for candidate in semantic_filters["tags"]:
             key = candidate.lower()
@@ -241,10 +296,21 @@ async def smart_search_files(
         if matched_tags:
             lowered_tags = [tag_name.lower() for tag_name in matched_tags]
             conditions.append(File.tags.any(func.lower(Tag.name).in_(lowered_tags)))
-        if semantic_filters["keywords"]:
-            conditions.append(or_(*[File.name.ilike(f"%{keyword}%") for keyword in semantic_filters["keywords"]]))
-        if semantic_filters["mime_types"]:
-            conditions.append(or_(*[File.mime_type.ilike(f"{mime_prefix}%") for mime_prefix in semantic_filters["mime_types"]]))
+        # Only use keywords that are specific enough (>4 chars, not generic words)
+        _generic_words = {"card", "file", "doc", "image", "photo", "pdf", "jpeg", "png"}
+        useful_keywords = [
+            kw for kw in semantic_filters.get("keywords", [])
+            if len(kw) > 4 and kw.lower() not in _generic_words
+        ]
+        if useful_keywords:
+            conditions.append(or_(*[File.name.ilike(f"%{keyword}%") for keyword in useful_keywords]))
+        # Skip mime_type filters that are too broad (e.g. "image/" matches everything)
+        specific_mimes = [
+            m for m in semantic_filters.get("mime_types", [])
+            if "/" in m and not m.rstrip("/").endswith("/")
+        ]
+        if specific_mimes:
+            conditions.append(or_(*[File.mime_type.ilike(f"{mime}%") for mime in specific_mimes]))
 
         if not conditions:
             response.headers["X-Smart-Search-Used"] = "false"
@@ -260,7 +326,8 @@ async def smart_search_files(
         )
         response.headers["X-Smart-Search-Used"] = "true"
         return results
-    except (httpx.HTTPError, httpx.TimeoutException, json.JSONDecodeError, KeyError, TypeError, ValueError):
+    except (httpx.HTTPError, httpx.TimeoutException, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+        logger.warning("Smart search LLM failed, falling back: %s: %s", type(exc).__name__, exc)
         response.headers["X-Smart-Search-Used"] = "false"
         return _regular_search_results(db, query)
 
