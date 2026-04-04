@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  ListTodo, Plus, LayoutList, Columns3, Trash2, Pencil, X, ChevronDown, ChevronRight, Clock
+  ListTodo, Plus, LayoutList, Columns3, Trash2, Pencil, X, ChevronDown, ChevronRight, ChevronUp, Clock, ArrowUpDown
 } from 'lucide-react';
 import api from '../api';
 
@@ -241,6 +241,8 @@ export default function Tasks() {
   const [expanded, setExpanded] = useState({});
   const [editing, setEditing] = useState(null); // null | 'new' | task object
   const [quickAdd, setQuickAdd] = useState('');
+  const [sortKey, setSortKey] = useState('created_at'); // title | status | priority | tags | created_by | created_at | due_date
+  const [sortDir, setSortDir] = useState('desc'); // asc | desc
   const pollRef = useRef(null);
 
   const fetchTasks = useCallback(async () => {
@@ -335,7 +337,45 @@ export default function Tasks() {
   );
 
   // Filtered tasks (already filtered server-side, but we keep all for board view counts)
-  const filteredTasks = tasks;
+  const PRIORITY_ORDER = { urgent: 0, high: 1, medium: 2, low: 3 };
+  const STATUS_ORDER = { blocked: 0, 'in-progress': 1, todo: 2, backlog: 3, done: 4 };
+
+  const toggleSort = (key) => {
+    if (sortKey === key) {
+      setSortDir(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir(key === 'title' || key === 'tags' ? 'asc' : 'desc');
+    }
+  };
+
+  const SortIcon = ({ col }) => {
+    if (sortKey !== col) return <ArrowUpDown className="w-3 h-3 opacity-30" />;
+    return sortDir === 'asc' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />;
+  };
+
+  const sortedTasks = [...tasks].sort((a, b) => {
+    let cmp = 0;
+    switch (sortKey) {
+      case 'title': cmp = (a.title || '').localeCompare(b.title || ''); break;
+      case 'status': cmp = (STATUS_ORDER[a.status] ?? 99) - (STATUS_ORDER[b.status] ?? 99); break;
+      case 'priority': cmp = (PRIORITY_ORDER[a.priority] ?? 99) - (PRIORITY_ORDER[b.priority] ?? 99); break;
+      case 'tags': cmp = (a.tags || '').localeCompare(b.tags || ''); break;
+      case 'created_by': cmp = (a.created_by || '').localeCompare(b.created_by || ''); break;
+      case 'due_date': {
+        const da = a.due_date || '9999'; const db = b.due_date || '9999';
+        cmp = da.localeCompare(db); break;
+      }
+      case 'created_at':
+      default: {
+        const ca = a.created_at || a.updated_at || ''; const cb = b.created_at || b.updated_at || '';
+        cmp = ca.localeCompare(cb); break;
+      }
+    }
+    return sortDir === 'asc' ? cmp : -cmp;
+  });
+
+  const filteredTasks = sortedTasks;
 
   return (
     <div className="max-w-6xl mx-auto space-y-4">
@@ -402,18 +442,61 @@ export default function Tasks() {
           <p>No tasks yet. Add one to get started!</p>
         </div>
       ) : view === 'list' ? (
-        /* ── List View ── */
-        <div className="bg-sky-50/80 border border-ocean-100 rounded-xl overflow-hidden">
-          {filteredTasks.map(task => (
-            <TaskRow
-              key={task.id}
-              task={task}
-              expanded={!!expanded[task.id]}
-              onToggle={() => toggleExpand(task.id)}
-              onEdit={t => setEditing(t)}
-              onDelete={handleDelete}
-            />
-          ))}
+        /* ── List View with Sortable Headers ── */
+        <div className="bg-white border border-ocean-100 rounded-xl overflow-hidden">
+          <div className="grid grid-cols-[1fr_100px_90px_100px_80px_90px_80px_60px] gap-1 px-4 py-2.5 border-b border-ocean-200 bg-sky-50/80 text-xs text-gray-500 font-medium uppercase tracking-wider">
+            <button onClick={() => toggleSort('title')} className="flex items-center gap-1 hover:text-ocean-700 transition text-left">Title <SortIcon col="title" /></button>
+            <button onClick={() => toggleSort('status')} className="flex items-center gap-1 hover:text-ocean-700 transition">Status <SortIcon col="status" /></button>
+            <button onClick={() => toggleSort('priority')} className="flex items-center gap-1 hover:text-ocean-700 transition">Priority <SortIcon col="priority" /></button>
+            <button onClick={() => toggleSort('tags')} className="flex items-center gap-1 hover:text-ocean-700 transition">Tags <SortIcon col="tags" /></button>
+            <button onClick={() => toggleSort('created_by')} className="flex items-center gap-1 hover:text-ocean-700 transition">By <SortIcon col="created_by" /></button>
+            <button onClick={() => toggleSort('due_date')} className="flex items-center gap-1 hover:text-ocean-700 transition">Due <SortIcon col="due_date" /></button>
+            <button onClick={() => toggleSort('created_at')} className="flex items-center gap-1 hover:text-ocean-700 transition">Age <SortIcon col="created_at" /></button>
+            <span></span>
+          </div>
+          {filteredTasks.map(task => {
+            const tagList = task.tags ? task.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
+            return (
+              <div key={task.id} className="border-b border-ocean-50 hover:bg-sky-50/60 transition">
+                <div className="grid grid-cols-[1fr_100px_90px_100px_80px_90px_80px_60px] gap-1 px-4 py-2.5 items-center cursor-pointer" onClick={() => toggleExpand(task.id)}>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <button className="text-gray-400 shrink-0">
+                      {expanded[task.id] ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                    </button>
+                    <span className="text-sm text-gray-800 font-medium truncate">{task.title}</span>
+                  </div>
+                  <span className={`text-xs px-2 py-0.5 rounded-full border w-fit ${STATUS_BADGE[task.status] || STATUS_BADGE.todo}`}>
+                    {STATUS_LABELS[task.status] || task.status}
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${PRIORITY_DOT[task.priority] || PRIORITY_DOT.medium}`} />
+                    <span className="text-xs text-gray-600 capitalize">{task.priority}</span>
+                  </div>
+                  <div className="flex gap-1 flex-wrap overflow-hidden max-h-5">
+                    {tagList.slice(0, 2).map(tag => (
+                      <span key={tag} className="text-xs bg-ocean-100 text-ocean-700 px-1.5 py-0 rounded">{tag}</span>
+                    ))}
+                    {tagList.length > 2 && <span className="text-xs text-gray-400">+{tagList.length - 2}</span>}
+                  </div>
+                  <span className={`text-xs px-1.5 py-0.5 rounded ${task.created_by === 'tia' ? 'bg-seafoam-100 text-seafoam-500' : 'bg-blue-500/15 text-blue-400'}`}>
+                    {task.created_by === 'tia' ? 'Tia' : 'Travis'}
+                  </span>
+                  <span className="text-xs text-gray-500">{task.due_date || '—'}</span>
+                  <span className="text-xs text-gray-400">{timeAgo(task.created_at || task.updated_at)}</span>
+                  <div className="flex items-center gap-0.5 justify-end">
+                    <button onClick={e => { e.stopPropagation(); setEditing(task); }} className="p-1 text-gray-400 hover:text-sky-500 transition"><Pencil className="w-3.5 h-3.5" /></button>
+                    <button onClick={e => { e.stopPropagation(); handleDelete(task.id); }} className="p-1 text-gray-400 hover:text-coral-500 transition"><Trash2 className="w-3.5 h-3.5" /></button>
+                  </div>
+                </div>
+                {expanded[task.id] && (
+                  <div className="px-12 pb-3 space-y-1.5 text-sm">
+                    {task.description && <p className="text-gray-700">{task.description}</p>}
+                    {task.notes && <p className="text-gray-500 italic">Notes: {task.notes}</p>}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       ) : (
         /* ── Board View ── */
