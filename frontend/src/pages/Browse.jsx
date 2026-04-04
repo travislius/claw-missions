@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { LayoutGrid, List, Upload as UploadIcon } from 'lucide-react';
+import { LayoutGrid, List, Upload as UploadIcon, Search } from 'lucide-react';
 import { useStore } from '../store';
 import { getFiles, getTags, getStats, searchFiles } from '../api';
 import FileGrid from '../components/FileGrid';
@@ -24,7 +24,7 @@ export default function Browse() {
   const {
     files, setFiles, loading, setLoading,
     viewMode, setViewMode, tags, setTags, selectedTag,
-    searchQuery, stats, setStats,
+    searchQuery, setSearchQuery, stats, setStats,
   } = useStore();
 
   const [sort, setSort] = useState('created_at:desc');
@@ -32,6 +32,22 @@ export default function Browse() {
   const [totalPages, setTotalPages] = useState(1);
   const [previewFile, setPreviewFile] = useState(null);
   const [showUpload, setShowUpload] = useState(false);
+  const [localSearch, setLocalSearch] = useState(searchQuery);
+  const searchDebounce = useRef(null);
+
+  // Debounced search — updates store after 300ms of typing
+  useEffect(() => {
+    clearTimeout(searchDebounce.current);
+    searchDebounce.current = setTimeout(() => {
+      setSearchQuery(localSearch.trim());
+    }, 300);
+    return () => clearTimeout(searchDebounce.current);
+  }, [localSearch, setSearchQuery]);
+
+  // Clear search when leaving the page
+  useEffect(() => {
+    return () => setSearchQuery('');
+  }, [setSearchQuery]);
 
   // Expose upload toggle to header via window (simple bridge)
   useEffect(() => {
@@ -103,6 +119,23 @@ export default function Browse() {
           {searchQuery ? `Search: "${searchQuery}"` : selectedTag ? `Tag filter` : 'Documents'}
         </h2>
         <div className="flex items-center gap-2">
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ocean-400" />
+            <input
+              type="text"
+              placeholder="Search files..."
+              value={localSearch}
+              onChange={(e) => setLocalSearch(e.target.value)}
+              className="bg-sky-50 border border-ocean-200 rounded-lg pl-9 pr-3 py-1.5 text-sm text-gray-700 placeholder-ocean-400 focus:outline-none focus:border-ocean-500 transition w-48 sm:w-64"
+            />
+            {localSearch && (
+              <button
+                onClick={() => { setLocalSearch(''); setSearchQuery(''); }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs"
+              >✕</button>
+            )}
+          </div>
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value)}
