@@ -11,7 +11,7 @@
 }
 
 body {
-  @apply antialiased bg-gradient-to-b from-sky-50 to-sand-50 text-gray-800;
+  @apply antialiased bg-white text-gray-800;
 }
 
 /* Touch-friendly: ensure min 44px tap targets on mobile */

@@ -39,7 +39,7 @@ function AppLayout() {
   }, []);
 
   return (
-    <div className="h-screen flex flex-col bg-transparent text-gray-800 ocean-bubbles">
+    <div className="h-screen flex flex-col bg-white text-gray-800">
       <Header />
       <div className="flex flex-1 overflow-hidden relative">
         {/* Mobile sidebar overlay */}
