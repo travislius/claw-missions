@@ -1,27 +1,31 @@
-<img src="https://raw.githubusercontent.com/travislius/claw-missions/main/docs/logo.png" width="120" alt="Claw Missions Logo" />
+<img src="https://raw.githubusercontent.com/travislius/claw-missions/main/docs/logo.png" width="100" alt="Claw Missions Logo" />
 
 # Claw Missions
 
-**Mission control for your digital life.** A self-hosted hub for file storage, AI agent integration, team monitoring, and personal automation — built to be fast, private, and actually good-looking.
+**Mission control for your digital life.** A self-hosted AI operations dashboard for file storage, task tracking, agent monitoring, and team visibility — built to be fast, private, and genuinely beautiful.
 
-> Started as a personal file vault. Evolving into a full AI operations dashboard.
+> Started as a personal file vault. Now a full AI ops hub.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-cyan.svg)](./LICENSE)
 [![Built with FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?logo=fastapi)](https://fastapi.tiangolo.com)
 [![Built with React](https://img.shields.io/badge/Frontend-React-61DAFB?logo=react)](https://react.dev)
+[![Tailwind CSS](https://img.shields.io/badge/Styles-Tailwind-38bdf8?logo=tailwindcss)](https://tailwindcss.com)
 
 ---
 
 ## 📸 Screenshots
 
 ### 🏠 Mission Control — Home Dashboard
-![Home](docs/screenshots/home-ocean.jpg)
+![Home](docs/screenshots/home.jpg)
 
-### 🔐 Login — Ocean Theme
-![Login](docs/screenshots/login-ocean.jpg)
+### ✅ Tasks — Kanban Board
+![Tasks Board](docs/screenshots/tasks-board.jpg)
+
+### 📋 Tasks — Sortable List View
+![Tasks List](docs/screenshots/tasks-list.jpg)
 
 ### 🌐 Monitor — Uptime & Latency
-![Monitor](docs/screenshots/monitor-ocean.jpg)
+![Monitor](docs/screenshots/monitor.jpg)
 
 ### 👥 Team — Multi-Machine Overview
 ![Team](docs/screenshots/team.jpg)
@@ -32,137 +36,87 @@
 ### 🧠 Skills — Agent Skills Browser
 ![Skills](docs/screenshots/skills.jpg)
 
+### 🔐 Login
+![Login](docs/screenshots/login.jpg)
+
 ---
 
 ## What Is Claw Missions?
 
 Claw Missions is a lightweight, self-hosted platform that gives you full ownership of your files, AI agents, and automation pipelines. No subscriptions, no third-party clouds, no bloat.
 
-- 🗄️ **File vault** — Upload, organize, tag, search, and preview your files
-- 🤖 **AI agent dashboard** — Track sessions, coding agents, and skills across your fleet
-- 📡 **Live feed** — Real-time activity stream from your AI and cron jobs
-- 🖥️ **Team monitor** — See all your machines and their status at a glance
-- 🌐 **Site monitor** — Uptime and latency tracking for your web services
-- 📱 **PWA** — Installs on your phone like a native app
-- 🔐 **Private by default** — Your data stays on your machine
+### Core Features
 
-Built to work seamlessly with [OpenClaw](https://github.com/openclaw/openclaw) — your personal AI agent hub.
+- 🏠 **Mission Control Dashboard** — Pinned widgets for system stats, uptime, tasks, projects, notes, team status, and AI sessions — all at a glance
+- ✅ **Task Tracker** — Full kanban board + sortable list view with drag-and-drop, status filters, priority tiers, assignee tracking, and tags
+- 📁 **File Vault** — Upload, tag, search, and preview files; supports images, PDFs, and arbitrary binaries up to 500 MB
+- 🌐 **Site Monitor** — HTTP uptime checker for your self-hosted services with live latency display
+- 👥 **Team View** — Multi-machine overview showing each device's hardware specs, role, and online status
+- 📡 **Sessions Browser** — Full OpenClaw session history with token usage, model, type (main/cron/subagent), and search
+- 🧠 **Skills Browser** — Browse and inspect all installed OpenClaw skills (custom + built-in), searchable and filterable
+- 🗓️ **Schedule** — Cron job calendar view of your automation schedules
+- 📝 **Notes & Memory** — Structured note-taking and AI memory file browser
+- 🔎 **Global Search** — Search across files, notes, and projects from the header bar
 
----
+### Design
 
-## ✨ Features
-
-- 📁 **File browser** — Upload, download, rename, delete, move files
-- 🏷️ **Tags** — Label files with searchable, color-coded tags
-- 🔍 **Search** — Instant search by filename or tag
-- 🖼️ **Preview** — Inline image and PDF preview
-- 📱 **PWA** — Install on your phone like a native app
-- 🔐 **Auth** — Username/password login with JWT + API key support
-- 🤖 **REST API** — Full API for automation and AI agent integration
-- 🐳 **Docker** — One-liner deployment with `docker compose up`
-- 📊 **Dashboard widgets** — Pinnable cards for system stats, schedule, tasks, projects, and more
-- 🏃 **Sessions viewer** — Browse and inspect AI session history with token usage
-- 🧠 **Skills browser** — See all installed OpenClaw skills (custom + built-in)
-- 🖥️ **Team page** — Multi-machine fleet overview with live status
-- 📡 **Site monitor** — Track uptime and HTTP latency for your services
-- 🔔 **Live feed** — Real-time activity stream for uploads, sessions, and cron events
+- Ocean-themed UI — teal accent palette, watercolor header, clean white canvas
+- Responsive sidebar navigation with 12 sections
+- Light mode first — no forced dark mode
+- Inline task quick-add ("type and hit Enter")
+- Real-time live feed on the home dashboard
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
-### Docker (recommended)
-
-```bash
-git clone https://github.com/travislius/claw-missions.git
-cd claw-missions
-cp .env.example .env
-# Edit .env with your credentials
-docker compose up -d
-```
-
-Open `http://localhost:5679` in your browser.
-
-### Native (Python + Node)
+### Local (Python + Node)
 
 ```bash
 git clone https://github.com/travislius/claw-missions.git
 cd claw-missions
 
 # Backend
-cd backend && python3 -m venv venv && source venv/bin/activate
-pip install -r requirements.txt && cd ..
+cp .env.example .env          # Edit with your settings
+cd backend && pip install -r requirements.txt
+uvicorn app.main:app --host 0.0.0.0 --port 5679
 
-# Frontend
-cd frontend && npm install && npm run build && cd ..
-
-# Configure & run
-cp .env.example .env   # Edit with your credentials
-./start.sh
+# Frontend (separate terminal)
+cd frontend && npm install && npm run build
 ```
+
+Frontend is served as static files by the FastAPI backend. Visit `http://localhost:5679`.
+
+### Docker
+
+```bash
+cp .env.example .env          # Edit first
+docker compose up -d
+```
+
+Runs at `http://localhost:5679`. Data persists in `./data/`.
 
 ---
 
-## ⚙️ Configuration
-
-Copy `.env.example` to `.env` and edit:
+## Configuration
 
 ```env
 CLAWMISSIONS_USERNAME=admin
-CLAWMISSIONS_PASSWORD=changeme          # Use something strong!
-CLAWMISSIONS_SECRET=random-string       # openssl rand -hex 32
-CLAWMISSIONS_STORAGE=/data/files        # Where files live on disk
-CLAWMISSIONS_DB=/data/clawmissions.db
+CLAWMISSIONS_PASSWORD=changeme
+CLAWMISSIONS_SECRET=your-random-jwt-secret
+CLAWMISSIONS_STORAGE=/path/to/files
+CLAWMISSIONS_DB=/path/to/clawmissions.db
 CLAWMISSIONS_MAX_UPLOAD_MB=500
 CLAWMISSIONS_PORT=5679
+CLAWMISSIONS_ALLOWED_ORIGINS=https://your.domain.com
 ```
-
-> Keep your data directory outside the git repo to avoid committing personal files.
 
 ---
 
-## 🖥️ Team & Fleet Setup
-
-To display your machines on the Team page, copy `backend/team.sample.json` to `backend/team.json` and fill in your details:
-
-```json
-{
-  "tia": {
-    "name": "Tia",
-    "emoji": "🌿",
-    "role": "Always-On Hub",
-    "machine": "Mac Mini",
-    "specs": "32 GB RAM · 2 TB SSD",
-    "os": "macOS",
-    "location": "Home",
-    "fetch": "local"
-  }
-}
-```
-
-`team.json` is gitignored — your machine details and IPs stay private.
-
----
-
-## 🌐 Exposing to the Internet
-
-For HTTPS access anywhere, use [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) (free):
+## API
 
 ```bash
-cloudflared tunnel create claw-missions
-cloudflared tunnel route dns claw-missions missions.yourdomain.com
-```
-
-Or use nginx + Let's Encrypt for a traditional reverse proxy setup.
-
----
-
-## 📡 REST API
-
-Full REST API — designed for AI agents and automation:
-
-```bash
-# Login
+# Log in
 TOKEN=$(curl -s -X POST http://localhost:5679/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"changeme"}' | jq -r .access_token)
@@ -170,69 +124,79 @@ TOKEN=$(curl -s -X POST http://localhost:5679/api/auth/login \
 # Upload a file
 curl -X POST http://localhost:5679/api/files/upload \
   -H "Authorization: Bearer $TOKEN" \
-  -F "file=@/path/to/document.pdf"
+  -F "file=@/path/to/file.pdf"
 
 # Search files
 curl "http://localhost:5679/api/files/search?q=report" \
   -H "Authorization: Bearer $TOKEN"
 
-# Tag a file
-curl -X POST http://localhost:5679/api/files/1/tags \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '[1, 2]'
+# Machine-to-machine (API key)
+curl http://localhost:5679/api/files \
+  -H "X-API-Key: your-api-key"
 ```
 
-Full interactive docs at `http://localhost:5679/docs` (Swagger UI).
+Full interactive docs: `http://localhost:5679/docs` (Swagger UI)
 
 ---
 
-## 🏗️ Tech Stack
+## Tech Stack
 
 | Layer | Tech |
 |-------|------|
-| Frontend | React + Vite + Tailwind CSS |
-| Backend | Python + FastAPI |
+| Frontend | React 18 + Vite + Tailwind CSS |
+| Backend | Python 3.14 + FastAPI + Uvicorn |
 | Database | SQLite via SQLAlchemy |
-| Auth | JWT tokens + bcrypt |
-| Storage | Real filesystem (files are actual files) |
+| Auth | JWT (24h) + bcrypt + API key |
+| Storage | Native filesystem |
 | Container | Docker + docker-compose |
 
 ---
 
-## 🔐 Security
+## Security
 
 - Bcrypt password hashing
 - JWT with configurable expiry
-- CORS lockdown (set `CLAWMISSIONS_ALLOWED_ORIGINS`)
+- CORS lockdown via `CLAWMISSIONS_ALLOWED_ORIGINS`
 - API key auth for machine-to-machine calls
 - `team.json` and `.env` are gitignored — no secrets in the repo
 
-For sensitive deployments, add **Cloudflare Access** as a second auth layer (free tier available).
+For production, add **Cloudflare Access** as a zero-trust auth layer (free tier covers personal deployments).
 
 See [SECURITY.md](./SECURITY.md) for the full guide.
 
 ---
 
-## 🗺️ Roadmap
+## Deployment
 
-- [ ] Multi-user support with role-based access
-- [ ] Folder organization
-- [ ] Bulk operations (tag, delete, move)
-- [ ] Full-text search inside documents
-- [ ] Share links (public file sharing with expiry)
-- [ ] OpenClaw deep integration (agent memory store)
-- [ ] Mobile app (React Native)
+Designed for **Mac Mini / Linux home server** behind Cloudflare tunnel:
+
+```
+Mac Mini :5679 → cloudflared → missions.yourdomain.com
+```
+
+Works equally well on a Raspberry Pi, VPS, or any Linux box.
 
 ---
 
-## 🤝 Contributing
+## Roadmap
+
+- [ ] Multi-user support with role-based access
+- [ ] Folder organization + nested projects
+- [ ] Bulk file operations (tag, delete, move)
+- [ ] Full-text search inside documents (PDF/txt)
+- [ ] Share links (public file sharing with expiry)
+- [ ] Mobile app (React Native or PWA)
+- [ ] Calendar day/week view in Schedule tab
+
+---
+
+## Contributing
 
 PRs welcome. Open an issue first for big changes.
 
 ---
 
-## 📄 License
+## License
 
 MIT — use it, fork it, make it yours.
 
