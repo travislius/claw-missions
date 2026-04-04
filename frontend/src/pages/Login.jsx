@@ -28,12 +28,8 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-300 via-ocean-200 to-sand-100 ocean-bubbles ocean-wave flex items-center justify-center px-4 py-10">
+    <div className="min-h-screen bg-white flex items-center justify-center px-4 py-10">
       <div className="relative w-full max-w-sm">
-        <span className="absolute -top-10 -left-6 text-3xl">🐙</span>
-        <span className="absolute -top-6 right-2 text-2xl">🐠</span>
-        <span className="absolute -bottom-6 -left-4 text-3xl">🌊</span>
-        <span className="absolute -bottom-8 right-4 text-2xl">🐚</span>
 
         {/* Logo */}
         <div className="rounded-2xl border border-ocean-200 bg-white/80 p-8 shadow-xl backdrop-blur-lg">
