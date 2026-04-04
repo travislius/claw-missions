@@ -49,8 +49,8 @@ export default function Header() {
 
   return (
     <header
-      className="bg-gradient-to-r from-sky-100 via-sky-50 to-sand-50 border-b border-ocean-200 flex items-center px-3 sm:px-4 gap-2 sm:gap-4 shrink-0"
-      style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))', paddingBottom: '0.75rem', minHeight: '3.5rem' }}
+      className="border-b border-ocean-200 flex items-center px-3 sm:px-4 gap-2 sm:gap-4 shrink-0 bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: "url('/icons/sea/header-bg.png')", paddingTop: 'max(0.75rem, env(safe-area-inset-top))', paddingBottom: '0.75rem', minHeight: '3.5rem' }}
     >
       {/* Hamburger (mobile) */}
       <button onClick={toggleSidebar} className="p-2 rounded-lg text-gray-600 hover:text-ocean-700 hover:bg-white/70 transition md:hidden">
