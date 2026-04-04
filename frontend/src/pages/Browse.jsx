@@ -122,6 +122,32 @@ export default function Browse() {
 
   return (
     <div className="space-y-4">
+      {/* Search bar — prominent, centered */}
+      <div className="flex justify-center">
+        <div className="relative w-full max-w-2xl">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-ocean-400" />
+          <input
+            type="text"
+            placeholder="Search documents..."
+            value={localSearch}
+            onChange={(e) => setLocalSearch(e.target.value)}
+            className="w-full bg-sky-50 border border-ocean-200 rounded-xl pl-12 pr-20 py-3 text-base text-gray-700 placeholder-ocean-400 focus:outline-none focus:border-ocean-500 focus:ring-2 focus:ring-ocean-500/20 transition shadow-sm"
+          />
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+            {localSearch && (
+              <button
+                onClick={() => { setLocalSearch(''); setSearchQuery(''); setSmartSearchUsed(false); }}
+                className="text-gray-400 hover:text-gray-600 text-sm"
+              >✕</button>
+            )}
+            <span className="inline-flex items-center gap-1 rounded-md bg-ocean-50 border border-ocean-200 px-2 py-1 text-[11px] font-semibold text-ocean-600">
+              <Sparkles className="w-3 h-3" />
+              AI
+            </span>
+          </div>
+        </div>
+      </div>
+
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <h2 className="flex items-center flex-wrap gap-2 text-xl font-semibold text-gray-800">
@@ -133,29 +159,6 @@ export default function Browse() {
           )}
         </h2>
         <div className="flex items-center gap-2">
-          {/* Search */}
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ocean-400" />
-              <input
-                type="text"
-                placeholder="Search files..."
-                value={localSearch}
-                onChange={(e) => setLocalSearch(e.target.value)}
-                className="bg-sky-50 border border-ocean-200 rounded-lg pl-9 pr-3 py-1.5 text-sm text-gray-700 placeholder-ocean-400 focus:outline-none focus:border-ocean-500 transition w-48 sm:w-64"
-              />
-              {localSearch && (
-                <button
-                  onClick={() => { setLocalSearch(''); setSearchQuery(''); setSmartSearchUsed(false); }}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs"
-                >✕</button>
-              )}
-            </div>
-            <span className="inline-flex items-center gap-1 rounded-lg border border-ocean-200 bg-sky-50 px-2.5 py-1.5 text-xs font-medium text-ocean-600">
-              <Sparkles className="w-3.5 h-3.5" />
-              AI
-            </span>
-          </div>
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value)}
