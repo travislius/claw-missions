@@ -9,6 +9,7 @@ class Settings:
     DB: str = os.getenv("CLAWMISSIONS_DB", "/data/clawmissions.db")
     MAX_UPLOAD_MB: int = int(os.getenv("CLAWMISSIONS_MAX_UPLOAD_MB", "500"))
     PORT: int = int(os.getenv("CLAWMISSIONS_PORT", "5679"))
+    LLM_URL: str = os.getenv("CLAWMISSIONS_LLM_URL", "http://100.125.85.113:8080")
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_HOURS: int = 24
 

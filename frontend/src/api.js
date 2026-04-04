@@ -47,6 +47,7 @@ export const uploadFiles = (formData, onProgress) =>
 
 // Search
 export const searchFiles = (q) => api.get('/files/search', { params: { q } });
+export const smartSearchFiles = (q) => api.post('/files/smart-search', { q });
 
 // Tags
 export const getTags = () => api.get('/tags');

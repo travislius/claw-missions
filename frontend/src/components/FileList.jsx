@@ -1,4 +1,4 @@
-import { File, Image, FileText, Film, Music, Archive, Code, Download, Trash2, Check } from 'lucide-react';
+import { Archive, Check, Code, Download, File, FileText, Film, Image, Music, Trash2 } from 'lucide-react';
 import { downloadFile, deleteFile, getThumb } from '../api';
 import { useState } from 'react';
 import { useStore } from '../store';
@@ -15,6 +15,25 @@ function formatDate(d) {
   return new Date(d).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+function getFileTypeLabel(file) {
+  if (file?.name && file.name.includes('.')) {
+    const ext = file.name.split('.').pop()?.trim();
+    if (ext) return ext.replace(/^jpeg$/i, 'jpg').toUpperCase();
+  }
+  if (file?.mime_type?.includes('/')) {
+    const subtype = file.mime_type
+      .split('/')[1]
+      .split(';')[0]
+      .split('+')[0]
+      .replace(/^x-/, '')
+      .replace(/^jpeg$/i, 'jpg')
+      .replace(/^plain$/i, 'txt')
+      .trim();
+    if (subtype) return subtype.toUpperCase();
+  }
+  return 'FILE';
+}
+
 function SmallIcon({ mime }) {
   const cls = 'w-5 h-5';
   if (!mime) return <File className={cls} />;
@@ -27,7 +46,7 @@ function SmallIcon({ mime }) {
   return <File className={cls} />;
 }
 
-function FileRow({ file, onPreview, onRefresh, selected, onToggleSelect }) {
+function FileRow({ file, fileType, onPreview, onRefresh, selected, onToggleSelect }) {
   const [imgErr, setImgErr] = useState(false);
   const hasThumb = file.thumbnail_path || file.mime_type?.startsWith('image/');
 
@@ -81,6 +100,7 @@ function FileRow({ file, onPreview, onRefresh, selected, onToggleSelect }) {
           </div>
         )}
       </td>
+      <td className="py-3 px-4 text-sm text-gray-600 hidden sm:table-cell">{fileType}</td>
       <td className="py-3 px-4 text-sm text-gray-600 hidden sm:table-cell">{formatBytes(file.size)}</td>
       <td className="py-3 px-4 text-sm text-gray-500 hidden md:table-cell">{formatDate(file.created_at)}</td>
       <td className="py-3 px-4">
@@ -99,6 +119,53 @@ function FileRow({ file, onPreview, onRefresh, selected, onToggleSelect }) {
 
 export default function FileList({ files, onPreview, onRefresh }) {
   const { selectedFiles, toggleFileSelection } = useStore();
+  const [sortConfig, setSortConfig] = useState({ key: 'date', direction: 'desc' });
+
+  const sortableFiles = [...files].sort((a, b) => {
+    const aType = getFileTypeLabel(a);
+    const bType = getFileTypeLabel(b);
+    const aValue = {
+      name: a.name?.toLowerCase() || '',
+      type: aType.toLowerCase(),
+      size: a.size || 0,
+      date: new Date(a.created_at).getTime() || 0,
+    }[sortConfig.key];
+    const bValue = {
+      name: b.name?.toLowerCase() || '',
+      type: bType.toLowerCase(),
+      size: b.size || 0,
+      date: new Date(b.created_at).getTime() || 0,
+    }[sortConfig.key];
+
+    if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+    if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+    return (a.name || '').localeCompare(b.name || '');
+  });
+
+  const handleSort = (key) => {
+    setSortConfig((current) => ({
+      key,
+      direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc',
+    }));
+  };
+
+  const renderSortArrow = (key) => {
+    if (sortConfig.key !== key) return null;
+    return <span className="text-ocean-500 text-[10px]">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>;
+  };
+
+  const SortHeader = ({ label, sortKey, className = '' }) => (
+    <th className={`py-2 px-4 ${className}`}>
+      <button
+        type="button"
+        onClick={() => handleSort(sortKey)}
+        className="inline-flex items-center gap-1 hover:text-ocean-700 transition"
+      >
+        <span>{label}</span>
+        {renderSortArrow(sortKey)}
+      </button>
+    </th>
+  );
 
   return (
     <div className="overflow-x-auto">
@@ -106,17 +173,19 @@ export default function FileList({ files, onPreview, onRefresh }) {
         <thead>
           <tr className="text-left text-xs text-gray-500 uppercase tracking-wider border-b border-ocean-100">
             <th className="py-2 px-4 w-10"></th>
-            <th className="py-2 px-4">Name</th>
-            <th className="py-2 px-4 hidden sm:table-cell">Size</th>
-            <th className="py-2 px-4 hidden md:table-cell">Date</th>
+            <SortHeader label="Name" sortKey="name" />
+            <SortHeader label="Type" sortKey="type" className="hidden sm:table-cell" />
+            <SortHeader label="Size" sortKey="size" className="hidden sm:table-cell" />
+            <SortHeader label="Date" sortKey="date" className="hidden md:table-cell" />
             <th className="py-2 px-4 w-24"></th>
           </tr>
         </thead>
         <tbody>
-          {files.map((file) => (
+          {sortableFiles.map((file) => (
             <FileRow
               key={file.id}
               file={file}
+              fileType={getFileTypeLabel(file)}
               onPreview={onPreview}
               onRefresh={onRefresh}
               selected={selectedFiles.has(file.id)}

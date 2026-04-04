@@ -24,6 +24,7 @@ class TagCreate(TagBase):
 class TagOut(TagBase):
     id: int
     created_at: datetime
+    file_count: int = 0
 
     class Config:
         from_attributes = True

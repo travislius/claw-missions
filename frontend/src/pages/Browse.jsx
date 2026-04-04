@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { LayoutGrid, List, Upload as UploadIcon, Search } from 'lucide-react';
+import { LayoutGrid, List, Search, Sparkles, Upload as UploadIcon } from 'lucide-react';
 import { useStore } from '../store';
-import { getFiles, getTags, getStats, searchFiles } from '../api';
+import { getFiles, getTags, getStats, searchFiles, smartSearchFiles } from '../api';
 import FileGrid from '../components/FileGrid';
 import FileList from '../components/FileList';
 import Upload from '../components/Upload';
@@ -23,8 +23,8 @@ const PAGE_SIZE = 30;
 export default function Browse() {
   const {
     files, setFiles, loading, setLoading,
-    viewMode, setViewMode, tags, setTags, selectedTag,
-    searchQuery, setSearchQuery, stats, setStats,
+    viewMode, setViewMode, setTags, selectedTag,
+    searchQuery, setSearchQuery, setStats,
   } = useStore();
 
   const [sort, setSort] = useState('created_at:desc');
@@ -33,6 +33,7 @@ export default function Browse() {
   const [previewFile, setPreviewFile] = useState(null);
   const [showUpload, setShowUpload] = useState(false);
   const [localSearch, setLocalSearch] = useState(searchQuery);
+  const [smartSearchUsed, setSmartSearchUsed] = useState(false);
   const searchDebounce = useRef(null);
 
   // Debounced search — updates store after 300ms of typing
@@ -69,9 +70,16 @@ export default function Browse() {
 
       let res;
       if (searchQuery.trim()) {
-        res = await searchFiles(searchQuery);
+        try {
+          res = await smartSearchFiles(searchQuery);
+          setSmartSearchUsed(res.headers['x-smart-search-used'] === 'true');
+        } catch {
+          res = await searchFiles(searchQuery);
+          setSmartSearchUsed(false);
+        }
       } else {
         res = await getFiles(params);
+        setSmartSearchUsed(false);
       }
 
       const data = res.data;
@@ -84,6 +92,7 @@ export default function Browse() {
       }
     } catch (err) {
       console.error('Failed to load files', err);
+      setSmartSearchUsed(false);
       setFiles([]);
     } finally {
       setLoading(false);
@@ -115,26 +124,37 @@ export default function Browse() {
     <div className="space-y-4">
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
-        <h2 className="text-xl font-semibold text-gray-800">
+        <h2 className="flex items-center flex-wrap gap-2 text-xl font-semibold text-gray-800">
           {searchQuery ? `Search: "${searchQuery}"` : selectedTag ? `Tag filter` : 'Documents'}
+          {searchQuery && smartSearchUsed && (
+            <span className="inline-flex items-center rounded-full bg-sky-50 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-ocean-600">
+              AI
+            </span>
+          )}
         </h2>
         <div className="flex items-center gap-2">
           {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ocean-400" />
-            <input
-              type="text"
-              placeholder="Search files..."
-              value={localSearch}
-              onChange={(e) => setLocalSearch(e.target.value)}
-              className="bg-sky-50 border border-ocean-200 rounded-lg pl-9 pr-3 py-1.5 text-sm text-gray-700 placeholder-ocean-400 focus:outline-none focus:border-ocean-500 transition w-48 sm:w-64"
-            />
-            {localSearch && (
-              <button
-                onClick={() => { setLocalSearch(''); setSearchQuery(''); }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs"
-              >✕</button>
-            )}
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ocean-400" />
+              <input
+                type="text"
+                placeholder="Search files..."
+                value={localSearch}
+                onChange={(e) => setLocalSearch(e.target.value)}
+                className="bg-sky-50 border border-ocean-200 rounded-lg pl-9 pr-3 py-1.5 text-sm text-gray-700 placeholder-ocean-400 focus:outline-none focus:border-ocean-500 transition w-48 sm:w-64"
+              />
+              {localSearch && (
+                <button
+                  onClick={() => { setLocalSearch(''); setSearchQuery(''); setSmartSearchUsed(false); }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs"
+                >✕</button>
+              )}
+            </div>
+            <span className="inline-flex items-center gap-1 rounded-lg border border-ocean-200 bg-sky-50 px-2.5 py-1.5 text-xs font-medium text-ocean-600">
+              <Sparkles className="w-3.5 h-3.5" />
+              AI
+            </span>
           </div>
           <select
             value={sort}

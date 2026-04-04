@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, X, Pencil, Trash2, Check } from 'lucide-react';
+import { ChevronDown, ChevronRight, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useStore } from '../store';
 import { createTag, updateTag, deleteTag as apiDeleteTag } from '../api';
 
@@ -8,23 +8,19 @@ const PRESET_COLORS = [
   '#eab308', '#22c55e', '#14b8a6', '#06b6d4', '#3b82f6',
 ];
 
-function TagChip({ tag, selected, onClick }) {
+function TagRow({ tag, selected, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
+      className={`w-full flex items-center gap-3 rounded-xl border px-3 py-2 text-sm text-left transition ${
         selected
-          ? 'ring-2 ring-offset-1 ring-offset-gray-950'
-          : 'hover:brightness-110'
+          ? 'border-ocean-300 ring-2 ring-ocean-500/30 bg-sky-50'
+          : 'border-ocean-100 bg-white hover:border-ocean-200 hover:bg-sky-50/70'
       }`}
-      style={{
-        backgroundColor: tag.color + (selected ? '44' : '22'),
-        color: tag.color,
-        ringColor: selected ? tag.color : undefined,
-      }}
     >
-      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: tag.color }} />
-      {tag.name}
+      <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: tag.color }} />
+      <span className="text-gray-700 truncate">{tag.name}</span>
+      <span className="ml-auto text-xs text-gray-400">{tag.file_count ?? 0}</span>
     </button>
   );
 }
@@ -94,6 +90,7 @@ export default function TagBar({ onRefreshTags }) {
   const [showModal, setShowModal] = useState(false);
   const [editTag, setEditTag] = useState(null);
   const [showManage, setShowManage] = useState(false);
+  const [showTags, setShowTags] = useState(false);
 
   const handleDelete = async (tag) => {
     if (!confirm(`Delete tag "${tag.name}"? This won't delete the files.`)) return;
@@ -112,31 +109,48 @@ export default function TagBar({ onRefreshTags }) {
 
   return (
     <div className="space-y-2">
-      {/* Tag chips row */}
       <div className="flex items-center gap-2 flex-wrap">
-        {tags.map((tag) => (
-          <TagChip
-            key={tag.id}
-            tag={tag}
-            selected={selectedTag === tag.id}
-            onClick={() => setSelectedTag(selectedTag === tag.id ? null : tag.id)}
-          />
-        ))}
+        <button
+          onClick={() => setShowTags((open) => !open)}
+          className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition ${
+            showTags || selectedTag
+              ? 'border-ocean-300 bg-sky-50 text-ocean-700'
+              : 'border-ocean-100 bg-white text-gray-700 hover:border-ocean-200 hover:bg-sky-50/70'
+          }`}
+        >
+          {showTags ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+          <span>Tags ({tags.length})</span>
+        </button>
         <button
           onClick={() => { setEditTag(null); setShowModal(true); }}
-          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs text-gray-500 hover:text-ocean-700 hover:bg-sky-50 border border-dashed border-ocean-200 transition"
+          className="inline-flex items-center gap-1 px-2.5 py-2 rounded-lg text-xs text-gray-500 hover:text-ocean-700 hover:bg-sky-50 border border-dashed border-ocean-200 transition"
         >
-          <Plus className="w-3 h-3" /> Tag
+          <Plus className="w-3 h-3" /> + Tag
         </button>
         {tags.length > 0 && (
           <button
             onClick={() => setShowManage(!showManage)}
-            className="text-xs text-gray-600 hover:text-gray-600 transition ml-1"
+            className="text-xs text-gray-600 hover:text-ocean-700 transition ml-1"
           >
             {showManage ? 'Done' : 'Manage'}
           </button>
         )}
       </div>
+
+      {showTags && tags.length > 0 && (
+        <div className="rounded-xl border border-ocean-100 bg-white p-3 shadow-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+            {tags.map((tag) => (
+              <TagRow
+                key={tag.id}
+                tag={tag}
+                selected={selectedTag === tag.id}
+                onClick={() => setSelectedTag(selectedTag === tag.id ? null : tag.id)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Manage list */}
       {showManage && tags.length > 0 && (

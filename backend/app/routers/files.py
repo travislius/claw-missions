@@ -1,8 +1,11 @@
+import json
 import mimetypes
 import os
+import re
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, Query
+import httpx
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlalchemy import or_, func
@@ -17,6 +20,14 @@ from ..utils.storage import save_file, get_abs_path, delete_file
 from ..utils.thumbnails import generate_thumbnail
 
 router = APIRouter()
+THINK_TAG_RE = re.compile(r"<think>.*?</think>", re.IGNORECASE | re.DOTALL)
+ZED_MODEL = "qwen3.5-35b-a3b-q4kxl.gguf"
+SMART_SEARCH_SYSTEM_PROMPT = (
+    'You are a file search assistant. Given a user query and a list of available tags and file types, '
+    'return a JSON object with: {"tags": [list of tag names that match the intent], '
+    '"keywords": [list of filename keywords/patterns to search], "mime_types": [list of mime type prefixes '
+    'to filter]}. Be generous - include anything plausible. Respond ONLY with valid JSON, no markdown.'
+)
 
 
 class FileUpdate(BaseModel):
@@ -69,6 +80,78 @@ class PaginatedFiles(BaseModel):
     total_pages: int
 
 
+def _regular_search_results(db: Session, q: str, page: int = 1, per_page: int = 20) -> list[File]:
+    pattern = f"%{q}%"
+    offset = (page - 1) * per_page
+    return (
+        db.query(File)
+        .outerjoin(file_tags, File.id == file_tags.c.file_id)
+        .outerjoin(Tag, Tag.id == file_tags.c.tag_id)
+        .filter(or_(File.name.ilike(pattern), Tag.name.ilike(pattern)))
+        .distinct()
+        .order_by(File.created_at.desc())
+        .offset(offset)
+        .limit(per_page)
+        .all()
+    )
+
+
+def _extract_extension(name: str | None, mime_type: str | None) -> str | None:
+    if name and "." in name:
+        ext = name.rsplit(".", 1)[-1].strip().lower()
+        if ext:
+            return ext
+    if mime_type and "/" in mime_type:
+        subtype = mime_type.split("/", 1)[1].split(";", 1)[0].strip().lower()
+        subtype = subtype.split("+", 1)[0]
+        subtype = subtype.replace("jpeg", "jpg").replace("plain", "txt")
+        if subtype.startswith("x-"):
+            subtype = subtype[2:]
+        if subtype:
+            return subtype
+    return None
+
+
+def _strip_model_wrappers(text: str) -> str:
+    cleaned = THINK_TAG_RE.sub("", text or "").strip()
+    if cleaned.startswith("```"):
+        cleaned = re.sub(r"^```[a-zA-Z0-9_-]*\s*", "", cleaned)
+        cleaned = re.sub(r"\s*```$", "", cleaned)
+    return cleaned.strip()
+
+
+async def _call_smart_search_llm(query: str, tag_summary: list[str], file_types: list[str], total_files: int) -> dict:
+    user_prompt = (
+        "/no_thinking\n"
+        f"User query: {query}\n"
+        f"Total files: {total_files}\n"
+        f"Available tags: {', '.join(tag_summary) or 'None'}\n"
+        f"Available file types: {', '.join(file_types) or 'None'}\n"
+        'Return JSON with keys "tags", "keywords", and "mime_types".'
+    )
+    async with httpx.AsyncClient(timeout=5.0) as client:
+        response = await client.post(
+            f"{settings.LLM_URL.rstrip('/')}/v1/chat/completions",
+            json={
+                "model": ZED_MODEL,
+                "messages": [
+                    {"role": "system", "content": SMART_SEARCH_SYSTEM_PROMPT},
+                    {"role": "user", "content": user_prompt},
+                ],
+            },
+        )
+        response.raise_for_status()
+
+    content = response.json()["choices"][0]["message"]["content"]
+    cleaned = _strip_model_wrappers(content)
+    payload = json.loads(cleaned)
+    return {
+        "tags": [str(item).strip() for item in payload.get("tags", []) if str(item).strip()],
+        "keywords": [str(item).strip() for item in payload.get("keywords", []) if str(item).strip()],
+        "mime_types": [str(item).strip() for item in payload.get("mime_types", []) if str(item).strip()],
+    }
+
+
 @router.get("", response_model=PaginatedFiles)
 def list_files(
     page: int = Query(1, ge=1),
@@ -105,20 +188,81 @@ def search_files(
     db: Session = Depends(get_db),
 ):
     """Search files by filename or tag name."""
-    pattern = f"%{q}%"
-    offset = (page - 1) * per_page
-    results = (
-        db.query(File)
-        .outerjoin(file_tags, File.id == file_tags.c.file_id)
-        .outerjoin(Tag, Tag.id == file_tags.c.tag_id)
-        .filter(or_(File.name.ilike(pattern), Tag.name.ilike(pattern)))
-        .distinct()
-        .order_by(File.created_at.desc())
-        .offset(offset)
-        .limit(per_page)
+    return _regular_search_results(db, q, page, per_page)
+
+
+@router.post("/smart-search", response_model=list[FileOut])
+async def smart_search_files(
+    payload: dict[str, str],
+    response: Response,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    query = (payload.get("q") or "").strip()
+    if not query:
+        raise HTTPException(status_code=422, detail="Query is required")
+
+    tag_rows = (
+        db.query(Tag, func.count(file_tags.c.file_id).label("file_count"))
+        .outerjoin(file_tags, Tag.id == file_tags.c.tag_id)
+        .group_by(Tag.id)
+        .order_by(Tag.name)
         .all()
     )
-    return results
+    file_rows = db.query(File.name, File.mime_type).all()
+    total_files = db.query(func.count(File.id)).scalar() or 0
+
+    tag_summary = [f"{tag.name} ({file_count})" for tag, file_count in tag_rows]
+    tag_lookup = {tag.name.strip().lower(): tag.name for tag, _ in tag_rows}
+
+    file_types = sorted({
+        ext.upper()
+        for name, mime_type in file_rows
+        for ext in [_extract_extension(name, mime_type)]
+        if ext
+    })
+
+    try:
+        semantic_filters = await _call_smart_search_llm(query, tag_summary, file_types, total_files)
+        matched_tags = []
+        for candidate in semantic_filters["tags"]:
+            key = candidate.lower()
+            if key in tag_lookup:
+                matched_tags.append(tag_lookup[key])
+                continue
+            matched_tags.extend(
+                actual_name
+                for actual_key, actual_name in tag_lookup.items()
+                if key in actual_key or actual_key in key
+            )
+        matched_tags = sorted(set(matched_tags), key=str.lower)
+
+        conditions = []
+        if matched_tags:
+            lowered_tags = [tag_name.lower() for tag_name in matched_tags]
+            conditions.append(File.tags.any(func.lower(Tag.name).in_(lowered_tags)))
+        if semantic_filters["keywords"]:
+            conditions.append(or_(*[File.name.ilike(f"%{keyword}%") for keyword in semantic_filters["keywords"]]))
+        if semantic_filters["mime_types"]:
+            conditions.append(or_(*[File.mime_type.ilike(f"{mime_prefix}%") for mime_prefix in semantic_filters["mime_types"]]))
+
+        if not conditions:
+            response.headers["X-Smart-Search-Used"] = "false"
+            return _regular_search_results(db, query)
+
+        results = (
+            db.query(File)
+            .filter(or_(*conditions))
+            .distinct()
+            .order_by(File.created_at.desc())
+            .limit(100)
+            .all()
+        )
+        response.headers["X-Smart-Search-Used"] = "true"
+        return results
+    except (httpx.HTTPError, httpx.TimeoutException, json.JSONDecodeError, KeyError, TypeError, ValueError):
+        response.headers["X-Smart-Search-Used"] = "false"
+        return _regular_search_results(db, query)
 
 
 @router.get("/{file_id}", response_model=FileOut)

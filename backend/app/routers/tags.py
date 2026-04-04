@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from ..auth import get_current_user
 from ..database import get_db
-from ..models import User, Tag
+from ..models import User, Tag, file_tags
 from ..schemas import TagCreate, TagOut
 
 router = APIRouter()
@@ -11,7 +12,23 @@ router = APIRouter()
 
 @router.get("", response_model=list[TagOut])
 def list_tags(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    return db.query(Tag).order_by(Tag.name).all()
+    rows = (
+        db.query(Tag, func.count(file_tags.c.file_id).label("file_count"))
+        .outerjoin(file_tags, Tag.id == file_tags.c.tag_id)
+        .group_by(Tag.id)
+        .order_by(Tag.name)
+        .all()
+    )
+    return [
+        TagOut(
+            id=tag.id,
+            name=tag.name,
+            color=tag.color,
+            created_at=tag.created_at,
+            file_count=file_count,
+        )
+        for tag, file_count in rows
+    ]
 
 
 @router.post("", response_model=TagOut, status_code=201)
