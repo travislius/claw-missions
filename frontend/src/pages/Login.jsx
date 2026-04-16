@@ -37,8 +37,8 @@ export default function Login() {
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-sky-50 border border-ocean-200 mb-4 shadow-sm">
               <Crosshair className="w-8 h-8 text-ocean-500" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-800">Claw Missions</h1>
-            <p className="text-gray-600 text-sm mt-1">Mission control for your digital life</p>
+            <h1 className="text-2xl font-bold text-gray-800">Companion</h1>
+            <p className="text-gray-600 text-sm mt-1">Your agents, one dashboard</p>
           </div>
 
           {/* Form */}

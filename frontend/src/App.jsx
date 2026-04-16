@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { useCallback, useEffect } from 'react';
+import { Menu } from 'lucide-react';
 import { useStore } from './store';
 import { getTags } from './api';
 import Login from './pages/Login';
@@ -16,7 +17,6 @@ import Sessions from './pages/Sessions';
 import Tasks from './pages/Tasks';
 import Agents from './pages/Agents';
 import Monitor from './pages/Monitor';
-import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 
 function ProtectedRoute() {
@@ -27,7 +27,7 @@ function ProtectedRoute() {
 
 function AppLayout() {
   const setTags = useStore((s) => s.setTags);
-  const { sidebarOpen, setSidebarOpen } = useStore();
+  const { sidebarOpen, setSidebarOpen, toggleSidebar } = useStore();
   const refreshTags = useCallback(() => {
     getTags().then((r) => setTags(r.data?.tags || r.data || [])).catch(() => {});
   }, [setTags]);
@@ -39,21 +39,22 @@ function AppLayout() {
   }, []);
 
   return (
-    <div className="h-screen flex flex-col bg-white text-gray-800">
-      <Header />
-      <div className="flex flex-1 overflow-hidden relative">
-        {/* Mobile sidebar overlay */}
-        {sidebarOpen && (
-          <div
-            className="fixed inset-0 bg-ocean-900/20 backdrop-blur-sm z-30 md:hidden"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
-        <Sidebar onRefreshTags={refreshTags} />
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
-          <Outlet />
-        </main>
-      </div>
+    <div className="h-screen flex bg-white text-gray-800">
+      {/* Mobile sidebar overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-ocean-900/20 backdrop-blur-sm z-30 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+      <Sidebar onRefreshTags={refreshTags} />
+      {/* Mobile hamburger */}
+      <button onClick={toggleSidebar} className="fixed top-3 left-3 z-50 p-2 rounded-lg text-gray-600 hover:text-ocean-700 hover:bg-white/70 transition md:hidden">
+        <Menu className="w-5 h-5" />
+      </button>
+      <main className="flex-1 overflow-y-auto p-4 sm:p-6">
+        <Outlet />
+      </main>
     </div>
   );
 }

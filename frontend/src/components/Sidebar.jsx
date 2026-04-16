@@ -1,7 +1,8 @@
 import { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  FolderOpen, CalendarDays, LayoutDashboard, Users, Brain, GripVertical, Radio, FolderKanban, ListTodo, Puzzle, Bot, Shield, NotebookText
+  FolderOpen, CalendarDays, LayoutDashboard, Users, Brain, GripVertical, Radio, FolderKanban, ListTodo, Puzzle, Bot, Shield, NotebookText,
+  Crosshair, LogOut, Menu,
 } from 'lucide-react';
 import { useStore } from '../store';
 
@@ -53,16 +54,8 @@ function getOrderedNav() {
   return [...DEFAULT_NAV];
 }
 
-function formatBytes(bytes) {
-  if (!bytes) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
-}
-
 export default function Sidebar({ onRefreshTags }) {
-  const { stats, sidebarOpen, setSidebarOpen } = useStore();
+  const { stats, sidebarOpen, setSidebarOpen, logout } = useStore();
   const [navItems, setNavItems] = useState(getOrderedNav);
   const [dragIdx, setDragIdx] = useState(null);
   const [overIdx, setOverIdx] = useState(null);
@@ -117,6 +110,17 @@ export default function Sidebar({ onRefreshTags }) {
     <aside className={`w-64 bg-gradient-to-b from-sky-100 to-ocean-50 border-r border-ocean-200 flex flex-col shrink-0 overflow-y-auto
       fixed md:relative inset-y-0 left-0 z-40 transform transition-transform duration-200 ease-in-out
       ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
+
+      {/* Brand header */}
+      <div className="px-4 pt-4 pb-3 flex items-center gap-2 border-b border-ocean-200 shrink-0">
+        <div className="flex items-center gap-2 flex-1 cursor-pointer" onClick={() => goTo('/')}>
+          <Crosshair className="w-5 h-5 text-ocean-500" />
+          <span className="text-base font-bold text-gray-800">Companion</span>
+        </div>
+        <button onClick={logout} className="p-1.5 rounded-lg text-gray-500 hover:text-coral-500 hover:bg-white/70 transition" title="Logout">
+          <LogOut className="w-4 h-4" />
+        </button>
+      </div>
 
       {/* Nav Items */}
       <div className="p-4 space-y-1 flex-1">
