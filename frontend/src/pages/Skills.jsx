@@ -68,6 +68,11 @@ function SkillViewer({ skillId, onClose }) {
   );
 }
 
+const AGENTS = [
+  { id: 'tia', label: '🌿 Tia Skills' },
+  { id: 'maru', label: '⚔️ Maru Skills' },
+];
+
 export default function Skills() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -76,12 +81,13 @@ export default function Skills() {
   const [refreshing, setRefreshing] = useState(false);
   const [expanded, setExpanded] = useState(null);
   const [viewing, setViewing] = useState(null); // skill id being viewed
+  const [agent, setAgent] = useState('tia');
 
-  const fetchData = async (bg = false) => {
+  const fetchData = async (bg = false, agentId = agent) => {
     if (!bg) setLoading(true);
     else setRefreshing(true);
     try {
-      const res = await api.get('/system/skills');
+      const res = await api.get(`/system/skills?agent=${agentId}`);
       setData(res.data);
     } catch (e) {
       console.error(e);
@@ -92,6 +98,13 @@ export default function Skills() {
   };
 
   useEffect(() => { fetchData(); }, []);
+
+  const switchAgent = (agentId) => {
+    setAgent(agentId);
+    setExpanded(null);
+    setSearch('');
+    fetchData(false, agentId);
+  };
 
   const skills = data?.skills || [];
   const filtered = skills.filter(s => {
@@ -129,6 +142,18 @@ export default function Skills() {
           className="p-2 text-gray-500 hover:text-ocean-700 hover:bg-sky-50 rounded-lg transition">
           <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
         </button>
+      </div>
+
+      {/* Agent selector */}
+      <div className="flex items-center gap-1 mb-4 bg-white border border-ocean-100 rounded-xl p-1 w-fit">
+        {AGENTS.map(a => (
+          <button key={a.id} onClick={() => switchAgent(a.id)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+              agent === a.id ? 'bg-ocean-500 text-white' : 'text-gray-600 hover:text-ocean-700'
+            }`}>
+            {a.label}
+          </button>
+        ))}
       </div>
 
       {/* Search + Filter */}

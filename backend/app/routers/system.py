@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import psutil
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from ..auth import get_current_user
 
 router = APIRouter()
@@ -719,20 +719,51 @@ def _parse_skill(skill_dir: Path, source: str) -> dict:
         return None
 
 
+HERMES_SKILLS_DIR = Path.home() / ".hermes" / "skills"
+
+# Map agent → (user_skills_dir, builtin_skills_dir)
+_AGENT_SKILLS = {
+    "tia": (USER_SKILLS_DIR, BUILTIN_SKILLS_DIR),
+    "maru": (HERMES_SKILLS_DIR, None),
+}
+
+
+def _walk_skills(base_dir: Path, source: str, prefix: str = "") -> list[dict]:
+    """Recursively find skills (supports category subdirectories)."""
+    results = []
+    if not base_dir.exists():
+        return results
+    for item in sorted(base_dir.iterdir()):
+        if not item.is_dir():
+            continue
+        skill_file = item / "SKILL.md"
+        if skill_file.exists():
+            skill = _parse_skill(item, source)
+            if skill:
+                if prefix:
+                    skill["category"] = prefix
+                results.append(skill)
+        else:
+            # Might be a category directory — recurse
+            sub = _walk_skills(item, source, prefix=item.name)
+            results.extend(sub)
+    return results
+
+
 @router.get("/skills", tags=["system"])
-def get_skills(current_user=Depends(get_current_user)):
-    """Return all installed skills (builtin + user)."""
+def get_skills(
+    agent: str = Query("tia", description="Agent ID: tia | maru"),
+    current_user=Depends(get_current_user),
+):
+    """Return all installed skills (builtin + user) for a given agent."""
+    user_dir, builtin_dir = _AGENT_SKILLS.get(agent, _AGENT_SKILLS["tia"])
     skills = []
-    for skills_dir, source in [(USER_SKILLS_DIR, "user"), (BUILTIN_SKILLS_DIR, "builtin")]:
-        if skills_dir.exists():
-            for skill_dir in sorted(skills_dir.iterdir()):
-                if skill_dir.is_dir():
-                    skill = _parse_skill(skill_dir, source)
-                    if skill:
-                        skills.append(skill)
+    for skills_dir, source in [(user_dir, "user"), (builtin_dir, "builtin")]:
+        if skills_dir:
+            skills.extend(_walk_skills(skills_dir, source))
     # Sort: user skills first, then builtin, both alphabetical
     skills.sort(key=lambda s: (0 if s["source"] == "user" else 1, s["name"].lower()))
-    return {"skills": skills, "total": len(skills)}
+    return {"skills": skills, "total": len(skills), "agent": agent}
 
 
 @router.patch("/projects", tags=["system"])
