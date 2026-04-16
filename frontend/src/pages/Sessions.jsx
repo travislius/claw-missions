@@ -34,6 +34,7 @@ const KIND_STYLES = {
 };
 
 const FILTERS = ['all', 'main', 'cron', 'subagent'];
+const AGENTS = [{ id: 'tia', label: 'Tia Sessions', emoji: '🌿' }, { id: 'maru', label: 'Maru Sessions', emoji: '⚔️' }];
 
 export default function Sessions() {
   const token = useStore((s) => s.token);
@@ -43,11 +44,12 @@ export default function Sessions() {
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [expandedId, setExpandedId] = useState(null);
+  const [activeAgent, setActiveAgent] = useState('tia');
   const intervalRef = useRef(null);
 
   const fetchSessions = async (isBackground = false) => {
     try {
-      const res = await fetch(`${API}/api/system/sessions`, {
+      const res = await fetch(`${API}/api/system/sessions?agent=${activeAgent}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -62,10 +64,12 @@ export default function Sessions() {
   };
 
   useEffect(() => {
+    setInitialLoading(true);
+    setData(null);
     fetchSessions(false);
     intervalRef.current = setInterval(() => fetchSessions(true), 10000);
     return () => clearInterval(intervalRef.current);
-  }, []);
+  }, [activeAgent]);
 
   if (initialLoading) {
     return (
@@ -98,6 +102,23 @@ export default function Sessions() {
         <Radio className="w-6 h-6 text-coral-500" />
         Sessions
       </h1>
+
+      {/* Agent Tabs */}
+      <div className="flex gap-1 bg-sky-50/80 rounded-lg p-1 w-fit">
+        {AGENTS.map((a) => (
+          <button
+            key={a.id}
+            onClick={() => setActiveAgent(a.id)}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition ${
+              activeAgent === a.id
+                ? 'bg-ocean-500 text-white'
+                : 'text-gray-600 hover:text-ocean-700'
+            }`}
+          >
+            {a.emoji} {a.label}
+          </button>
+        ))}
+      </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

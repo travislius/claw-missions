@@ -14,6 +14,7 @@ router = APIRouter()
 
 CLAWD_DIR = Path("/Users/tiali/clawd")
 SESSIONS_DIR = Path("/Users/tiali/.openclaw/agents/main/sessions")
+HERMES_SESSIONS_DIR = Path("/Users/tiali/.hermes/sessions")
 PROJECTS_FILE = Path("/Users/tiali/clawd/PROJECTS.md")
 HOST_STATS_FILE = Path("/Users/tiali/clawmissions-data/host_stats.json")
 
@@ -569,8 +570,10 @@ def get_resources_zed(current_user=Depends(get_current_user)):
 
 
 @router.get("/sessions", tags=["system"])
-def get_sessions(current_user=Depends(get_current_user)):
-    """Return OpenClaw session list with stats."""
+def get_sessions(agent: str = "tia", current_user=Depends(get_current_user)):
+    """Return session list with stats for the given agent."""
+    if agent == "maru":
+        return _get_hermes_sessions()
     sessions_file = SESSIONS_DIR / "sessions.json"
     try:
         raw = json.loads(sessions_file.read_text())
@@ -637,6 +640,105 @@ def get_sessions(current_user=Depends(get_current_user)):
             "message_count": msg_count,
             "last_message": last_msg,
             "auth_profile": meta.get("authProfileOverride", ""),
+        })
+
+    sessions.sort(key=lambda s: s["updated_at"] or 0, reverse=True)
+
+    total_input = sum(s["input_tokens"] for s in sessions)
+    total_output = sum(s["output_tokens"] for s in sessions)
+    total_cache_read = sum(s["cache_read"] for s in sessions)
+
+    return {
+        "sessions": sessions,
+        "total": len(sessions),
+        "stats": {
+            "total_input_tokens": total_input,
+            "total_output_tokens": total_output,
+            "total_cache_read": total_cache_read,
+            "total_tokens": total_input + total_output,
+        }
+    }
+
+
+def _iso_to_epoch_ms(val):
+    """Convert ISO timestamp string to epoch milliseconds."""
+    if not val:
+        return None
+    if isinstance(val, (int, float)):
+        return val
+    try:
+        from datetime import datetime, timezone
+        dt = datetime.fromisoformat(val.replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return int(dt.timestamp() * 1000)
+    except Exception:
+        return None
+
+
+def _get_hermes_sessions():
+    """Read Hermes agent sessions from sessions.json."""
+    sessions_file = HERMES_SESSIONS_DIR / "sessions.json"
+    try:
+        raw = json.loads(sessions_file.read_text())
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Cannot read Hermes sessions: {e}")
+
+    sessions = []
+    for entry in (raw if isinstance(raw, list) else raw.values()):
+        session_key = entry.get("session_key", "")
+        parts = session_key.split(":")
+        kind = parts[1] if len(parts) >= 2 else "unknown"
+
+        session_id = entry.get("session_id", "")
+        msg_count = 0
+        last_msg = None
+        jsonl_path = HERMES_SESSIONS_DIR / f"{session_id}.jsonl"
+        if jsonl_path.exists():
+            try:
+                lines = jsonl_path.read_text(encoding="utf-8", errors="ignore").strip().split("\n")
+                for line in lines:
+                    if not line.strip():
+                        continue
+                    try:
+                        obj = json.loads(line)
+                        role = obj.get("role")
+                        if role in ("user", "assistant"):
+                            msg_count += 1
+                            content = obj.get("content", "")
+                            if isinstance(content, str) and content.strip():
+                                last_msg = {"role": role, "text": content[:120]}
+                            elif isinstance(content, list):
+                                for block in content:
+                                    if isinstance(block, dict) and block.get("type") == "text":
+                                        text = block.get("text", "")[:120]
+                                        if text.strip():
+                                            last_msg = {"role": role, "text": text}
+                                            break
+                    except Exception:
+                        continue
+            except Exception:
+                pass
+
+        sessions.append({
+            "key": session_key,
+            "kind": kind,
+            "label": entry.get("display_name") or session_key,
+            "session_id": session_id,
+            "model": "unknown",
+            "model_provider": "unknown",
+            "updated_at": _iso_to_epoch_ms(entry.get("updated_at")),
+            "chat_type": entry.get("chat_type", ""),
+            "compaction_count": 0,
+            "input_tokens": entry.get("input_tokens", 0),
+            "output_tokens": entry.get("output_tokens", 0),
+            "cache_read": entry.get("cache_read_tokens", 0),
+            "cache_write": entry.get("cache_write_tokens", 0),
+            "total_tokens": entry.get("total_tokens", 0),
+            "context_tokens": 0,
+            "message_count": msg_count,
+            "last_message": last_msg,
+            "auth_profile": "",
         })
 
     sessions.sort(key=lambda s: s["updated_at"] or 0, reverse=True)
