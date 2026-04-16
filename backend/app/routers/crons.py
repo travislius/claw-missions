@@ -223,7 +223,7 @@ def _fetch_openclaw_crons_ssh(host: str, ssh_user: str, cmd: str = "openclaw") -
         return []
 
 
-_CRONS_JSON_PATH = _os.environ.get("OPENCLAW_CRON_PATH", "/openclaw/cron/jobs.json")
+_CRONS_JSON_PATH = _os.environ.get("OPENCLAW_CRON_PATH", _os.path.expanduser("~/.openclaw/cron/jobs.json"))
 
 def _fetch_openclaw_crons() -> list[dict]:
     # Primary: read directly from mounted OpenClaw cron file
