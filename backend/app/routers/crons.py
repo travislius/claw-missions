@@ -308,7 +308,11 @@ def _fetch_hermes_crons(cron_path: str) -> list[dict]:
         if not job.get("enabled", True):
             continue
 
-        expr = job.get("schedule", "0 0 * * *")
+        schedule = job.get("schedule", "0 0 * * *")
+        if isinstance(schedule, dict):
+            expr = schedule.get("expr", "0 0 * * *")
+        else:
+            expr = str(schedule)
         parsed = _parse_expr(expr)
         prompt = job.get("prompt", "")
         task_preview = prompt[:300].strip() + ("…" if len(prompt) > 300 else "")
