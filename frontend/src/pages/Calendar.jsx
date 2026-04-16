@@ -7,7 +7,7 @@ import {
 import api from '../api';
 
 const ACTIVE_AGENT = 'tia';
-const AGENTS = [{ id: 'tia', label: 'Tia Schedule' }];
+const AGENTS = [{ id: 'tia', label: 'Tia Schedule' }, { id: 'maru', label: 'Maru Schedule' }];
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const HOUR_PX = 96;

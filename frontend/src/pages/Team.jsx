@@ -17,6 +17,7 @@ const ROLE_COLOR = {
   max:  'border-amber-500/40 bg-amber-500/5',
   sia:  'border-purple-500/40 bg-purple-500/5',
   zed:  'border-zinc-500/40 bg-zinc-500/5',
+  maru: 'border-red-500/40 bg-red-500/5',
 };
 
 const ACCENT = {
@@ -24,6 +25,7 @@ const ACCENT = {
   max:  { text: 'text-amber-400',  badge: 'bg-amber-500/20 text-amber-300',   dot: 'bg-amber-400' },
   sia:  { text: 'text-purple-400', badge: 'bg-purple-500/20 text-purple-300', dot: 'bg-purple-400' },
   zed:  { text: 'text-zinc-300',   badge: 'bg-zinc-500/20 text-zinc-300',     dot: 'bg-zinc-400' },
+  maru: { text: 'text-red-400',    badge: 'bg-red-500/20 text-red-300',      dot: 'bg-red-400' },
 };
 
 const ORDER_KEY = 'clawmissions_team_order';

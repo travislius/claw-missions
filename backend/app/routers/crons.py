@@ -251,6 +251,102 @@ def _fetch_openclaw_crons() -> list[dict]:
     return out
 
 
+def _iso_to_relative(iso_str: str | None) -> str | None:
+    """Convert an ISO 8601 timestamp to a relative time string."""
+    if not iso_str:
+        return None
+    try:
+        from datetime import datetime, timezone
+        # Parse ISO string (handles timezone offsets)
+        dt = datetime.fromisoformat(iso_str)
+        now = datetime.now(timezone.utc)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        delta_s = int((now - dt).total_seconds())
+        if delta_s < 0:
+            secs = abs(delta_s)
+            if secs < 60: return f"in {secs}s"
+            mins = secs // 60
+            if mins < 60: return f"in {mins}m"
+            hrs = mins // 60
+            if hrs < 24: return f"in {hrs}h"
+            return f"in {hrs // 24}d"
+        if delta_s < 60: return f"{delta_s}s ago"
+        mins = delta_s // 60
+        if mins < 60: return f"{mins}m ago"
+        hrs = mins // 60
+        if hrs < 24: return f"{hrs}h ago"
+        return f"{hrs // 24}d ago"
+    except Exception:
+        return None
+
+
+def _iso_to_ms(iso_str: str | None) -> int | None:
+    """Convert an ISO 8601 timestamp to epoch milliseconds."""
+    if not iso_str:
+        return None
+    try:
+        from datetime import datetime, timezone
+        dt = datetime.fromisoformat(iso_str)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return int(dt.timestamp() * 1000)
+    except Exception:
+        return None
+
+
+def _fetch_hermes_crons(cron_path: str) -> list[dict]:
+    """Read Hermes cron jobs from a local JSON file and convert to standard format."""
+    try:
+        with open(cron_path) as f:
+            data = json.load(f)
+    except Exception:
+        return []
+
+    out = []
+    for job in data.get("jobs", []):
+        if not job.get("enabled", True):
+            continue
+
+        expr = job.get("schedule", "0 0 * * *")
+        parsed = _parse_expr(expr)
+        prompt = job.get("prompt", "")
+        task_preview = prompt[:300].strip() + ("…" if len(prompt) > 300 else "")
+
+        out.append({
+            "id": job["id"],
+            "name": job.get("name", "Unnamed"),
+            "source": "hermes",
+            "kind": "cron",
+            "category": _categorize(job.get("name", "")),
+            "hour": parsed["hour"],
+            "minute": parsed["minute"],
+            "days": parsed["days"],
+            "expr": expr,
+            "tz": "America/Los_Angeles",
+            "enabled": True,
+            "agent_id": None,
+            "wake_mode": "now",
+            "session_target": "isolated",
+            "status": job.get("last_status") or "unknown",
+            "next_run": _iso_to_relative(job.get("next_run_at")),
+            "next_run_at_ms": _iso_to_ms(job.get("next_run_at")),
+            "last_run": _iso_to_relative(job.get("last_run_at")),
+            "last_run_at_ms": _iso_to_ms(job.get("last_run_at")),
+            "duration_ms": None,
+            "consecutive_errors": 0,
+            "last_error": job.get("last_error"),
+            "target": "isolated",
+            "task_preview": task_preview,
+            "timeout_s": None,
+            "at": None,
+            "every_ms": None,
+            "anchor_ms": None,
+            "supports_drag": False,
+        })
+    return out
+
+
 def _fetch_system_crons() -> list[dict]:
     try:
         result = subprocess.run(["crontab", "-l"], capture_output=True, text=True, timeout=5)
@@ -302,7 +398,7 @@ def get_team(current_user=Depends(get_current_user)):
     members = []
     for agent_id, cfg in TEAM.items():
         online = False
-        if cfg["fetch"] == "local":
+        if cfg["fetch"] in ("local", "hermes"):
             online = True
         elif cfg.get("host"):
             # SSH ping (works for both macOS and Windows via OpenSSH)
@@ -358,6 +454,9 @@ def get_cron_jobs(
             formatted = _format_openclaw_job(job)
             if formatted:
                 jobs.append(formatted)
+    elif cfg["fetch"] == "hermes":
+        cron_path = cfg.get("hermes_cron_path", "/Users/tiali/.hermes/cron/jobs.json")
+        jobs = _fetch_hermes_crons(cron_path)
     elif cfg.get("host"):
         raw = _fetch_openclaw_crons_ssh(cfg["host"], cfg["ssh_user"], cfg.get("openclaw_cmd", "openclaw"))
         if not raw:
