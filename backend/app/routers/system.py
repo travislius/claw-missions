@@ -821,25 +821,43 @@ def delete_project_section(
     return {"ok": True}
 
 
+def _find_skill_file(skill_id: str) -> Path | None:
+    """Search all agent skill directories (recursively) for a SKILL.md."""
+    all_dirs = set()
+    for user_dir, builtin_dir in _AGENT_SKILLS.values():
+        if user_dir:
+            all_dirs.add(user_dir)
+        if builtin_dir:
+            all_dirs.add(builtin_dir)
+    for skills_dir in all_dirs:
+        if not skills_dir.exists():
+            continue
+        # Direct match
+        direct = skills_dir / skill_id / "SKILL.md"
+        if direct.exists():
+            return direct
+        # Search subdirectories (category folders)
+        for sub in skills_dir.iterdir():
+            if sub.is_dir():
+                nested = sub / skill_id / "SKILL.md"
+                if nested.exists():
+                    return nested
+    return None
+
+
 @router.get("/skills/{skill_id}", tags=["system"])
 def get_skill_content(skill_id: str, current_user=Depends(get_current_user)):
     """Return the raw SKILL.md content for a given skill id."""
-    for skills_dir in [USER_SKILLS_DIR, BUILTIN_SKILLS_DIR]:
-        skill_file = skills_dir / skill_id / "SKILL.md"
-        if skill_file.exists():
-            # Security: ensure we don't escape the skills dirs
-            try:
-                skill_file.resolve().relative_to(skills_dir.resolve())
-            except ValueError:
-                raise HTTPException(status_code=403, detail="Access denied")
-            content = skill_file.read_text(encoding="utf-8")
-            stat = skill_file.stat()
-            return {
-                "id": skill_id,
-                "content": content,
-                "path": str(skill_file),
-                "updated_at": int(stat.st_mtime * 1000),
-            }
+    skill_file = _find_skill_file(skill_id)
+    if skill_file:
+        content = skill_file.read_text(encoding="utf-8")
+        stat = skill_file.stat()
+        return {
+            "id": skill_id,
+            "content": content,
+            "path": str(skill_file),
+            "updated_at": int(stat.st_mtime * 1000),
+        }
     raise HTTPException(status_code=404, detail=f"Skill '{skill_id}' not found")
 
 
