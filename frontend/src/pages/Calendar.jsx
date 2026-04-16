@@ -660,7 +660,7 @@ function DropPreview({ preview }) {
 }
 
 export default function CalendarPage() {
-  const activeAgent = ACTIVE_AGENT;
+  const [activeAgent, setActiveAgent] = useState(ACTIVE_AGENT);
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
   const [calView, setCalView] = useState(isMobile ? 'day' : 'week');
@@ -808,14 +808,27 @@ export default function CalendarPage() {
     <div className="flex flex-col h-full max-w-full">
       <div className="mb-4 flex flex-col gap-3">
         <div className="flex items-center justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-              <CalIcon className="w-5 h-5 text-coral-500" />
-              {AGENTS.find((a) => a.id === activeAgent)?.label ?? 'Schedule'}
-            </h1>
-            <p className="text-xs text-gray-500 mt-0.5">
-              {data.total} cron jobs · drag one-time tiles to reschedule · recurring jobs stay locked
-            </p>
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <CalIcon className="w-5 h-5 text-coral-500" />
+                Schedule
+              </h1>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {data.total} cron jobs · drag one-time tiles to reschedule · recurring jobs stay locked
+              </p>
+            </div>
+            <div className="flex items-center gap-1 bg-sky-50 rounded-lg p-1">
+              {AGENTS.map((a) => (
+                <button
+                  key={a.id}
+                  onClick={() => setActiveAgent(a.id)}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition ${activeAgent === a.id ? 'bg-ocean-500 text-white' : 'text-gray-600 hover:text-ocean-700'}`}
+                >
+                  {a.label}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1 bg-sky-50 rounded-lg p-1">
